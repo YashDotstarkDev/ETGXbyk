@@ -1,0 +1,53 @@
+@model ETG.Web.Components.ViewComponents.Pagination.IPagedViewModel
+
+@{
+    int maxPagesToShow = 7;
+    int startPage = Math.Max(1, Model.Page - (maxPagesToShow / 2));
+    int endPage = Math.Min(Model.TotalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage + 1 < maxPagesToShow)
+    {
+        startPage = Math.Max(1, endPage - maxPagesToShow + 1);
+    }
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="pagination" class="d-flex justify-content-center mt-5 mb-5">
+        <ul class="pagination m-0" style="gap: 8px; flex-wrap: wrap; list-style: none; padding: 0;">
+            
+            <!-- Left Arrow -->
+            @if (Model.Page > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link d-flex align-items-center justify-content-center" href='@Model.PageLinkPath(Model.Page - 1, Context.Request)' style="width: 40px; height: 40px; border-radius: 6px; border: 1px solid #eaeaea !important; color: #a0a0a0 !important; background: white !important; text-decoration: none; font-size: 18px; line-height: 1;">‹</a>
+                </li>
+            }
+
+            <!-- Page Numbers -->
+            @for (int i = startPage; i <= endPage; i++)
+            {
+                if (i == Model.Page)
+                {
+                    <li class="page-item active">
+                        <span class="page-link d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 6px; border: none !important; background-color: #f1f1f1 !important; color: #333 !important; font-weight: 600;">@i</span>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item">
+                        <a class="page-link d-flex align-items-center justify-content-center" href='@Model.PageLinkPath(i, Context.Request)' style="width: 40px; height: 40px; border-radius: 6px; border: 1px solid #eaeaea !important; color: #CA568E !important; background: white !important; text-decoration: none; font-weight: 500;">@i</a>
+                    </li>
+                }
+            }
+
+            <!-- Right Arrow -->
+            @if (Model.Page < Model.TotalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link d-flex align-items-center justify-content-center" href='@Model.PageLinkPath(Model.Page + 1, Context.Request)' style="width: 40px; height: 40px; border-radius: 6px; border: 1px solid #eaeaea !important; color: #a0a0a0 !important; background: white !important; text-decoration: none; font-size: 18px; line-height: 1;">›</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

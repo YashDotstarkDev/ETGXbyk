@@ -1,0 +1,159 @@
+﻿@model ETG.Core.Models.Tour.TourEnquireViewModel
+
+@{
+    var tour = Model.Tour;
+    var form = Model.Form;
+}
+
+<partial name="~/Views/Shared/Partial/Tour/_TourHeroImageWithSlider.cshtml"
+         model="tour" />
+
+ @if (!string.IsNullOrWhiteSpace(tour.TourDepartureCity) && !string.IsNullOrWhiteSpace(tour.TourCode))
+{
+    <div class="pkg-header-wrapper border-top border-info border-2" style="background-color: #fff9fb;">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-3 pkg-header-row">
+                <h2 class="pkg-title m-0">@tour.TourDepartureCity | Tour Code: <span class="text-pink">@tour.TourCode</span></h2>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ============ BOOKING ENQUIRY ============ -->
+<div class="container-fluid bg-lightgray section-pad">
+    <div class="container ">
+        <div class="row g-5">
+            <!-- Left Column: Form -->
+            <div class="col-lg-8 pe-lg-5">
+                <form id="tourEnquireForm" class="contact-form needs-validation" action="/enquire/submit" method="post">
+
+                    @Html.AntiForgeryToken()
+                    <input asp-for="Form.TourCode" type="hidden" />
+                    <input asp-for="Form.TourName" type="hidden" />
+                    <input asp-for="Form.TourDepartureCity" type="hidden" />
+                    <input asp-for="Form.TourClass" type="hidden" />
+                    <input asp-for="Form.TourDate" type="hidden" />
+                    <input asp-for="Form.DepartureDate" type="hidden" />
+                    <input asp-for="Form.ReturnDate" type="hidden" />
+                    <input asp-for="Form.TourQuotedPrice" type="hidden" />
+                    <input asp-for="Form.PriceCurrency" type="hidden" />
+                    <input asp-for="Form.TourDiscountText" type="hidden" />
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Form.FirstName" class="form-label"> First name </label>
+                            <input asp-for="Form.FirstName"
+                                   class="form-control contact-input"
+                                   autocomplete="given-name"
+                                   required />
+                            <span asp-validation-for="Form.FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.LastName" class="form-label"> Last name</label>
+                            <input asp-for="Form.LastName"
+                                   class="form-control contact-input"
+                                   autocomplete="family-name"
+                                   required />
+                            <span asp-validation-for="Form.LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Form.Email" class="form-label">Email</label>
+                            <input asp-for="Form.Email"
+                                   type="email"
+                                   class="form-control contact-input"
+                                   autocomplete="email" />
+                            <span asp-validation-for="Form.Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.Phone"class="form-label">Phone</label>
+                            <input asp-for="Form.Phone"
+                                   type="tel"
+                                   class="form-control contact-input"
+                                   autocomplete="tel"
+                                   pattern="[0-9\s\+\-\(\)]*" />
+                            <span asp-validation-for="Form.Phone"class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 mt-4">
+                        <label class="form-label d-block">Preferred contact method</label>
+                        <div class="form-check form-check-inline mt-1">
+                            <input asp-for="Form.PreferredContactMethod"
+                                   class="form-check-input"
+                                   type="radio"
+                                   value="Email"
+                                   id="methodEmail" />
+                            <label class="form-check-label"for="methodEmail">Email</label>
+                        </div>
+
+                        <div class="form-check form-check-inline mt-1">
+                            <input asp-for="Form.PreferredContactMethod"
+                                   class="form-check-input"
+                                   type="radio"
+                                   value="Phone"
+                                   id="methodPhone" />
+                            <label class="form-check-label"for="methodPhone">Phone</label>
+                        </div>
+                        <span asp-validation-for="Form.PreferredContactMethod"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Form.Message"class="form-label">Questions or comments</label>
+                        <textarea asp-for="Form.Message"
+                                  class="form-control contact-input"
+                                  rows="5"
+                                  required></textarea>
+                        <span asp-validation-for="Form.Message"class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4 form-check mt-3">
+                        <input asp-for="Form.SubscribeToNewsletter"
+                               class="form-check-input"
+                               type="checkbox"
+                               id="subscribeNews" />
+                        <label class="form-check-label"for="subscribeNews">
+                            Subscribe to our newsletter for special deals.
+                        </label>
+                    </div>
+                    <!-- reCAPTCHA -->
+                    <input type="hidden"
+                           id="recaptchaToken"
+                           name="g-recaptcha-response"
+                           value="" />
+
+                    <input type="hidden"
+                           id="recaptchaAction"
+                           name="g-recaptcha-action"
+                           value="tour_enquire_submit" />
+
+                    <button type="submit" class="btn btn-pink contact-submit-btn"> SUBMIT </button>
+                </form>
+            </div>
+
+            <vc:generic-enquire-sidebar />
+
+    </div>
+</div>
+</div>
+
+<script type="module">
+    asyncReady(async () => {
+
+        const recaptcha = await import('@Url.Content("~/js/recaptcha.js")');
+
+        recaptcha.initCaptcha({
+            fieldElemID: 'recaptchaToken',
+            fieldName: 'g-recaptcha-response',
+            actionName: 'tour_enquire_submit',
+
+            onSubmit: function(event) {
+                document.getElementById('tourEnquireForm').submit();
+            }
+        });
+
+    });
+</script>

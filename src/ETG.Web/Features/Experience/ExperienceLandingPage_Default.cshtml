@@ -1,0 +1,39 @@
+﻿@using System.Linq
+@using ETG.Web.Features.Experience
+@model ExperienceLandingPageViewModel
+
+@{
+    var viewModel = Model;
+}
+
+@if (viewModel is null)
+{
+    return;
+}
+@if (!string.IsNullOrWhiteSpace(viewModel.JsonSchema))
+{
+    <script type="application/ld+json">
+        @Html.Raw(viewModel.JsonSchema)
+    </script>
+}
+
+
+<vc:bread-crumb />
+
+<partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
+         model="viewModel.Hero" />
+<editable-area area-identifier="LandingBody" />
+<section class="primary-experience-listing py-5">
+    <div class="container">
+        <partial name="~/Views/Shared/Partial/PrimaryLandingListing/_PrimaryLandingListing.cshtml"
+                 model="viewModel.PrimaryLandingListing" />
+    </div>
+</section>
+<editable-area area-identifier="Bottom" />
+
+<script src="/scripts/primary-landing.js"></script>
+
+@if (!string.IsNullOrWhiteSpace(viewModel.JsonSchema))
+{
+    @Html.Raw(viewModel.JsonSchema)
+}

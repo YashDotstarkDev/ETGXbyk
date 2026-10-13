@@ -1,0 +1,51 @@
+﻿@using CMS.Websites.Routing
+@using ETG.Web.Features.AgentIncentive
+@using Kentico.Content.Web.Mvc
+@using Kentico.Content.Web.Mvc.PageBuilder
+@using Kentico.PageBuilder.Web.Mvc
+@using MediatR
+
+@inject IMediator Mediator
+@inject IWebPageDataContextRetriever ContextRetriever
+@inject IWebsiteChannelContext WebsiteChannelContext
+
+@model TemplateViewModel<AgentIncentivePageTemplateProperties>
+
+@{
+    var viewModel = Model?.GetTemplateModel<AgentIncentivePageViewModel>()
+        ?? await AgentIncentivePageTemplateController.LoadViewModelAsync(
+            Mediator,
+            ContextRetriever,
+            WebsiteChannelContext,
+            Context.RequestAborted);
+}
+
+@if (viewModel is not null)
+{
+    <vc:bread-crumb />
+
+    <section class="hero tahiti-hero"
+             aria-label="@($"{viewModel.Heading} hero banner")">
+
+        @if (!string.IsNullOrWhiteSpace(viewModel.HeroImageUrl))
+        {
+            <picture>
+                <img src="@viewModel.HeroImageUrl"
+                     alt="@viewModel.HeroImageAlt"
+                     class="hero-bg" />
+            </picture>
+        }
+
+        <div class="hero-overlay tahiti-hero__overlay"></div>
+
+        <div class="container text-white">
+            <div class="tahiti-hero__content">
+                <h1 class="tahiti-hero__title">
+                    @viewModel.Heading
+                </h1>
+            </div>
+        </div>
+    </section>
+}
+
+<editable-area area-identifier="Content" />

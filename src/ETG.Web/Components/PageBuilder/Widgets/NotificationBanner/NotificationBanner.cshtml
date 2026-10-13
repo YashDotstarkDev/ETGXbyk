@@ -1,0 +1,111 @@
+@using ETG.Web.Components.PageBuilder.Widgets.NotificationBanner
+@using ETG.Web.Rendering
+
+@model NotificationBannerWidgetViewModel
+
+@{
+    /*
+     * In live mode, hide the banner if outside the scheduled window.
+     * In edit/preview mode, always render so editors can configure the widget.
+     */
+    bool isEditMode = View.PageBuilderMode != ApplicationPageBuilderMode.Live;
+
+    if (!Model.IsWithinSchedule && !isEditMode)
+    {
+        return;
+    }
+
+    string dismissAttr = Model.Dismissible ? "alert-dismissible" : "";
+    string customClass = string.IsNullOrWhiteSpace(Model.CustomCssClass) ? "" : Model.CustomCssClass;
+}
+
+<div id="@Model.AlertId"
+     role="alert"
+     class="alert @Model.AlertClass @dismissAttr fade show @customClass"
+     xpc-preview-outline="@Model.ComponentName">
+
+    @* ── Out-of-schedule notice for editors ──────────────────────────────── *@
+    @if (!Model.IsWithinSchedule && isEditMode)
+    {
+        <div class="alert alert-secondary mb-2 py-1 px-2 d-flex align-items-center gap-2 small">
+            <i class="bi bi-clock" aria-hidden="true"></i>
+            <span>
+                <strong>Page Builder:</strong> This banner is hidden outside its scheduled window.
+                @if (Model.StartDate.HasValue)
+                {
+                    <span>Starts: <code>@Model.StartDate.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                }
+                @if (Model.EndDate.HasValue)
+                {
+                    <span class="ms-2">Ends: <code>@Model.EndDate.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+                }
+            </span>
+        </div>
+    }
+
+    @* ── Banner body ─────────────────────────────────────────────────────── *@
+    <div class="d-flex align-items-start gap-2 flex-wrap">
+
+        @* Type icon *@
+        <span class="notification-banner__icon flex-shrink-0 mt-1" aria-hidden="true">
+            <i class="@Model.IconClass"></i>
+        </span>
+
+        @* Content *@
+        <div class="notification-banner__content flex-grow-1">
+            @if (Model.HasTitle)
+            {
+                <strong class="notification-banner__title me-1">@Model.Title</strong>
+            }
+
+            @if (Model.HasMessage)
+            {
+                <span class="notification-banner__message">@Model.Message</span>
+            }
+
+            @if (Model.HasCta)
+            {
+                <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl) ? "#" : Model.CtaUrl)"
+                   class="alert-link notification-banner__cta ms-2 text-nowrap"
+                   aria-label="@Model.CtaText">
+                    @Model.CtaText <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                </a>
+            }
+        </div>
+
+        @* Dismiss button — rendered last so it floats right via Bootstrap *@
+        @if (Model.Dismissible)
+        {
+            <button type="button"
+                    class="btn-close flex-shrink-0"
+                    data-bs-dismiss="alert"
+                    aria-label="Close notification"
+                    data-notification-id="@Model.AlertId">
+            </button>
+        }
+    </div>
+</div>
+
+@* ── Dismiss persistence (localStorage) ──────────────────────────────────── *@
+@if (Model.Dismissible)
+{
+    <script>
+    (function () {
+        var key = "notification-dismissed-@Model.AlertId";
+        var el  = document.getElementById("@Model.AlertId");
+
+        if (!el) return;
+
+        // Hide immediately if previously dismissed
+        if (localStorage.getItem(key) === "1") {
+            el.style.display = "none";
+            return;
+        }
+
+        // Persist dismissal on close
+        el.addEventListener("closed.bs.alert", function () {
+            localStorage.setItem(key, "1");
+        });
+    })();
+    </script>
+}

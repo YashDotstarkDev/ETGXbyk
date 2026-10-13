@@ -1,0 +1,92 @@
+@using System.Linq
+@using ETG.Web.Features.Experience
+
+@model ExperiencePageDetailViewModel
+
+@{
+    ExperiencePageDetailViewModel? experience = null;
+    try
+    {
+        experience = Model;
+    }
+    catch (System.InvalidCastException)
+    {
+        experience = null;
+    }
+}
+
+@if (experience == null)
+{
+    return;
+}
+
+@if (!string.IsNullOrWhiteSpace(experience.JsonSchema))
+{
+    <script type="application/ld+json">
+        @Html.Raw(experience.JsonSchema)
+    </script>
+}
+
+<vc:bread-crumb />
+<!-- HERO -->
+<partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
+         model="experience.Hero" />
+
+
+<!-- TOP CONTENT WIDGETS -->
+<div class="wrapper">
+    <div class="w-full max-w-4xl mx-auto mt-12 md:mt-20">
+        <editable-area area-identifier="TopContent"></editable-area>
+    </div>
+</div>
+
+
+
+@if (experience.TourListing?.Tours?.Any() == true)
+{
+  <partial name="~/Views/Shared/Partial/Tour/_TourListing.cshtml"
+         model="experience.TourListing" />
+
+}
+
+
+<editable-area area-identifier="Content"></editable-area>
+@await Html.PartialAsync(
+    "~/Views/Shared/Partial/Common/_ContactUs.cshtml",
+    Model.ContactUs
+)
+
+
+
+<!-- RELATED ARTICLES -->
+@if (experience.RelatedArticles?.Any() == true)
+{
+    <section class="related-articles-section py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <h2 class="section-title mb-2">
+                        Read what we've written on @experience.ExperienceName
+                    </h2>
+                    <div class="section-title-line"></div>
+                </div>
+
+                <a href="/articles" class="view-all-btn">View All</a>
+            </div>
+
+            <p class="related-articles-description mb-4">
+                @experience.Summary
+            </p>
+
+            <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml"
+                     model="experience.RelatedArticles.Take(3)" />
+        </div>
+    </section>
+}
+
+@if (!experience.HideGoogleReviews && experience.GoogleReviews != null)
+{
+    <partial name="~/Components/PageBuilder/Widgets/GoogleReviews/GoogleReviews.cshtml"
+             model="experience.GoogleReviews" />
+}
+

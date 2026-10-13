@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="CMS.AssemblyDiscoverableAttribute">
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CSharpFunctionalExtensions" version="3.7.0" />
+		<PackageReference Include="Enums.NET" Version="5.0.0" />
+		<PackageReference Include="Kentico.Xperience.WebApp" version="31.7.2" />
+		<PackageReference Include="MediatR" version="14.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" version="10.0.11" />
+		<PackageReference Include="Microsoft.Extensions.Logging" version="10.0.11" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="CSharpFunctionalExtensions" />
+		<Using Include="CMS.ContentEngine" />
+	</ItemGroup>
+</Project>

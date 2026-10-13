@@ -1,0 +1,189 @@
+@model ETG.Web.Components.ViewComponents.Footer.FooterViewModel
+
+<footer class="etg-footer">
+  <div class="container">
+    <div class="row footer-main gap-3 justify-content-between">
+      <div class="col-12 order-3 order-md-1">
+        <!-- TOP MENU (dynamic) -->
+        <div class="footer-top-menu row text-white">
+          @foreach (var column in Model.Columns)
+          {
+            <div class="col-6 col-md-4 col-lg footer-menu-item">
+              @if (!string.IsNullOrWhiteSpace(column.HeadingUrl))
+              {
+                <a href="@column.HeadingUrl" class="footer-dropdown">@column.Heading <i class="bi bi-chevron-down"></i></a>
+              }
+              else
+              {
+                <div class="footer-dropdown">@column.Heading <i class="bi bi-chevron-down"></i></div>
+              }
+              <ul class="footer-submenu">
+                @foreach (var link in column.Links)
+                {
+                  <li><a href="@link.Url" target="@link.Target">@link.Label</a></li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- SUSTAINABLE TRAVEL -->
+     <div class="col-12 mb-4 order-4 order-md-2">
+  <div class="sustainable-footer-section">
+    <div class="sustainable-logo-col">
+      @if (!string.IsNullOrWhiteSpace(Model.Layout?.OneTreeLogoUrl))
+      @* ?? "OneTreePlanted" *@
+      {
+          <img src="@Model.Layout.OneTreeLogoUrl" alt="@(Model.Layout.OneTreeLogoAltText )" class="sustainable-logo">
+      }
+      else
+      {
+          <img src="./images/Plantlogo white.png" alt="@(Model.Layout.OneTreeLogoAltText )" class="sustainable-logo">
+      }
+    </div>
+    <div class="sustainable-divider"></div>
+    <div class="sustainable-text-col">
+
+        @* ?? "Sustainable Travel" *@
+      <h5 class="text-pink fw-bold mb-2">@(Model.Layout?.SustainableHeading )</h5>
+      <p class="mb-0">
+
+          @* ?? "Entire Travel Group invites you to join us in positively impacting the planet. For every holiday, we proudly partner with OneTreePlanted and plant trees for our customers - contributing to a greener, more sustainable future together." *@
+        @(Model.Layout?.SustainableDescription )
+      </p>
+    </div>
+  </div>
+</div>
+
+      <!-- LOGO -->
+      <div class="col-md-5 col-lg-3 mb-4 order-1 order-md-2 text-center text-md-start">
+        @if (!string.IsNullOrWhiteSpace(Model.Layout?.FooterLogoUrl))
+  {
+              @* ?? "logo" *@
+      <img src="@Model.Layout.FooterLogoUrl" class="footer-logo" alt="@(Model.Layout.FooterLogoAltText)">
+  }
+  else
+  {
+      <img src="@Model.Layout.FooterLogoUrl" class="footer-logo" alt="@(Model.Layout.FooterLogoAltText)"> 
+  }
+        <div class="footer-social-strip">
+          <div class="footer-social-strip-inner">
+              @* ?? "Contact With Us" *@
+            <span class="footer-social-strip-label">@(Model.Layout?.ContactUsText)</span>
+            <ul class="footer-social-strip-list">
+              <li class="footer-social-strip-item">
+                <a href="@Model.Contact.FacebookUrl" target="_blank" rel="nofollow" aria-label="Facebook">
+                  <svg class="svg-inline--fa fa-facebook" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="facebook" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                    <path fill="currentColor" d="M512 256C512 114.6 397.4 0 256 0S0 114.6 0 256C0 376 82.7 476.8 194.2 504.5V334.2H141.4V256h52.8V222.3c0-87.1 39.4-127.5 125-127.5c16.2 0 44.2 3.2 55.7 6.4V172c-6-.6-16.5-1-29.6-1c-42 0-58.2 15.9-58.2 57.2V256h83.6l-14.4 78.2H287V510.1C413.8 494.8 512 386.9 512 256h0z"></path>
+                  </svg>
+                </a>
+              </li>
+              <li class="footer-social-strip-item">
+                <a href="@Model.Contact.InstagramUrl" target="_blank" rel="nofollow" aria-label="Instagram">
+                  <svg class="svg-inline--fa fa-instagram" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="instagram" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                    <path fill="currentColor" d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"></path>
+                  </svg>
+                </a>
+              </li>
+              <li class="footer-social-strip-item">
+                <a href="@Model.Contact.LinkedInUrl" target="_blank" rel="nofollow" aria-label="LinkedIn">
+                  <svg class="svg-inline--fa fa-linkedin" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="linkedin" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                    <path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"></path>
+                  </svg>
+                </a>
+              </li>
+              <li class="footer-social-strip-item">
+                <a href="@Model.Contact.YouTubeUrl" target="_blank" rel="nofollow" aria-label="YouTube">
+                  <svg class="svg-inline--fa fa-youtube" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="youtube" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                    <path fill="currentColor" d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"></path>
+                  </svg>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACT INFO -->
+     
+      <!-- CONTACT INFO -->
+@if (Model.Contact != null)
+{
+    <div class="col-md-6 col-lg-4 mb-4 mt-2 footer-contact order-2 order-md-3 mx-auto">
+        @if (!string.IsNullOrWhiteSpace(Model.Contact.OpeningHours))
+        {
+            <p class="contact-line">
+                <i class="bi bi-clock"></i>
+                <span>@Model.Contact.OpeningHours</span>
+            </p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Contact.Address1))
+        {
+            <p class="contact-line">
+                <i class="bi bi-envelope"></i>
+                <span>
+                    @Model.Contact.Address1
+                    @if (!string.IsNullOrWhiteSpace(Model.Contact.Address2))
+                    {
+                        <br />
+                        @Model.Contact.Address2
+                    }
+                </span>
+            </p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Contact.PhoneNumber))
+        {
+            <p class="contact-line">
+                <i class="bi bi-telephone"></i>
+                <span>
+                    @Model.Contact.PhoneNumber
+                    @if (!string.IsNullOrWhiteSpace(Model.Contact.PhoneNumber2))
+                    {
+                        <br />
+                        @Model.Contact.PhoneNumber2
+                    }
+                </span>
+            </p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Contact.EmailAddress))
+        {
+            <p class="contact-line">
+                <i class="bi bi-send"></i>
+                            <a class="text-pink" href="mailto:@Model.Contact.EmailAddress">@Model.Contact.EmailAddress</a>
+            </p>
+        }
+    </div>
+}
+
+      <!-- AWARDS -->
+      <div class="col-md-12 col-lg-4 mb-4 mt-4 text-center order-4">
+  @if (!string.IsNullOrWhiteSpace(Model.Layout?.AwardsImageSvg))
+  {
+      @Html.Raw(Model.Layout.AwardsImageSvg)
+  }
+  @* else
+  {
+      <img src="./images/Awards_Footer.svg" class="award-img">
+  } *@
+</div>
+
+    <!-- FOOTER BOTTOM LINKS (dynamic) -->
+    <div class="footer-links-row px-5 order-4">
+      <div class="row align-items-center">
+        <div class="col-lg-4 text-lg-start text-center small-text">
+  © @DateTime.UtcNow.Year @(Model.Layout?.CopyrightText)
+        </div>
+        <div class="col-lg-8 text-lg-end footer-links">
+          @foreach (var link in Model.BottomLinks)
+          {
+            <a href="@link.Url" target="@link.Target">@link.Label</a>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOCIAL BAR -->
+
+</footer>

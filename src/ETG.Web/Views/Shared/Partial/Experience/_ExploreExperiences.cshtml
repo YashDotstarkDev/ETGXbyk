@@ -1,0 +1,29 @@
+﻿@model IReadOnlyList<ETG.Web.Features.Home.HomeExperienceViewModel>
+
+@if (Model.Count > 0)
+{
+    <section class="section-pad" aria-labelledby="explore-title">
+        <div class="container">
+            <div class="title-div mb-4">
+                <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+                    <h2 id="explore-title" class="section-title mb-0">
+                        Explore Experiences
+                    </h2>
+                    <a href="/experiences" class="view-all-btn">View All</a>
+                </div>
+            </div>
+
+            <div class="row g-4 text-center justify-content-center">
+                @foreach (var experience in Model)
+                {
+                    <div class="col-4 col-md-3 col-lg feature-item">
+                        <a href="@experience.Url" class="text-decoration-none">
+                            @Html.Raw(experience.SvgIcon)
+                            <p>@experience.Name</p>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

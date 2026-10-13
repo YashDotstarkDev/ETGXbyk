@@ -1,0 +1,105 @@
+﻿@model ETG.Web.Components.ViewComponents.GenericEnquireSidebar.GenericEnquireSidebarViewModel
+@{
+    var firstEmail = Model.EnquiryContacts
+        .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Email))
+        ?.Email;
+}
+@if (Model?.EnquiryContacts != null && Model.EnquiryContacts.Any())
+{
+    <div class="col-lg-4 ps-lg-5">
+        <div class="contact-sidebar">
+            <h3 class="contact-sidebar-title">
+                ENTIRE TRAVEL GROUP
+            </h3>
+            @foreach (var contact in Model.EnquiryContacts)
+            {
+                <div class="contact-sidebar-item">
+                    @if (!string.IsNullOrWhiteSpace(contact.Name))
+                    {
+                        <div class="contact-region">
+                            @contact.Name
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(contact.Phone))
+                    {
+                        <div class="contact-detail">
+                            <i class="bi bi-telephone-fill text-pink"></i>
+                            <span>
+                                @contact.Phone
+                            </span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(contact.Address))
+                    {
+                        <div class="contact-detail mt-1">
+                            <i class="bi bi-geo-alt-fill text-pink"></i>
+                            <span>
+                                @contact.Address
+                            </span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(contact.Email))
+                    {
+                        <div class="contact-detail mt-1">
+                            <i class="bi bi-send-fill text-pink"></i>
+                            <span>
+                                @contact.Email
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
+            
+            <div class="contact-sidebar-actions mt-4 pt-2 text-center">
+                @if (!string.IsNullOrWhiteSpace(firstEmail))
+                {
+                    <a href="mailto:info@entiretravel.com.au"
+                       class="contact-action-btn d-block">
+                        SEND AN EMAIL
+                    </a>
+                }
+                <a href="#"
+                   class="contact-action-btn calendly-button"
+                   data-link="https://calendly.com/entiretravelgroup/30mins?month=2023-04">
+                    SCHEDULE A MEETING
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+
+        $(".calendly-button").on("click", function(e) {
+            e.preventDefault();
+            var $button = $(this);
+
+            if (!$button.length) {
+                return;
+            }
+
+            var calendlyUrl = $button.attr("data-link");
+
+            if (!calendlyUrl || !calendlyUrl.trim()) {
+                console.warn("Calendly URL is missing from data-link attribute.");
+                return;
+            }
+
+            if (
+                typeof window.Calendly === "undefined" ||
+                typeof window.Calendly.showPopupWidget !== "function"
+            ) {
+                console.warn("Calendly is not loaded.");
+                return;
+            }
+
+            try {
+                window.Calendly.showPopupWidget(calendlyUrl);
+            } catch (error) {
+                console.error("Unable to open Calendly popup:", error);
+            }
+        });
+
+    });
+</script>

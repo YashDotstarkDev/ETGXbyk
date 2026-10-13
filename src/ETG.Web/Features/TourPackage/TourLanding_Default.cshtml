@@ -1,0 +1,179 @@
+@using ETG.Web.Features.TourPackage
+@using ETG.Web.Features.TourPackage.Operations
+@using ETG.Core.Models.Tour
+@using System.Linq
+@model TourLandingViewModel
+
+@{
+    var vm = Model;
+
+    var heading = vm.Heading?.Trim() ?? "";
+    var headingParts = heading.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
+    var headingPrefix = headingParts.Length > 1 ? string.Join(" ", headingParts.Take(headingParts.Length - 1)) : "";
+    var headingHighlight = headingParts.LastOrDefault() ?? "";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@7/themes/reset-min.css" />
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="search-page pb-5"
+      id="algolia-landing"
+      data-algolia-app-id="@vm.ApplicationId"
+      data-algolia-search-key="@vm.SearchKey"
+      data-algolia-index="@vm.TourIndexName">
+
+    <vc:bread-crumb />
+
+    <!-- Title -->
+    <div class="container text-center py-4 py-md-5">
+        <h1 class="search-title">
+            @if (!string.IsNullOrWhiteSpace(headingPrefix))
+            {
+                @headingPrefix
+                <span> </span>
+            }
+            <span class="text-pink">@headingHighlight</span>
+        </h1>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="mx-auto search-bar-wrap">
+                    <form class="d-flex flex-column flex-md-row gap-2 m-0" onsubmit="event.preventDefault();">
+
+                        <div class="flex-grow-1 search-field-wrap">
+                            <label class="d-block text-muted text-uppercase search-field-label">Destination</label>
+                            <select id="searchbox-destination" class="form-select border-0 p-0 shadow-none bg-transparent fw-medium text-dark search-field-input search-filter-select">
+                                <option value="all">Select destination</option>
+                            </select>
+                        </div>
+                        <div class="flex-grow-1 search-field-wrap">
+                            <label class="d-block text-muted text-uppercase search-field-label">Experience</label>
+                            <select id="searchbox-experience" class="form-select border-0 p-0 shadow-none bg-transparent fw-medium text-dark search-field-input search-filter-select">
+                                <option value="all">Select experience</option>
+                            </select>
+                        </div>
+                        <div class="flex-grow-1 search-field-wrap" style="line-height:21px;">
+                            <label class="d-block text-muted text-uppercase search-field-label">Keyword</label>
+                            <input type="text" id="searchbox-keyword" class="form-control border-0 p-0 shadow-none bg-transparent fw-medium text-dark search-field-input " placeholder="Tour code or keyword">
+                        </div>
+                        <div class="search-btn-wrap">
+                            <button type="submit" class="btn btn-pink w-100 h-100 search-btn-custom">FIND</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sort & View Bar -->
+    <div class="container mb-5">
+        <div class="row border-bottom pb-3">
+            <div class="col-12 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 ">
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div id="stats-container"></div>
+                    <button class="btn btn-outline-secondary btn-sm d-lg-none " type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas" aria-controls="filterOffcanvas">
+                        <i class="bi bi-sliders me-1"></i> Advanced Filters
+                    </button>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 gap-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="text-muted small mb-0 fw-semibold">Sort:</label>
+                        <div id="sort-by"></div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="text-muted small mb-0 fw-semibold">View:</label>
+                        <div id="hits-per-page"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row filter-row">
+            <!-- Sidebar Filters -->
+            <aside class="col-lg-3 filter-sidebar pe-lg-4">
+                <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="filterOffcanvas" aria-labelledby="filterOffcanvasLabel">
+                    <div class="offcanvas-header border-bottom">
+                        <h5 class="offcanvas-title text-teal fw-bold" id="filterOffcanvasLabel">Filter By</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas" aria-label="Close"></button>
+                    </div>
+                    <div class="offcanvas-body flex-column filter-top">
+                        <h5 class="text-teal fw-bold mb-4 pb-3 border-bottom d-none d-lg-block">Filter By</h5>
+
+                        <!-- Travel Style -->
+                        <div class="mb-4 filter-section">
+                            <h6 class="text-teal fw-bold mb-3 d-flex justify-content-between align-items-center  filter-header" style="cursor: pointer;">
+                                Travel Style <i class="bi bi-chevron-up filter-accordion-icon"></i>
+                            </h6>
+                            <div id="refinement-travel-style" class="filter-items"></div>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-4 border-top pt-3 filter-section">
+              <h6 class="text-teal fw-bold mb-3 d-flex justify-content-between align-items-center filter-header" style="cursor: pointer;">
+                                Price <i class="bi bi-chevron-up filter-accordion-icon"></i>
+                            </h6>
+                            <div id="range-slider-price" class="filter-items"></div>
+                        </div>
+
+                        <!-- Duration -->
+                            <div class="mb-4 border-top pt-3 filter-section">
+              <h6 class="text-teal fw-bold mb-3 d-flex justify-content-between align-items-center filter-header" style="cursor: pointer;">
+                                Duration <i class="bi bi-chevron-up filter-accordion-icon"></i>
+                            </h6>
+                            <div id="range-slider-duration" class="filter-items"></div>
+                        </div>
+
+                        <!-- Start Location -->
+                        <div class="mb-4 border-top pt-3 filter-section">
+                            <h6 class="text-teal fw-bold mb-3 d-flex justify-content-between align-items-center filter-header" style="cursor: pointer;">
+                                Start Location <i class="bi bi-chevron-up filter-accordion-icon"></i>
+                            </h6>
+                            <div class="p-2 border rounded border-light bg-white filter-items">
+                                <div id="refinement-start-location"></div>
+                            </div>
+                        </div>
+
+                        <!-- End Location -->
+                        <div class="mb-4 border-top pt-3 filter-section">
+                            <h6 class="text-teal fw-bold mb-3 d-flex justify-content-between align-items-center filter-header" style="cursor: pointer;">
+                                End Location <i class="bi bi-chevron-up filter-accordion-icon"></i>
+                            </h6>
+                            <div class="p-2 border rounded border-light bg-white filter-items">
+                                <div id="refinement-end-location"></div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Action Buttons -->
+                        <div class="d-lg-none mt-4 pt-3 border-top mt-auto pb-3">
+                            <div class="row g-2 align-items-stretch">
+                                <div class="col-6"><div id="clear-refinements-mobile"></div></div>
+                                <div class="col-6"><button type="button" class="btn btn-pink w-100 h-100 py-2 text-uppercase fw-semibold" data-bs-dismiss="offcanvas">Apply Filters</button></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Grid -->
+            <div class="col-lg-9 tahiti-v2-packages">
+                <div id="hits"></div>
+                <!-- Pagination -->
+                <nav id="pagination-nav" aria-label="Search results pages" class="mt-5 mb-4">
+                    <div id="pagination" class="d-flex justify-content-center"></div>
+                </nav>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script>
+<script src="~/algolia/tourlandingscript.js" asp-append-version="true"></script>

@@ -1,0 +1,74 @@
+﻿@model ETG.Web.Components.ViewComponents.StickyFooter.StickyBarViewComponent.StickyBarViewModel
+
+@if (Model?.StickyFooterBar == null)
+{
+    return;
+}
+
+@if (string.IsNullOrWhiteSpace(Model.StickyFooterBar?.StickyBarContent))
+{
+    return;
+}
+
+@{
+    var reviews = Model.Reviews;
+    double averageRating = reviews?.Totals.AverageRating ?? 0;
+    int reviewCount = reviews?.Totals.ReviewCount ?? 0;
+    int fullStars = (int)Math.Floor(averageRating);
+    bool halfStar = (averageRating - fullStars) >= 0.5;
+    int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+}
+
+<div class="connect-bar text-center">
+    <div class="ticker-wrapper">
+        <!-- Scrolling Marquee -->
+        <div class="ticker">
+            <div class="ticker-track" id="tickerTrack">
+                @Html.Raw(Model.StickyFooterBar?.StickyBarContent)
+            </div>
+        </div>
+        <!-- Bottom row -->
+        <div class="bottom-row">
+            <a href="/contact-us"
+               class="btn-enquire-footer">
+                Enquire Now
+            </a>
+            @if (reviews != null)
+            {
+                <div class="google-rating">
+                    <div class="google-top">
+                        <a href="https://share.google/u4apm8PYX8bv7lH9r"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            <img src="/images/google-review-logo.png"
+                                 alt="Google"
+                                 class="google-logo" />
+                        </a>
+                        <div class="google-content">
+                            <div class="stars"
+                                 aria-label="@averageRating out of 5 stars">
+                                @for (int i = 0; i < fullStars; i++)
+                                {
+                                    <span aria-hidden="true">&#9733;</span>
+                                }
+                                @if (halfStar)
+                                {
+                                    <span aria-hidden="true">&#9734;</span>
+                                }
+                                @for (int i = 0; i < emptyStars; i++)
+                                {
+                                    <span aria-hidden="true">&#9734;</span>
+                                }
+                            </div>
+                            <div class="reviews">
+                                @averageRating.ToString("0.0") Stars,
+                                @reviewCount
+                                Review@(reviewCount == 1 ? "" : "s")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

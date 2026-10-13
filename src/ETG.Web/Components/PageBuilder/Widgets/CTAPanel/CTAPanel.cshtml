@@ -1,0 +1,42 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.CTAPanel
+@model CTAPanelWidgetViewModel
+
+<section class="cta-section" aria-label="Start your journey">
+    @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
+    {
+        <img loading="lazy"
+             src="@Model.Image.LegacyMediaFileAsset.Url"
+             alt="@(string.IsNullOrEmpty(Model.Heading) ? (Model.Image.LegacyMediaFileTitle ?? "CTA Background") : Model.Heading)"
+             class="cta-bg" />
+    }
+
+    <div class="cta-overlay"></div>
+
+    <div class="container text-center text-white cta-content">
+        @if (!string.IsNullOrEmpty(Model.Heading))
+        {
+            <h2 class="display-5 fw-bold">@Model.Heading</h2>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.TextContent))
+        {
+            <p class="mb-4">@Model.TextContent</p>
+        }
+
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            @if (!string.IsNullOrEmpty(Model.Path2) && !string.IsNullOrEmpty(Model.CTALabel2))
+            {
+                <a href="@Model.Path2" class="btn btn-outline-light btn-lg outline-button">@Model.CTALabel2</a>
+            }   
+
+            @if (!string.IsNullOrEmpty(Model.Path) && !string.IsNullOrEmpty(Model.CTALabel))
+            {
+                <a href="@Model.Path" class="btn btn-pink btn-lg">@Model.CTALabel</a>
+            }
+        </div>
+
+
+    </div>
+</section>
+
+

@@ -1,0 +1,91 @@
+﻿@model ETG.Web.Features.DestinationPostPage.DestinationPostPageViewModel
+
+@{
+    var sticky = Model.DestinationStickyModel;
+    var reviews = Model.Reviews;
+
+    double averageRating = reviews?.Totals?.AverageRating ?? 0;
+    int reviewCount = reviews?.Totals?.ReviewCount ?? 0;
+
+    averageRating = Math.Clamp(averageRating, 0, 5);
+
+    int fullStars = (int)Math.Floor(averageRating);
+    bool halfStar = (averageRating - fullStars) >= 0.5;
+    int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+}
+
+@if (sticky is not null && sticky.DisplaySticky)
+{
+    <div class="connect-bar text-center">
+        <div class="ticker-wrapper">
+            <!-- Scrolling Marquee -->
+            <div class="ticker">
+                <div class="ticker-track" id="tickerTrack">
+                    @if (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1))
+                    {
+                        <div class="marque-item">@sticky.CampaignDetail1</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(sticky.CampaignDetail2))
+                    {
+                        <div class="marque-item">@sticky.CampaignDetail2</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(sticky.CampaignDetail3))
+                    {
+                        <div class="marque-item">@sticky.CampaignDetail3</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Bottom row -->
+            <div class="bottom-row">
+                <a href="@Model.CTA.CTAUrl"
+                   class="btn-enquire-footer">
+                    Enquire Now
+                </a>
+
+                @if (reviews?.Totals is not null)
+                {
+                    <div class="google-rating">
+                        <div class="google-top">
+                            <a href="https://share.google/u4apm8PYX8bv7lH9r"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                <img src="/images/google-review-logo.png"
+                                     alt="Google"
+                                     class="google-logo" />
+                            </a>
+
+                            <div class="google-content">
+                                <div class="stars"
+                                     aria-label="@averageRating out of 5 stars">
+                                    @for (int i = 0; i < fullStars; i++)
+                                    {
+                                        <span aria-hidden="true">&#9733;</span>
+                                    }
+
+                                    @if (halfStar)
+                                    {
+                                        <span aria-hidden="true">&#9734;</span>
+                                    }
+
+                                    @for (int i = 0; i < emptyStars; i++)
+                                    {
+                                        <span aria-hidden="true">&#9734;</span>
+                                    }
+                                </div>
+
+                                <div class="reviews">
+                                    @averageRating.ToString("0.0") Stars,
+                                    @reviewCount
+                                    Review@(reviewCount == 1 ? "" : "s")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

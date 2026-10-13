@@ -1,0 +1,45 @@
+@using CMS.Helpers
+@using ETG.Web.Components.PageBuilder.Widgets.Video
+
+@model VideoWidgetViewModel
+
+@{
+    string containerClasses = Model.Alignment switch
+    {
+        VideoAlignments.Left => "justify-content-start",
+        VideoAlignments.Right => "justify-content-end",
+        VideoAlignments.Center or _ => "justify-content-center",
+    };
+
+    string figureStyles = Model.Size switch
+    {
+        VideoSizes.Small => "--size-preferred: 50cqi",
+        VideoSizes.Medium => "--size-preferred: 70cqi",
+        VideoSizes.Large => "--size-preferred: 80cqi",
+        VideoSizes.Full_Width or _ => "--size-preferred: 100cqi",
+    };
+
+    string sizesAttribute = Model.Size switch
+    {
+        VideoSizes.Small => "(max-width: 767px) 100vw, 200px", // Mobile: full width, Desktop: 200px
+        VideoSizes.Medium => "(max-width: 767px) 100vw, 300px", // Mobile: full width, Desktop: 300px
+        VideoSizes.Large => "(max-width: 767px) 100vw, 450px", // Mobile: full width, Desktop: 450px
+        VideoSizes.Full_Width or _ => "(max-width: 767px) 100vw, 600px", // Mobile: full width, Desktop: 600px
+    };
+}
+
+<div class="d-flex align-content-center @containerClasses container-inline-size"
+    xpc-preview-outline="@Model.ComponentName">
+    <figure class="figure clamp-width" style="@figureStyles">
+        <video class="w-100" controls>
+            <source src="@Model.Video.VideoContentAsset.Url" type="@Model.Video.VideoContentAssetMimeType" sizes="@sizesAttribute">
+            Your browser does not support the video tag.
+        </video>
+        @if (Model.ShowDescriptionAsCaption)
+        {
+            <figcaption class="figure-caption">
+                @Model.Video.BasicItemShortDescription
+            </figcaption>
+        }
+    </figure>
+</div>

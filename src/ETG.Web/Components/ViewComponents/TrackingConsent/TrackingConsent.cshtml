@@ -1,0 +1,54 @@
+﻿@model ETG.Web.Components.ViewComponents.TrackingConsent.ConsentViewModel
+
+@if (!Model.IsAgreed && !Model.IsRevoke)
+{
+    <div class="cookie-consent-banner">
+        <div class="cookie-consent-inner">
+
+            <!-- Logo -->
+           <div class="cookie-consent-brand">
+     @if (Model.Layout is not null)
+    {
+        @Html.Raw(Model.Layout.BrandLogoSvg)
+    }
+</div>
+            <!-- Content -->
+            <div class="cookie-consent-content">
+                @* heading *@
+
+                @Html.Raw(Model.ConsentShortText)
+
+                @* description with privicy link *@
+
+                @Html.Raw(Model.ConsentFullText)
+
+            </div>
+
+            <!-- Buttons -->
+            <div class="cookie-consent-actions">
+
+                <form id="consentForm"
+                      asp-action="ProcessConsent"
+                      asp-controller="Consent"
+                      method="post">
+                    <button type="submit"
+                            name="consentChoice"
+                            value="Decline"
+                            class="view-all-btn">
+                        DECLINE
+                    </button>
+
+                    <button type="submit"
+                            name="consentChoice"
+                            value="All cookies allow"
+                            class="btn btn-pink">
+                        ACCEPT
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+}

@@ -1,0 +1,50 @@
+﻿@using ETG.Web.Features
+@model PrimaryLandingListingViewModel
+
+@if (Model.Items.Any())
+{
+    <div class="row g-4 mb-5">
+        @foreach (var item in Model.Items)
+        {
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a href="@item.LinkPath"
+                   class="hd-dest-card d-flex flex-column h-100">
+
+                    <div class="hd-dest-card__img-wrap">
+                        @if (item.Image?.LegacyMediaFileAsset?.Url is not null)
+                        {
+                            <img src="@item.Image.LegacyMediaFileAsset.Url"
+                                 alt="@item.ImageAlt"
+                                 loading="lazy" />
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.ImageAlt))
+                        {
+                            <span class="hd-dest-card__image-alt">
+                                @item.ImageAlt
+                            </span>
+                        }
+                    </div>
+
+                    <div class="hd-dest-card__body d-flex flex-column flex-grow-1">
+                        <p class="hd-dest-card__label">@item.Title</p>
+                        @if (!string.IsNullOrWhiteSpace(item.Summary))
+                        {
+                            <p class="hd-dest-card__desc flex-grow-1"
+                               style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+                                @item.Summary
+                            </p>
+                        }
+
+                        <p class="text-pink fw-bold mt-4 mb-0"
+                           style="font-size: 13px;">
+                            @item.CtaText
+                            <i class="bi bi-arrow-right"
+                               style="font-weight: 800; -webkit-text-stroke: 0.5px;">
+                            </i>
+                        </p>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}

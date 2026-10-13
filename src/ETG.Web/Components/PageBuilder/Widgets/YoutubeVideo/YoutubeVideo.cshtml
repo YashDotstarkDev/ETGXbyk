@@ -1,0 +1,72 @@
+﻿@model ETG.Web.Components.PageBuilder.Widgets.YoutubeVideo.YoutubeVideoWidgetViewModel
+
+@{
+    var widgetId = $"youtube-video-{Guid.NewGuid():N}";
+    var imageUrl = Model.Image?.LegacyMediaFileAsset?.Url;
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.YoutubeID))
+{
+    <section class="section-pad careers-video-section bg-lightgray" aria-label="Welcome Video">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div id="@widgetId"
+                         class="careers-video-wrapper"
+                         style="background-image: url('@imageUrl');"
+                         data-youtube-id="@Model.YoutubeID"
+                         data-youtube-url="https://www.youtube.com/watch?v=@Model.YoutubeID"
+                         data-open-in-new-window="@Model.OpenInNewWindow.ToString().ToLowerInvariant()">
+
+                        <img src="@imageUrl"
+                             alt="@Model.Caption"
+                             class="careers-video-thumbnail"
+                             loading="lazy" />
+
+                        <div class="careers-video-play-btn"
+                             role="button"
+                             tabindex="0"
+                             aria-label="Play @Model.Caption">
+                            <i class="bi bi-play-circle-fill"></i>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Caption))
+                        {
+                            <div class="careers-video-caption">
+                                <p>@Model.Caption</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        (() => {
+            const wrapper = document.getElementById("@widgetId");
+            const playButton = wrapper.querySelector(".careers-video-play-btn");
+
+            playButton.addEventListener("click", () => {
+                const youtubeId = wrapper.dataset.youtubeId;
+
+                if (wrapper.dataset.openInNewWindow === "true") {
+                    window.open(wrapper.dataset.youtubeUrl, "_blank", "noopener,noreferrer");
+                    return;
+                }
+
+                const iframe = document.createElement("iframe");
+
+                iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(youtubeId)}?autoplay=1&rel=0`;
+                iframe.className = "careers-video-thumbnail";
+                iframe.title = "@Model.Caption";
+                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+                iframe.allowFullscreen = true;
+                iframe.style.border = "0";
+
+                wrapper.querySelector(".careers-video-thumbnail").replaceWith(iframe);
+                playButton.remove();
+            });
+        })();
+    </script>
+}

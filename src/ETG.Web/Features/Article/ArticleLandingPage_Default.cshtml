@@ -1,0 +1,253 @@
+@using ETG.Web.Features
+@using ETG.Web.Features.Article
+@using Kentico.PageBuilder.Web.Mvc
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@model ArticleLandingPageViewModel
+
+@{
+    var landing = Model;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = landing.Title;
+
+    // Fetch Algolia settings directly in the view
+    var algoliaAppId = Configuration["CMSAlgoliaSearch:ApplicationId"] ?? "";
+    var algoliaSearchKey = Configuration["CMSAlgoliaSearch:SearchKey"] ?? "";
+    var algoliaIndex = Configuration["CMSAlgoliaSearch:IndexArticle"] ?? "etg_articles";
+}
+
+<!-- Algolia InstantSearch CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@7/themes/reset-min.css" />
+
+<!-- ============ MAIN CONTENT ============ -->
+<main class="container-fluid bg-white p-0 blogs-page-layout"
+      id="algolia-landing"
+      data-algolia-app-id="@algoliaAppId"
+      data-algolia-search-key="@algoliaSearchKey"
+      data-algolia-index="@algoliaIndex"
+      data-total-articles="@landing.TotalArticles"
+      data-page-size="@landing.PageSize">
+
+    <vc:bread-crumb />
+
+    <!-- 1. HERO SECTION (Using Shared Partial) -->
+    
+        <partial name="~/Views/Shared/Partial/Common/_Hero.cshtml" model="landing.Hero" />
+    
+
+    <!-- FEATURED BLOGS -->
+    <div id="featured-section">
+        @if (landing.Articles.Any())
+        {
+            var featuredLeft = landing.Articles.FirstOrDefault();
+            var featuredRightTop = landing.Articles.Skip(1).FirstOrDefault();
+            var featuredRightBottom = landing.Articles.Skip(2).FirstOrDefault();
+
+            <section class="section-pad bg-white pb-0 mt-5">
+                <div class="container">
+                    <div class="row g-4">
+
+                        <!-- Featured Blog Left -->
+                        @if (featuredLeft != null)
+                        {
+                            var leftImg = featuredLeft.HeroImage?.LegacyMediaFileAsset?.Url;
+                            <div class="col-12 col-lg-6">
+                                <div class="blog-list-card h-100 p-0 d-flex flex-column overflow-hidden bg-lightgray">
+                                    @if (!string.IsNullOrWhiteSpace(leftImg))
+                                    {
+                                        <img src="@leftImg" class="blog-list-img m-0" style="aspect-ratio: 16/9; object-fit: cover; width: 100%; border-radius: 0;" alt="@featuredLeft.Title">
+                                    }
+                                    else
+                                    {
+                                        <div class="blog-list-img m-0 bg-light d-flex align-items-center justify-content-center" style="aspect-ratio: 16/9; width: 100%; border-radius: 0;">
+                                            <span class="text-muted small">@featuredLeft.Title</span>
+                                        </div>
+                                    }
+                                    <div class="p-4 flex-grow-1 d-flex flex-column justify-content-center">
+                                        @if (!string.IsNullOrWhiteSpace(featuredLeft.Categories))
+                                        {
+                                            <span class="blog-list-tag text-pink d-block mb-2" style="font-size: 10px; font-weight: 800; text-transform: uppercase;">@featuredLeft.Categories</span>
+                                        }
+                                        <h3 class="blog-list-title fs-4 mb-2 mt-1 fw-bold text-dark">@featuredLeft.Title</h3>
+                                        <p class="text-muted small mb-3" style="line-height: 1.6;">@featuredLeft.Summary</p>
+                                        <a href="@featuredLeft.LinkPath" class="text-pink fw-bold text-decoration-none mt-auto" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Read full article &rarr;</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Featured Blog Right (Stacked) -->
+                        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+
+                            <!-- Top Horizontal Card -->
+                            @if (featuredRightTop != null)
+                            {
+                                var topImg = featuredRightTop.HeroImage?.LegacyMediaFileAsset?.Url;
+                                <div class="blog-list-card p-0 overflow-hidden">
+                                    <div class="row g-0 h-100">
+                                        <div class="col-12 col-md-5">
+                                            @if (!string.IsNullOrWhiteSpace(topImg))
+                                            {
+                                                <img src="@topImg" class="blog-list-img w-100 h-100 m-0" style="object-fit: cover; border-radius: 0;" alt="@featuredRightTop.Title">
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-light w-100 h-100 m-0 d-flex align-items-center justify-content-center" style="min-height: 200px; border-radius: 0;">
+                                                    <span class="text-muted small text-center p-2">@featuredRightTop.Title</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="col-12 col-md-7 p-4 d-flex flex-column justify-content-center bg-lightgray">
+                                            @if (!string.IsNullOrWhiteSpace(featuredRightTop.Categories))
+                                            {
+                                                <span class="blog-list-tag text-pink d-block mb-2" style="font-size: 10px; font-weight: 800; text-transform: uppercase;">@featuredRightTop.Categories</span>
+                                            }
+                                            <h3 class="blog-list-title fs-5 fw-bold text-dark mt-1 mb-2">@featuredRightTop.Title</h3>
+                                            <p class="text-muted small mb-3" style="line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">@featuredRightTop.Summary</p>
+                                            <a href="@featuredRightTop.LinkPath" class="text-pink fw-bold text-decoration-none mt-auto" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Read full article &rarr;</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Bottom Horizontal Card -->
+                            @if (featuredRightBottom != null)
+                            {
+                                var botImg = featuredRightBottom.HeroImage?.LegacyMediaFileAsset?.Url;
+                                <div class="blog-list-card p-0 overflow-hidden">
+                                    <div class="row g-0 h-100">
+                                        <div class="col-12 col-md-5">
+                                            @if (!string.IsNullOrWhiteSpace(botImg))
+                                            {
+                                                <img src="@botImg" class="blog-list-img w-100 h-100 m-0" style="object-fit: cover; border-radius: 0;" alt="@featuredRightBottom.Title">
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-light w-100 h-100 m-0 d-flex align-items-center justify-content-center" style="min-height: 200px; border-radius: 0;">
+                                                    <span class="text-muted small text-center p-2">@featuredRightBottom.Title</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="col-12 col-md-7 p-4 d-flex flex-column justify-content-center bg-lightgray">
+                                            @if (!string.IsNullOrWhiteSpace(featuredRightBottom.Categories))
+                                            {
+                                                <span class="blog-list-tag text-pink d-block mb-2" style="font-size: 10px; font-weight: 800; text-transform: uppercase;">@featuredRightBottom.Categories</span>
+                                            }
+                                            <h3 class="blog-list-title fs-5 fw-bold text-dark mt-1 mb-2">@featuredRightBottom.Title</h3>
+                                            <p class="text-muted small mb-3" style="line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">@featuredRightBottom.Summary</p>
+                                            <a href="@featuredRightBottom.LinkPath" class="text-pink fw-bold text-decoration-none mt-auto" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Read full article &rarr;</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+        }
+    </div>
+
+    <!-- BLOGS FILTERS (Algolia Connected) -->
+    <style>
+        .blogs-filter-select-wrapper .ts-dropdown.single {
+            z-index: 10 !important;
+        }
+    </style>
+    <div class="container blogs-header pt-5 pb-5 border-top mt-5">
+        <div class="blogs-filter-bar">
+            <input type="text" id="searchInput" class="blogs-search-input mb-4" placeholder="Search by keyword">
+            <div class="filter-selects">
+                <div class="filter-group">
+                    <label>Destination</label>
+                    <select id="destFilter" class="blogs-filter-select">
+                        <option value="all">See all</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="catFilter" class="blogs-filter-select">
+                        <option value="all">See all</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Experience</label>
+                    <select id="expFilter" class="blogs-filter-select">
+                        <option value="all">See all</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SENIOR'S RESULTS BAR -->
+    <div class="container blogs-results-bar">
+        <p class="mb-0" id="resultsCount">Showing <span id="algolia-stats-count" style="color: #CA568E; font-weight: 600;">@(landing.TotalArticles)</span> results</p>
+        <div>
+            <label>View:</label>
+            <select id="viewFilter" class="view-select text-pink" onchange="window.location.href = '?page=1&pageSize=' + this.value;">
+                @if (landing.PageSize == 60)
+                {
+                    <option value="30">30</option>
+                    <option value="60" selected>60</option>
+                }
+                else
+                {
+                    <option value="30" selected>30</option>
+                    <option value="60">60</option>
+                }
+            </select>
+        </div>
+    </div>
+
+</main>
+
+<div style="padding: 40px 0; background-color: #fafafa;">
+    <div class="container">
+
+        <!-- SERVER-SIDE GRID (shown when no Algolia filter is active) -->
+        <div id="server-grid">
+            <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml" model="landing.Articles.Skip(3)" />
+        </div>
+
+        <!-- SERVER-SIDE PAGINATION -->
+        <div id="server-pagination" class="etg-pagination mt-5">
+            <vc:pagination model="landing" />
+        </div>
+
+        <!-- ALGOLIA HITS GRID (shown only when search/filter is active) -->
+        <div id="algolia-results" style="display: none;">
+            <div id="algolia-hits"></div>
+
+            <!-- PERFECT PAGINATION STYLING CONTAINER -->
+            <div class="mt-5 d-flex justify-content-center">
+                <div id="algolia-pagination"></div>
+            </div>
+        </div>
+
+        <!-- POPULAR DESTINATIONS -->
+        @if (landing.PopularDestinations != null && landing.PopularDestinations.Any())
+        {
+            <div class="container text-center mt-5 pt-5 border-top">
+                <h4 class="fw-bold mb-4" style="font-size: 16px;">Explore Popular Destinations</h4>
+                <div class="d-flex flex-wrap justify-content-center align-items-center column-gap-3 row-gap-2" style="font-size: 13px;">
+                    @foreach (var destination in landing.PopularDestinations)
+                    {
+                        <a href="@destination.Url" class="text-pink text-decoration-none fw-bold">@destination.Title Holidays</a>
+                        @if (destination != landing.PopularDestinations.Last())
+                        {
+                            <span class="text-muted">|</span>
+                        }
+                    }
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+
+<!-- ============ ALGOLIA INSTANTSEARCH JS ============ -->
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script>
+
+<script src="~/algolia/article-landing.js" asp-append-version="true"></script>

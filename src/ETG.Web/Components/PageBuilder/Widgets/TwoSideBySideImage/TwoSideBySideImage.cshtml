@@ -1,0 +1,72 @@
+﻿@model ETG.Web.Components.PageBuilder.Widgets.TwoSideBySideImage.TwoSideBySideImageWidgetViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.Caption1) ||
+    !string.IsNullOrWhiteSpace(Model.Caption2) ||
+    !string.IsNullOrWhiteSpace(Model.Caption3))
+{
+    <section class="section-pad bg-white group-why-travel">
+        <div class="container @(Model.HasSidePadding ? "px-4" : "px-0")">
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+            {
+                <div class="row mb-5">
+                    <div class="col-12">
+                        <h2 class="fw-bold"
+                            style="font-size: 2.2rem; color: #1a1a1a; position: relative; display: inline-block;">
+                            @Model.Heading
+                        </h2>
+                    </div>
+                </div>
+            }
+
+            <div class="row g-5 mt-3 justify-content-center">
+                @if (!string.IsNullOrWhiteSpace(Model.Caption1) && Model.Image1 is not null)
+                {
+                    var image1Url = Model.Image1?.LegacyMediaFileAsset?.Url;
+
+                    <div class="col-12 col-md-4">
+                        <div class="mb-2 text-center">
+                            <img src="@image1Url"
+                                 alt="@Model.Caption1"
+                                 class="img-fluid"
+                                 style="max-height: 140px;"
+                                 loading="lazy" />
+                        </div>
+                        <p class="group-why-travel-para">@Model.Caption1</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Caption2) && Model.Image2 is not null)
+                {
+                    var image2Url = Model.Image2?.LegacyMediaFileAsset?.Url;
+
+                    <div class="col-12 col-md-4">
+                        <div class="mb-2 text-center">
+                            <img src="@image2Url"
+                                 alt="@Model.Caption2"
+                                 class="img-fluid"
+                                 style="max-height: 140px;"
+                                 loading="lazy" />
+                        </div>
+                        <p class="group-why-travel-para">@Model.Caption2</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Caption3) && Model.Image3 is not null)
+                {
+                    var image3Url = Model.Image3?.LegacyMediaFileAsset?.Url;
+
+                    <div class="col-12 col-md-4">
+                        <div class="mb-2 text-center">
+                            <img src="@image3Url"
+                                 alt="@Model.Caption3"
+                                 class="img-fluid"
+                                 style="max-height: 140px;"
+                                 loading="lazy" />
+                        </div>
+                        <p class="group-why-travel-para">@Model.Caption3</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

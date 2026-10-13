@@ -1,0 +1,39 @@
+@using ETG.Web.Components.PageBuilder.Widgets.Heading
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@model HeadingWidgetViewModel
+
+@{
+    string headingClasses = Model.HeadingAlignment switch
+    {
+        HeadingAlignments.Center => "text-center",
+        HeadingAlignments.Right => "text-end",
+        HeadingAlignments.Left or _ => "text-start"
+    };
+
+    string idAttribute = Model.HeadingAnchorSlug.HasValue
+        ? $"""id="{Model.HeadingAnchorSlug.GetValueOrDefault("")}" """
+        : "";
+
+    var (open, close) = Model.HeadingLevel switch
+    {
+        HeadingLevels.H1 => ($"""<h1 {idAttribute}class="heading {headingClasses}">""", "</h1>"),
+        HeadingLevels.H2 => ($"""<h2 {idAttribute}class="heading {headingClasses}">""", "</h2>"),
+        HeadingLevels.H3 => ($"""<h3 {idAttribute}class="heading {headingClasses}">""", "</h3>"),
+        HeadingLevels.H4 => ($"""<h4 {idAttribute}class="heading {headingClasses}">""", "</h4>"),
+        HeadingLevels.H5 => ($"""<h5 {idAttribute}class="heading {headingClasses}">""", "</h5>"),
+        HeadingLevels.H6 or _ => ($"""<h6 {idAttribute}class="heading {headingClasses}">""", "</h6>"),
+    };
+}
+
+<div xpc-preview-outline="@Model.ComponentName" xpc-preview-outline-remove-element="true">
+    @Html.Raw(open)
+    @{
+        @Model.HeadingText
+        if (Model.HeadingAnchorSlug.TryGetValue(out string? slug))
+        {
+            <a title="Navigate to this heading" aria-label="Navigate to this heading" class="heading-link" href="#@slug"></a>
+        }
+    }
+    @Html.Raw(close)
+</div>

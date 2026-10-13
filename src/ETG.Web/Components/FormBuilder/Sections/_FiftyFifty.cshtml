@@ -1,0 +1,13 @@
+@using Kentico.Web.Mvc
+@using Kentico.Forms.Web.Mvc
+
+<div class="form-section-fifty-fifty">
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            @await Html.Kentico().FormZoneAsync("left-column")
+        </div>
+        <div class="col-12 col-md-6">
+            @await Html.Kentico().FormZoneAsync("right-column")
+        </div>
+    </div>
+</div>

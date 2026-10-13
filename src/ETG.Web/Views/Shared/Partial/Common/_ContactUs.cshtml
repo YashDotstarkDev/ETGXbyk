@@ -1,0 +1,30 @@
+﻿@model ETG.Core.Models.ContactUsViewModel
+
+<!-- ============ CTA BANNERS ============ -->
+<section class="cta-section" aria-label="Start your journey">
+    <img loading="lazy" src="/images/travel_destination.png" alt="Tropical island sunset" class="cta-bg" />
+    <div class="cta-overlay"></div>
+    <div class="container text-center text-white cta-content">
+        <h2 class="cta-heading fw-bold">Connect <span class="text-pink">with us</span></h2>
+        <div class="cta-phones d-flex justify-content-center align-items-center gap-1 flex-wrap mb-4">
+            <a href="tel:0290943322" class="cta-phone-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"
+                     style="margin-right:5px; opacity:0.85;">
+                    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58z" />
+                </svg>
+                Australia: (02) 9094 3322
+            </a>
+            <a href="tel:0800855045" class="cta-phone-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"
+                     style="margin-right:5px; opacity:0.85;">
+                    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58z" />
+                </svg>
+                New Zealand: 0800 855 045
+            </a>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.CTAUrl))
+        {
+            <a href="@Model.CTAUrl" class="btn btn-pink btn-lg cta-enquire-btn">@(Model.CTAText ?? "ENQUIRE NOW")</a>
+        }        
+    </div>
+</section>

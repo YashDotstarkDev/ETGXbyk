@@ -1,0 +1,16 @@
+﻿.clamp-width-mobile-full {
+    width: 100%
+}
+
+@media (width>=768px) {
+    .clamp-width-mobile-full {
+        width: 50%;
+        width: var(--size-preferred,50%);
+        max-width: 100%
+    }
+}
+
+
+.container-inline-size {
+    container-type: inline-size
+}

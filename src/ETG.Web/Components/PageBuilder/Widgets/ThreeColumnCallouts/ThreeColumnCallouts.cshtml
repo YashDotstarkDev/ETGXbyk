@@ -1,0 +1,297 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.ThreeColumnCallouts
+@model ThreeColumnCalloutsWidgetViewModel
+
+
+@if (Model.IsImageWithContent)
+{
+
+    <section id="@Model.SectionIdName" class="section-pad pt-4">
+
+        <div class="container">
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+            {
+                <div class="row">
+                    <div class="col-12 text-center text-md-start">
+                        <h2 class="section-title mb-5">
+                            @Model.Heading
+                        </h2>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Callout1Heading) ||
+                 !string.IsNullOrWhiteSpace(Model.Callout1Description) ||
+                 Model.Callout1Image?.LegacyMediaFileAsset?.Url != null)
+            {
+                <div class="row dest-zigzag-item mb-4 mb-md-5 mt-5">
+                    <div class="col-md-6 mb-1 mb-md-0 text-center text-md-start
+                        @(Model.StartFromRight
+                            ? "order-md-1 ps-md-5"
+                            : "order-md-2 pe-md-5 pe-3")">
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout1Heading))
+                        {
+                            <h3 class="dest-zigzag-title">
+                                @Model.Callout1Heading
+                            </h3>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout1Description))
+                        {
+                            <p class="dest-zigzag-text description-collapse" id="callout1-description">
+                                @Model.Callout1Description
+                            </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout1Url) &&
+                             !string.IsNullOrWhiteSpace(Model.Callout1CtaButtonText))
+                        {
+                            <a href="@Model.Callout1Url"
+                               class="link-pink d-none d-md-inline-block read-more-link" data-target="callout1-description">
+                                @Model.Callout1CtaButtonText
+                            </a>
+                        }
+                    </div>
+
+                    <div class="col-md-6
+                        @(Model.StartFromRight
+                            ? "order-md-2 mb-4 mb-md-0"
+                            : "order-md-1 mb-4 mb-md-0")">
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            Model.Callout1Image?.LegacyMediaFileAsset?.Url))
+                        {
+                            <img loading="lazy"
+                                 src="@Model.Callout1Image.LegacyMediaFileAsset.Url"
+                                 alt="@(string.IsNullOrWhiteSpace(Model.Callout1Heading)
+                                                             ? (Model.Callout1Image.LegacyMediaFileTitle ?? "Callout Image")
+                                                             : Model.Callout1Heading)"
+                                 class="dest-zigzag-img img-fluid" />
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout1Url) &&
+                             !string.IsNullOrWhiteSpace(Model.Callout1CtaButtonText))
+                        {
+                            <div class="text-center d-md-none">
+                                <a href="@Model.Callout1Url"
+                                   class="link-pink d-inline-block mt-3">
+                                    @Model.Callout1CtaButtonText
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Callout2Heading) ||
+                 !string.IsNullOrWhiteSpace(Model.Callout2Description) ||
+                 Model.Callout2Image?.LegacyMediaFileAsset?.Url != null)
+            {
+                <div class="row dest-zigzag-item mb-4 mb-md-5">
+                    <div class="col-md-6 mb-1 mb-md-0 text-center text-md-start
+                        @(Model.StartFromRight
+                            ? "order-md-2 ps-md-5"
+                            : "order-md-1 pe-md-5 pe-3")">
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout2Heading))
+                        {
+                            <h3 class="dest-zigzag-title">
+                                @Model.Callout2Heading
+                            </h3>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout2Description))
+                        {
+                            <p class="dest-zigzag-text description-collapse" id="callout2-description">
+                                @Model.Callout2Description
+                            </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout2Url) &&
+                             !string.IsNullOrWhiteSpace(Model.Callout2CtaButtonText))
+                        {
+                            <a href="@Model.Callout2Url"
+                               class="link-pink d-none d-md-inline-block read-more-link" data-target="callout2-description">
+                                @Model.Callout2CtaButtonText
+                            </a>
+                        }
+
+                    </div>
+
+                    <div class="col-md-6
+                        @(Model.StartFromRight
+                            ? "order-md-1 mb-3 mb-md-0"
+                            : "order-md-2 mb-3 mb-md-0")">
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            Model.Callout2Image?.LegacyMediaFileAsset?.Url))
+                        {
+                            <img loading="lazy"
+                                 src="@Model.Callout2Image.LegacyMediaFileAsset.Url"
+                                 alt="@(string.IsNullOrWhiteSpace(Model.Callout2Heading)
+                                                             ? (Model.Callout2Image.LegacyMediaFileTitle ?? "Callout Image")
+                                                             : Model.Callout2Heading)"
+                                 class="dest-zigzag-img img-fluid" />
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout2Url) &&
+                             !string.IsNullOrWhiteSpace(Model.Callout2CtaButtonText))
+                        {
+                            <div class="text-center d-md-none">
+                                <a href="@Model.Callout2Url"
+                                   class="link-pink d-inline-block mt-3">
+                                    @Model.Callout2CtaButtonText
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Callout3Heading) ||
+                 !string.IsNullOrWhiteSpace(Model.Callout3Description) ||
+                 !string.IsNullOrWhiteSpace(Model.Callout3Url) ||
+                 Model.Callout3Image?.LegacyMediaFileAsset?.Url != null)
+            {
+                <div class="row dest-zigzag-item mb-4 mb-md-5">
+                    <div class="col-md-6 mb-1 mb-md-0 text-center text-md-start
+                        @(Model.StartFromRight
+                            ? "order-md-1 ps-md-5"
+                            : "order-md-2 pe-md-5 pe-3")">
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout3Heading))
+                        {
+                            <h3 class="dest-zigzag-title">
+                                @Model.Callout3Heading
+                            </h3>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout3Description))
+                        {
+                            <p class="dest-zigzag-text description-collapse" id="callout3-description">
+                                @Model.Callout3Description
+                            </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout3Url) &&
+                             !string.IsNullOrWhiteSpace(Model.Callout3CtaButtonText))
+                        {
+                            <a href="@Model.Callout3Url"
+                               class="link-pink d-none d-md-inline-block read-more-link" data-target="callout3-description">
+                                @Model.Callout3CtaButtonText
+                            </a>
+                        }
+
+                    </div>
+
+                    <div class="col-md-6
+                        @(Model.StartFromRight
+                            ? "order-md-2 mb-4 mb-md-0"
+                            : "order-md-1 mb-4 mb-md-0")">
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            Model.Callout3Image?.LegacyMediaFileAsset?.Url))
+                        {
+                            <img loading="lazy"
+                                 src="@Model.Callout3Image.LegacyMediaFileAsset.Url"
+                                 alt="@(string.IsNullOrWhiteSpace(Model.Callout3Heading)
+                                                             ? (Model.Callout3Image.LegacyMediaFileTitle ?? "Callout Image")
+                                                             : Model.Callout3Heading)"
+                                 class="dest-zigzag-img img-fluid" />
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout3Url) &&
+                             !string.IsNullOrWhiteSpace(Model.Callout3CtaButtonText))
+                        {
+                            <div class="text-center d-md-none">
+                                <a href="@Model.Callout3Url"
+                                   class="link-pink d-inline-block mt-3">
+                                    @Model.Callout3CtaButtonText
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+
+@if (Model.IsIconWithContent)
+{
+     <section class="about-why mb-5 pt-5 pb-5  px-4 rounded-4 container" id="@Model.SectionIdName">
+
+        @if (!string.IsNullOrWhiteSpace(Model.Heading))
+        {
+        <div class="row">
+            <div class="col-12 text-center text-md-start">
+                <h2 class="section-title mb-5"> @Model.Heading</h2>
+            </div>
+        </div>
+        }
+        
+        <div class="row g-4 justify-content-center">
+
+            <!-- Item 1 -->
+            <div class="col-12 col-md-4 mb-4">
+                <div class="about-why-item h-100 d-flex flex-column">
+                    @if (!string.IsNullOrEmpty(Model.Callout1Image?.LegacyMediaFileAsset?.Url))
+                        {
+                         <div class="text-center">
+                            <img src="@Model.Callout1Image.LegacyMediaFileAsset.Url" alt="@(string.IsNullOrEmpty(Model.Callout1Heading) ? (Model.Callout1Image.LegacyMediaFileTitle ?? "Callout Icon") : Model.Callout1Heading)" class="about-why-icon mb-4" width="60" style="display:inline-block;">
+                         </div>
+                        }
+                    <h3 class="about-why-title fw-bold text-uppercase " style="text-align: justify;">@Model.Callout1Heading</h3>
+                    <p class="about-why-desc  text-muted">@Model.Callout1Description</p>
+                    <div class="text-center mt-auto pt-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout1CtaButtonText) && !string.IsNullOrWhiteSpace(Model.Callout1Url))
+                        {
+                            <a href="@Model.Callout1Url" class="about-btn">@Model.Callout1CtaButtonText </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="col-12 col-md-4 mb-4">
+                <div class="about-why-item h-100 d-flex flex-column">
+                    @if (!string.IsNullOrEmpty(Model.Callout2Image?.LegacyMediaFileAsset?.Url))
+                    {
+                    <div class="text-center">
+                        <img src="@Model.Callout1Image.LegacyMediaFileAsset.Url" alt="@(string.IsNullOrEmpty(Model.Callout1Heading) ? (Model.Callout1Image.LegacyMediaFileTitle ?? "Callout Icon") : Model.Callout1Heading)" class="about-why-icon mb-4" width="60" style="display:inline-block;">
+                    </div>
+                    }
+                    <h3 class="about-why-title fw-bold text-uppercase">@Model.Callout1Heading</h3>
+                    <p class="about-why-desc  text-muted">@Model.Callout2Description</p>
+                    <div class="text-center mt-auto pt-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout1CtaButtonText) && !string.IsNullOrWhiteSpace(Model.Callout1Url))
+                        {
+                            <a href="@Model.Callout2Url" class="about-btn">@Model.Callout2CtaButtonText</a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="col-12 col-md-4 mb-4">
+                <div class="about-why-item h-100 d-flex flex-column">
+                    @if (!string.IsNullOrEmpty(Model.Callout2Image?.LegacyMediaFileAsset?.Url))
+                    {
+                        <div class="text-center">
+                            <img src="@Model.Callout3Image.LegacyMediaFileAsset.Url" alt="@(string.IsNullOrEmpty(Model.Callout3Heading) ? (Model.Callout1Image.LegacyMediaFileTitle ?? "Callout Icon") : Model.Callout3Heading)" class="about-why-icon mb-4" width="60" style="display:inline-block;">
+                        </div>
+                    }
+                    <h3 class="about-why-title fw-bold text-uppercase">@Model.Callout3Heading</h3>
+                    <p class="about-why-desc  text-muted">@Model.Callout3Description</p>
+                    <div class="text-center mt-auto pt-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.Callout3CtaButtonText) && !string.IsNullOrWhiteSpace(Model.Callout3Url))
+                        {
+                        <a href="@Model.Callout3Url" class="about-btn">@Model.Callout3CtaButtonText</a>
+                        }   
+                    </div>
+                </div>
+            </div>           
+        </div>
+    </section>
+}

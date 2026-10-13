@@ -1,0 +1,86 @@
+@using ETG.Web.Features.TravelType
+@model IReadOnlyList<TravelTypeDetailSummaryModel>
+
+    @if (Model is null || !Model.Any())
+{
+    return;
+}
+
+    <div class="container">
+        @for (var index = 0; index < Model.Count; index++)
+    {
+        var detail = Model[index];
+        var isEvenItem = index % 2 == 0;
+
+        var contentOrder = isEvenItem
+            ? "order-md-1 pe-md-5 pe-3"
+            : "order-md-2 ps-md-5";
+
+        var imageOrder = isEvenItem
+            ? "order-md-2"
+            : "order-md-1";
+
+        <div class="row dest-zigzag-item mb-4 mb-md-5 @(index == 0 ? "mt-5" : "")">
+
+            <div class="col-md-6 @contentOrder mb-1 mb-md-0 text-center text-md-start">
+                @if (!string.IsNullOrWhiteSpace(detail.Heading))
+                {
+                <h3 class="dest-zigzag-title">@detail.Heading</h3>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(detail.Summary))
+                {
+                <p class="dest-zigzag-text"
+                   style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+                    @detail.Summary
+                </p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(detail.Path))
+                {
+                <a href="@detail.Path"
+                   class="link-pink d-none d-md-inline-block">
+                    READ MORE
+                </a>
+                }
+            </div>
+            <div class="col-md-6 @imageOrder mb-4 mb-md-0">
+                @if (!string.IsNullOrWhiteSpace(detail.HeroImageUrl))
+                {
+                <img src="@detail.HeroImageUrl"
+                     alt="@detail.HeroImageAltText"
+                     class="dest-zigzag-img img-fluid"
+                     loading="lazy" />
+                }
+                else
+                {
+                <div class="dest-zigzag-img"
+                     style="min-height: 300px; background: #f2f2f2;">
+                </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(detail.Path))
+                {
+                <div class="text-center d-md-none">
+                    <a href="@detail.Path"
+                       class="link-pink d-inline-block mt-3">
+                        READ MORE
+                    </a>
+                </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(detail.Path))
+                    {
+            <div class="text-center d-md-none">
+                <a href="@detail.Path"
+                   class="link-pink d-inline-block mt-3">
+                    READ MORE
+                </a>
+            </div>
+                    }
+        </div>
+            }
+    </div>
+    }
+    </div>

@@ -1,0 +1,186 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.FeaturedTiles
+@model FeaturedTilesWidgetViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.SectionId))
+{
+    <div class="relative">
+        <div class="anchor-section top-[-200px] absolute" id="@Model.SectionId"></div>
+    </div>
+}
+
+@switch (Model.DisplayLayout)
+{
+    case DisplayLayoutOptions.CardWithTag:
+        <!-- ============ CARD WITH TAG THEME ============ -->
+        <section class="home-featured-wrapper bg-lightgray section-pad" aria-labelledby="home-featured-title-@Model.SectionId">
+            <div class="container">
+                @if (!string.IsNullOrWhiteSpace(Model.Heading) || !string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div class="title-div mb-4">
+                        <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+                            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                            {
+                                <h2 id="home-featured-title-@Model.SectionId" class="section-title mb-0">@Model.Heading</h2>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Description))
+                        {
+                            <p class="mt-2 mb-0">@Model.Description</p>
+                        }
+                    </div>
+                }
+
+                <div class="row g-3 row-cols-2 row-cols-md-3 row-cols-lg-6 mt-2">
+                    @foreach (var tile in Model.Tiles)
+                    {
+                        <div class="col">
+                            @if (Model.TileType == TileTypeOptions.TilesAreLinks)
+                            {
+                                <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="home-featured-card">
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <div class="home-featured-overlay"></div>
+
+                                    @* @if (!string.IsNullOrWhiteSpace(tile.CardTag))
+                                    {
+                                        if (string.Equals(tile.CardTag, "ON SALE", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <div class="home-featured-badge hf-badge-sale">@tile.CardTag</div>
+                                        }
+                                        else if (string.Equals(tile.CardTag, "NEW", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <div class="home-featured-badge hf-badge-new">@tile.CardTag</div>
+                                        }
+                                        else if (string.Equals(tile.CardTag, "TRENDING", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <div class="home-featured-badge hf-badge-trending">@tile.CardTag</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="home-featured-badge hf-badge-sale">@tile.CardTag</div>
+                                        }
+                                    } *@
+
+                                    <div class="home-featured-content">
+                                        <h3>@tile.Caption</h3>
+                                    </div>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="home-featured-card">
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <div class="home-featured-overlay"></div>
+
+                                    @* @if (!string.IsNullOrWhiteSpace(tile.CardTag))
+                                    {
+                                        if (string.Equals(tile.CardTag, "ON SALE", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <div class="home-featured-badge hf-badge-sale">@tile.CardTag</div>
+                                        }
+                                        else if (string.Equals(tile.CardTag, "NEW", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <div class="home-featured-badge hf-badge-new">@tile.CardTag</div>
+                                        }
+                                        else if (string.Equals(tile.CardTag, "TRENDING", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <div class="home-featured-badge hf-badge-trending">@tile.CardTag</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="home-featured-badge hf-badge-sale">@tile.CardTag</div>
+                                        }
+                                    } *@
+
+                                    <div class="home-featured-content">
+                                        <h3>@tile.Caption</h3>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+        break;
+
+    case DisplayLayoutOptions.UnderTextCard:
+        <!-- ============ UNDER TEXT CARD THEME ============ -->
+        <section class="section-pad" aria-labelledby="style-title-@Model.SectionId">
+            <div class="container">
+                @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                {
+                    <div class="title-div mb-4">
+                        <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+                            <h2 id="style-title-@Model.SectionId" class="section-title mb-0">@Model.Heading</h2>
+                        </div>
+                    </div>
+                }
+
+                <div class="row g-4">
+                    @foreach (var tile in Model.Tiles)
+                    {
+                        <div class="col-6 col-sm-6 col-lg-3 text-center">
+                            @if (Model.TileType == TileTypeOptions.TilesAreLinks)
+                            {
+                                <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="style-tile">
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <p>@tile.Caption</p>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="style-tile">
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <p>@tile.Caption</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+        break;
+
+    case DisplayLayoutOptions.LargeTextCard:
+    default:
+        <!-- ============ LARGE TEXT CARD THEME ============ -->
+        <section class="section-pad" aria-labelledby="featured-title-@Model.SectionId">
+            <div class="container">
+                @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                {
+                    <div class="title-div">
+                        <h2 id="featured-title-@Model.SectionId" class="section-title">@Model.Heading</h2>
+                    </div>
+                }
+
+                <div class="row g-4">
+                    @foreach (var tile in Model.Tiles)
+                    {
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            @if (Model.TileType == TileTypeOptions.TilesAreLinks)
+                            {
+                                <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="text-decoration-none">
+                                    <article class="card-tile">
+                                        <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                        <div class="card-tile-overlay">
+                                            <h3>@tile.Caption</h3>
+                                        </div>
+                                    </article>
+                                </a>
+                            }
+                            else
+                            {
+                                <article class="card-tile">
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <div class="card-tile-overlay">
+                                        <h3>@tile.Caption</h3>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+        break;
+}

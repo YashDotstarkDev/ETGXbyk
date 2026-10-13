@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AdminOrgName>Website</AdminOrgName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="CMS.AssemblyDiscoverableAttribute" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AdminClientPath Include="Client\dist\**">
+			<ProjectName>web-admin</ProjectName>
+		</AdminClientPath>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Kentico.Xperience.Admin" Version="31.7.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ETG.Core\ETG.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="**\*.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>$([System.String]::Copy('%(FileName)')).Designer.cs</LastGenOutput>
+			<ExcludeFromManifest>true</ExcludeFromManifest>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<Target Name="RestoreAdminClientDependencies"
+			BeforeTargets="PrepareForBuild"
+			Inputs="$(MSBuildProjectDirectory)/Client/package.json;$(MSBuildProjectDirectory)/Client/package-lock.json"
+			Outputs="$(MSBuildProjectDirectory)/Client/node_modules/.package-lock.json"
+			Condition="'$(DesignTimeBuild)' != 'true'">
+		<Exec Command="npm ci"
+			  WorkingDirectory="$(MSBuildProjectDirectory)/Client" />
+	</Target>
+
+	<Target Name="BuildAdminClient"
+			BeforeTargets="PrepareForBuild"
+			DependsOnTargets="RestoreAdminClientDependencies"
+			Condition="'$(DesignTimeBuild)' != 'true'">
+		<Exec Command="npm run build"
+			  WorkingDirectory="$(MSBuildProjectDirectory)/Client" />
+
+		<ItemGroup>
+			<AdminClientPath Remove="@(AdminClientPath)" />
+			<AdminClientPath Include="Client\dist\**">
+				<ProjectName>web-admin</ProjectName>
+			</AdminClientPath>
+		</ItemGroup>
+	</Target>
+
+</Project>

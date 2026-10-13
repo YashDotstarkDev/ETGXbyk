@@ -1,0 +1,16 @@
+﻿@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationViewModel
+
+<div class="etg-topbar">
+    <div class="etg-topbar__inner">
+        @foreach (var item in Model.RootItems)
+        {
+            <a href="@(string.IsNullOrWhiteSpace(item.LinkTo) ? "#" : item.LinkTo)" class="top-link" target="@item.Target">@item.Name</a>
+        }
+        @* currency doropdown vc *@
+        <vc:currency-dropdown />
+<a href="tel:0290943322" class="phone-block d-none d-md-block d-lg-none">
+            <i class="bi bi-telephone"></i>
+        </a>
+        <a href="@(Model.Layout.SearchPageUrl)" class="topbar-icon-link"><img src="~/images/topbar_search.svg" alt="search" style="width: 18px;"></a>
+    </div>
+</div>

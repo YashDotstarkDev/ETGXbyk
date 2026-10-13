@@ -1,0 +1,40 @@
+﻿@using ETG.Web.Features.FAQs
+@model FAQsPageViewModel
+
+@{
+    var pageModel = Model;
+}
+
+<vc:bread-crumb />
+
+<section class="faqs-page py-5" data-widget="faqs-page">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                @if (!string.IsNullOrWhiteSpace(pageModel.Heading))
+                {
+                    <h1 class="section-title mb-3">
+                        @pageModel.Heading
+                    </h1>
+
+                    <div class="section-title-line mb-4"></div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(pageModel.Content))
+                {
+                    <div class="faqs-content mb-4">
+                        @* Only trusted CMS-authored rich text. *@
+                        @Html.Raw(pageModel.Content)
+                    </div>
+                }
+
+                <editable-area area-identifier="editableMain" />
+            </div>
+
+            <div class="col-lg-4 ps-lg-5">
+                <partial name="~/Views/Shared/Partial/Common/_SideContact.cshtml"
+                         model="pageModel.ContactDetails" />
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,211 @@
+﻿@using ETG.Web.Features.Article
+@using Kentico.PageBuilder.Web.Mvc
+@model ArticlePostPageViewModel
+
+@{
+    var post = Model;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = post.Title;
+}
+@* JSON-LD Schema *@
+<script type="application/ld+json">
+{
+    "@@context": "http://schema.org",
+    "@@type": "Article",
+    "headline": "@post.Title",
+    "url": "https://www.entiretravel.com.au@(Context.Request.Path.Value)",
+    "description": "@post.Summary",
+    "image": "@post.HeroImageUrl",
+    "datePublished": "@post.PublishDateIso",
+    "dateModified": "@post.ModifiedDateIso",  <!-- ADDED THIS LINE -->
+    "mainEntityOfPage": {
+        "@@type": "WebPage",
+        "@@id": "https://www.entiretravel.com.au@(Context.Request.Path.Value)"
+    },
+    "author": {
+        "@@type": "Person",
+        "name": "@(string.IsNullOrEmpty(post.AuthorName) ? "Entire Travel Group" : post.AuthorName)"
+    },
+    "publisher": {
+        "@@type": "Organization",
+        "name": "Entire Travel Group Pty Ltd",
+        "logo": {
+            "@@type": "ImageObject",
+            "url": "https://www.entiretravel.com.au/icons/apple-touch-icon.png"
+        }
+    }
+}
+</script>
+
+
+<!-- BREADCRUMB -->
+<div class="container py-3">
+    <vc:bread-crumb />
+</div>
+
+<main class="bg-white">
+
+    <!-- 1. HERO SECTION (Using Shared Partial) -->
+    
+      <partial name="~/Views/Shared/Partial/Common/_Hero.cshtml" model="post.Hero" />
+
+    
+
+    <!-- CONTENT SECTION -->
+    <div class="container py-5 px-3">
+
+        <!-- META INFO -->
+        <div class="blog-meta-info mb-4" style="font-size: 0.95rem; color: #6c757d;">
+            <span class="fw-semibold text-secondary">
+                By @(!string.IsNullOrEmpty(post.AuthorName) ? post.AuthorName : "Entire Travel Group")
+            </span>
+            @if (!string.IsNullOrEmpty(post.DisplayPublishDate))
+            {
+                <span> | </span>
+                <span>Published @post.DisplayPublishDate</span>
+            }
+            @if (post.Categories.Any())
+            {
+                <span> | </span>
+                for (var i = 0; i < post.Categories.Count; i++)
+                {
+                    var cat = post.Categories[i];
+                    if (i > 0)
+                    {
+                        @Html.Raw(i == post.Categories.Count - 1 ? " and " : ", ")
+                    }
+                    <a href="/articles?category=@cat.ToLower()"
+                       style="color: #6c757d; text-decoration: none;">@cat</a>
+                }
+            }
+            <br />
+            <span style="color: #adb5bd; font-size: 0.9rem;">Curated by our travel specialists</span>
+        </div>
+
+        <hr style="border-color: #e9ecef; opacity: 1;" class="mb-5" />
+
+        <!-- IN THIS GUIDE BOX -->
+        @if (!string.IsNullOrEmpty(post.Summary))
+        {
+            <div class="guide-box mb-4 p-4"
+                 style="background-color: #f8f9fa; border-left: 4px solid #CA568E;">
+                <h5 class="fw-bold mb-3" style="color: #212529;">In this guide:</h5>
+                <p class="mb-0" style="color: #495057; line-height: 1.6;">
+                    @post.Summary
+                </p>
+            </div>
+        }
+
+        <!-- TABLE OF CONTENTS BOX -->
+        <div id="toc-box" class="toc-box mb-5 p-4 rounded-3"
+             style="border: 1px solid #dee2e6; background-color: #ffffff;">
+            <h5 class="fw-bold mb-3" style="color: #212529;">Table of Contents</h5>
+            <ul id="toc-list" class="list-unstyled mb-0" style="line-height: 1.8;"></ul>
+        </div>
+
+        <!-- MAIN ARTICLE BODY -->
+        <div class="article-layout article">
+            <div class="main prose max-w-none">
+                <editable-area area-identifier="ArticleBody"
+                               allowed-sections="@(new[] {
+                                   "ETG.SingleColumnSection",
+                                   "ETG.GridSection"
+                               })" />
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+@* Related Cruise Experiences *@
+@if (post.RelatedArticles.Any())
+{
+    <section class="section-pad blogs-page-layout">
+        <div class="container">
+
+            @* Header *@
+            <div class="d-flex justify-content-between align-items-end mb-4 title-div">
+                <h2 class="section-title">Related Cruise Experiences</h2>
+                <a href="/articles" class="view-all-btn">View All</a>
+            </div>
+
+            @* Subtitle *@
+            <p class="text-muted mb-4" style="max-width:640px">
+                Inspiration, tips and travel stories from our team of experts
+                to help you plan your next unforgettable journey.
+            </p>
+
+            @* Cards *@
+            <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml" model="post.RelatedArticles.Take(3)" /> 
+
+        </div>
+    </section>
+}
+
+@* Below article widgets *@
+<editable-area area-identifier="BelowArticle" />
+
+@* Tour Listing Partial *@
+@if (post.TourListing != null && post.TourListing.Tours.Any())
+{
+    <partial name="~/Views/Shared/Partial/Tour/_TourListing.cshtml" model="post.TourListing" />
+}
+
+<editable-area area-identifier="Bottom" />
+
+<script>
+    function buildTOC() {
+        var articleBody = document.querySelector('.article-layout .main');
+        var tocList = document.getElementById('toc-list');
+        var tocBox = document.getElementById('toc-box');
+
+        if (!articleBody || !tocList) return false;
+
+        var headings = articleBody.querySelectorAll('h2');
+        if (headings.length === 0) {
+            if (tocBox) tocBox.style.display = 'none';
+            return false;
+        }
+
+        tocList.innerHTML = '';
+
+        headings.forEach(function (heading, index) {
+            if (!heading.id) {
+                heading.id = 'toc-section-' + (index + 1);
+            }
+
+            var li = document.createElement('li');
+            li.className = 'mb-2';
+
+            var a = document.createElement('a');
+            a.href = '#' + heading.id;
+            a.textContent = heading.textContent.trim();
+            a.className = 'text-decoration-none';
+            a.style.color = '#CA568E';
+
+            li.appendChild(a);
+            tocList.appendChild(li);
+        });
+
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (buildTOC()) return;
+
+        var observer = new MutationObserver(function () {
+            if (buildTOC()) observer.disconnect();
+        });
+
+        observer.observe(document.querySelector('.article-layout') || document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        setTimeout(function () {
+            buildTOC();
+            observer.disconnect();
+        }, 3000);
+    });
+</script>

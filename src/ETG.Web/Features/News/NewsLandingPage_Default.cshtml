@@ -1,0 +1,400 @@
+@using ETG.Web.Features.News
+@model TemplateViewModel<NewsLandingPageTemplateProperties>
+
+@{
+    var viewModel = Model.GetTemplateModel<NewsLandingPageViewModel>();
+    var posts = viewModel?.NewsPosts ?? [];
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usKICT5eTUIAxMsV361X7fjM+VUP+VlULksYbUjvL3+8zXMzpqKLI8UVmjsDKw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .news-landing-hero {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+            .news-landing-hero h1 {
+                font-size: 3rem;
+                font-weight: 700;
+                margin-bottom: 20px;
+            }
+
+            .news-landing-hero p {
+                font-size: 1.2rem;
+                opacity: 0.9;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+        @@media (max-width: 768px) {
+            .news-landing-hero h1 {
+                font-size: 2rem;
+            }
+
+            .news-landing-hero p {
+                font-size: 1rem;
+            }
+        }
+
+        .news-breadcrumb {
+            background-color: #f8f9fa;
+            padding: 12px 0;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+            .news-breadcrumb .breadcrumb {
+                margin: 0;
+            }
+
+            .news-breadcrumb .breadcrumb-item {
+                color: #6c757d;
+            }
+
+                .news-breadcrumb .breadcrumb-item.active {
+                    color: #495057;
+                    font-weight: 500;
+                }
+
+            .news-breadcrumb a {
+                color: #1e3c72;
+                text-decoration: none;
+            }
+
+                .news-breadcrumb a:hover {
+                    color: #2a5298;
+                    text-decoration: underline;
+                }
+
+        /* Top Search Section */
+        .news-top-controls {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @@media (max-width: 768px) {
+            .news-top-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        .news-search-box {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: #333;
+            transition: all 0.3s ease;
+            min-width: 300px;
+        }
+
+        @@media (max-width: 768px) {
+            .news-search-box {
+                min-width: 100%;
+            }
+        }
+
+            .news-search-box:focus {
+                outline: none;
+                border-color: #1e3c72;
+                box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+            }
+
+        /* News Grid */
+        .news-posts-section {
+            padding: 20px 0 60px;
+        }
+
+        .news-posts-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .news-posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .news-post-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .news-post-card:hover {
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+                transform: translateY(-4px);
+            }
+
+        .news-card-image-wrapper {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .news-card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .news-post-card:hover .news-card-image {
+            transform: scale(1.08);
+        }
+
+        .news-card-categories {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .news-card-category-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background-color: rgba(30, 60, 114, 0.9);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+            .news-card-category-tag:hover {
+                background-color: #1e3c72;
+            }
+
+        .news-card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .news-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .news-card-date {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .news-card-author {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .news-card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+            .news-card-title a {
+                color: inherit;
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }
+
+                .news-card-title a:hover {
+                    color: #1e3c72;
+                }
+
+        .news-card-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-card-read-more {
+            color: #1e3c72;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+            .news-card-read-more:hover {
+                color: #2a5298;
+                gap: 12px;
+            }
+
+        .news-empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+
+            .news-empty-state h3 {
+                font-size: 1.5rem;
+                color: #666;
+                margin-bottom: 10px;
+            }
+
+            .news-empty-state p {
+                color: #999;
+                font-size: 1rem;
+            }
+
+        .news-results-info {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+    </style>
+}
+
+<!-- Hero Section -->
+<div class="news-landing-hero">
+    <div class="container">
+        <h1>Latest News</h1>
+        <p>Stay updated with the latest news and updates</p>
+    </div>
+</div>
+
+<!-- Main Container -->
+<div class="container">
+    <!-- Top Search Section -->
+    <div class="news-top-controls">
+        <form method="get" action="?" style="display: flex; gap: 15px; width: 100%; justify-content: flex-end; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <label for="searchInput" style="margin-bottom: 0; font-weight: 500; color: #333;">Search:</label>
+                <input type="text"
+                       id="searchInput"
+                       name="search"
+                       class="news-search-box"
+                       placeholder="Search by title..."
+                       value="@viewModel?.SearchQuery"
+                       onchange="this.form.submit();">
+            </div>
+        </form>
+    </div>
+
+    <!-- News Posts Section -->
+    <div class="news-posts-section">
+        @if (posts.Any())
+        {
+            <p class="news-results-info">
+                Showing <strong>@posts.Count()</strong> of <strong>@viewModel?.TotalPosts</strong> news
+            </p>
+
+            <div class="news-posts-grid">
+                @foreach (var post in posts)
+                {
+                    <article class="news-post-card">
+                        <!-- Card Image -->
+                        @if (post.Image != null)
+                        {
+                            <div class="news-card-image-wrapper">
+                                <img src="@post.Image.LegacyMediaFileAsset.Url"
+                                     alt="@post.Title"
+                                     class="news-card-image"
+                                     loading="lazy">
+                                @if (post.NewsCategory.Any())
+                                {
+                                    <div class="news-card-categories">
+                                        @foreach (var category in post.NewsCategory)
+                                        {
+                                            <span class="news-card-category-tag">@category.Title</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <!-- Card Content -->
+                        <div class="news-card-content">
+                            <!-- Card Meta -->
+                            <div class="news-card-meta">
+                                <span class="news-card-date">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    @post.Date.ToString("MMM d, yyyy")
+                                </span>
+                                @if (post.Author != null)
+                                {
+                                    <span class="news-card-author">
+                                        <i class="fas fa-user"></i>
+                                        @post.Author.FullName
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Title -->
+                            <h3 class="news-card-title">
+                                <a href="@post.LinkPath">@post.Title</a>
+                            </h3>
+
+                            <!-- Description -->
+                            <p class="news-card-description">@post.ShortDescription</p>
+
+                            <!-- Read More -->
+                            <a href="@post.LinkPath" class="news-card-read-more">
+                                Read More <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <!-- Pagination View Component -->
+            @if (viewModel?.TotalPages > 1)
+            {
+                <vc:pagination model="viewModel" />
+            }
+        }
+        else
+        {
+            <div class="news-empty-state">
+                <h3><i class="fas fa-newspaper"></i> No News Found</h3>
+                <p>We couldn't find any news matching your search. Try a different search term.</p>
+            </div>
+        }
+    </div>
+</div>

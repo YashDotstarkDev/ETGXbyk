@@ -1,0 +1,124 @@
+﻿@using System.Linq
+@using CMS.Websites
+@using ETG.Web.Features.CampaignPage
+@using Kentico.Content.Web.Mvc
+@using Kentico.Content.Web.Mvc.PageBuilder
+@using MediatR
+@using ETG.Web.Infrastructure
+@inject WebPageMetaService MetaService
+@inject IWebPageUrlRetriever UrlRetriever
+
+@addTagHelper Kentico.Content.Web.Mvc.EditableAreaTagHelper, Kentico.Content.Web.Mvc
+@addTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.PartialTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IMediator Mediator
+@inject IWebPageDataContextRetriever ContextRetriever
+
+@model TemplateViewModel<CampaignPageTemplateProperties>
+
+@{
+    var viewModel = await CampaignPageTemplate.LoadViewModelAsync(
+     Mediator,
+     ContextRetriever,
+     UrlRetriever,
+     MetaService,
+     Context.RequestAborted);
+
+    if (viewModel is null)
+    {
+        return;
+    }
+}
+
+<vc:bread-crumb />
+
+<section class="hero tahiti-hero"
+         aria-label="@viewModel.BannerLabel">
+
+    @if (viewModel.PageHero.HeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <picture>
+            <img src="@viewModel.PageHero.HeroImage.LegacyMediaFileAsset.Url"
+                 alt="@viewModel.PageHero.HeroImageAltText"
+                 class="hero-bg" />
+        </picture>
+    }
+
+    @if (!viewModel.PageHero.DisableOverlay)
+    {
+        <div class="hero-overlay tahiti-hero__overlay"></div>
+    }
+
+    <div class="container text-white">
+        <div class="tahiti-hero__content">
+            <span class="tahiti-hero__eyebrow">
+                @viewModel.PageHero.HeroCaption
+            </span>
+
+            <h1 class="tahiti-hero__title">
+                @viewModel.PageHero.Heading
+            </h1>
+
+            <a href="@(string.IsNullOrWhiteSpace(viewModel.PageHero.HeroContactUsCtaPath)
+                               ? "#"
+                               : viewModel.PageHero.HeroContactUsCtaPath)"
+               class="tahiti-hero__cta">
+                <i class="bi bi-chat-square-text"
+                   aria-hidden="true"></i>
+                Speak to a Tahiti specialist
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="Content" />
+    </div>
+</section>
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="WrappedContent" />
+    </div>
+</section>
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="WrappedContentBottom" />
+    </div>
+</section>
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="ContentBottom" />
+    </div>
+</section>
+
+@if (viewModel.RelatedArticles?.Any() == true)
+{
+    <section class="related-articles-section py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <h2 class="section-title mb-2">
+                        Travel Blogs &amp; Guides
+                    </h2>
+
+                    <div class="section-title-line"></div>
+                </div>
+
+                <a href="/articles" class="view-all-btn">
+                    View All
+                </a>
+            </div>
+
+            <p class="related-articles-description mb-4">
+                Inspiration, tips and travel stories from our team of experts to help you plan your next unforgettable journey.
+            </p>
+
+            <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml"
+                     model="viewModel.RelatedArticles.Take(3)" />
+        </div>
+    </section>
+}

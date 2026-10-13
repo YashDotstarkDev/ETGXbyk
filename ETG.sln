@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37012.4 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETG.Web", "src\ETG.Web\ETG.Web.csproj", "{94917E40-8BEF-80F2-B4AF-1C6F364C5BC0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{B28B85E6-8836-489B-897D-3BC70F95A062}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{AE41461D-1519-4049-ADD0-CF29256953C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETG.Web.Tests", "test\ETG.Web.Tests\ETG.Web.Tests.csproj", "{4BFAF670-EF6A-47E1-91D5-299324E964CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETG.Core", "src\ETG.Core\ETG.Core.csproj", "{B3A1FE9E-E92F-4FA0-A05F-A00F0BDE1A3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ETG.Admin", "src\ETG.Admin\ETG.Admin.csproj", "{84BF7707-7ACD-48BD-9D29-8836ED525524}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{94917E40-8BEF-80F2-B4AF-1C6F364C5BC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94917E40-8BEF-80F2-B4AF-1C6F364C5BC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94917E40-8BEF-80F2-B4AF-1C6F364C5BC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94917E40-8BEF-80F2-B4AF-1C6F364C5BC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BFAF670-EF6A-47E1-91D5-299324E964CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BFAF670-EF6A-47E1-91D5-299324E964CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BFAF670-EF6A-47E1-91D5-299324E964CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BFAF670-EF6A-47E1-91D5-299324E964CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3A1FE9E-E92F-4FA0-A05F-A00F0BDE1A3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3A1FE9E-E92F-4FA0-A05F-A00F0BDE1A3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3A1FE9E-E92F-4FA0-A05F-A00F0BDE1A3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A1FE9E-E92F-4FA0-A05F-A00F0BDE1A3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84BF7707-7ACD-48BD-9D29-8836ED525524}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84BF7707-7ACD-48BD-9D29-8836ED525524}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84BF7707-7ACD-48BD-9D29-8836ED525524}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84BF7707-7ACD-48BD-9D29-8836ED525524}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{94917E40-8BEF-80F2-B4AF-1C6F364C5BC0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{4BFAF670-EF6A-47E1-91D5-299324E964CF} = {AE41461D-1519-4049-ADD0-CF29256953C3}
+		{B3A1FE9E-E92F-4FA0-A05F-A00F0BDE1A3B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{84BF7707-7ACD-48BD-9D29-8836ED525524} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B2266BFE-34AA-4F97-9A4D-5C574830E145}
+	EndGlobalSection
+EndGlobal

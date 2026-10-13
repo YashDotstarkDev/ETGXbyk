@@ -1,0 +1,95 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.SmallTiles
+@model SmallTilesWidgetViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.SectionId))
+{
+    <div class="relative">
+        <div class="anchor-section top-[-200px] absolute" id="@Model.SectionId"></div>
+    </div>
+}
+
+@if (Model.Theme == TileThemeOptions.LargeCards)
+{
+    <section class="section-pad pt-4" aria-labelledby="destinations-title-@Model.SectionId" xpc-preview-outline="@Model.ComponentName">
+        <div class="container">
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+            {
+                <div class="title-div mb-4">
+                    <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+                        <h2 id="destinations-title-@Model.SectionId" class="section-title mb-0">@Model.Heading</h2>
+                    </div>
+                </div>
+            }
+
+            <div class="row g-3">
+                @if (Model.Images.Count >= 6)
+                {
+                    <div class="col-md-3">
+                        <a href="#" class="dest-tile dest-tall">
+                            <img loading="lazy" src="@Model.Images[0].LegacyMediaFileAsset?.Url" alt="@Model.Images[0].LegacyMediaFileTitle" />
+                            <span class="dest-label">@Model.Images[0].LegacyMediaFileTitle</span>
+                        </a>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            @foreach (var tile in Model.Images.Skip(1).Take(4))
+                            {
+                                <div class="col-6">
+                                    <a href="#" class="dest-tile">
+                                        <img loading="lazy" src="@tile.LegacyMediaFileAsset?.Url" alt="@tile.LegacyMediaFileTitle" />
+                                        <span class="dest-label">@tile.LegacyMediaFileTitle</span>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <a href="#" class="dest-tile dest-tall">
+                            <img loading="lazy" src="@Model.Images[5].LegacyMediaFileAsset?.Url" alt="@Model.Images[5].LegacyMediaFileTitle" />
+                            <span class="dest-label">@Model.Images[5].LegacyMediaFileTitle</span>
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var tile in Model.Images)
+                    {
+                        <div class="col-md-4 col-sm-6">
+                            <a href="#" class="dest-tile">
+                                <img loading="lazy" src="@tile.LegacyMediaFileAsset?.Url" alt="@tile.LegacyMediaFileTitle" />
+                                <span class="dest-label">@tile.LegacyMediaFileTitle</span>
+                            </a>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <section class="section-pad" aria-labelledby="regions-title-@Model.SectionId" xpc-preview-outline="@Model.ComponentName">
+        <div class="container">
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+            {
+                <div class="d-flex justify-content-between align-items-end mb-4 title-div">
+                    <h2 id="regions-title-@Model.SectionId" class="section-title">@Model.Heading</h2>
+                </div>
+            }
+
+            <div class="row g-3 justify-content-center">
+                @foreach (var tile in Model.Images)
+                {
+                    <div class="region-col">
+                        <a href="#" class="region-app-tile">
+                            <img loading="lazy" src="@tile.LegacyMediaFileAsset?.Url" alt="@tile.LegacyMediaFileTitle" />
+                            <span class="region-app-label">@tile.LegacyMediaFileTitle</span>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

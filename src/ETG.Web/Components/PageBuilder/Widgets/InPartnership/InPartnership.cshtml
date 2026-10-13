@@ -1,0 +1,32 @@
+﻿@model ETG.Web.Components.PageBuilder.Widgets.InPartnership.InPartnershipWidgetViewModel
+
+@{
+    var logo1Url = Model.Logo1Image?.LegacyMediaFileAsset?.Url;
+    var logo2Url = Model.Logo2Image?.LegacyMediaFileAsset?.Url;
+    var logo3Url = Model.Logo3Image?.LegacyMediaFileAsset?.Url;
+}
+
+<section class="section-pad" aria-labelledby="partnership-title">
+    <div class="container">
+        <div class="title-div">
+            <h2 id="partnership-title" class="section-title">@Model.Heading</h2>
+        </div>
+
+        <div class="logo-partnership-strip">
+            @if (!string.IsNullOrWhiteSpace(logo1Url))
+            {
+                <img loading="lazy" src="@logo1Url" alt="">
+            }
+
+            @if (!string.IsNullOrWhiteSpace(logo2Url))
+            {
+                <img loading="lazy" src="@logo2Url" alt="">
+            }
+
+            @if (!string.IsNullOrWhiteSpace(logo3Url))
+            {
+                <img loading="lazy" src="@logo3Url" alt="">
+            }
+        </div>
+    </div>
+</section>

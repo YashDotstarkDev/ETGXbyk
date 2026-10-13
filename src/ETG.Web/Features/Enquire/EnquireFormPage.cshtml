@@ -1,0 +1,579 @@
+﻿@using ETG.Core.Models
+@model EnquireFormPageViewModel
+
+@if (Model?.Page == null)
+{
+    return;
+}
+@{
+    var page = Model.Page;
+    var form = Model.Form ?? new EnquireFormViewModel();
+    var formTitle = !string.IsNullOrWhiteSpace(page.ContainerFormTitle)
+        ? page.ContainerFormTitle
+        : "Enquire Now";
+}
+
+<vc:bread-crumb />
+
+<div class="container-fluid bg-lightgray contact-section">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-8 pe-lg-5">
+                <h1 class="contact-title mb-5">
+                    @if (!string.IsNullOrWhiteSpace(formTitle))
+                    {
+                        var titleParts = formTitle.Split(
+                            ' ',
+                            StringSplitOptions.RemoveEmptyEntries);
+
+                        if (titleParts.Length > 1)
+                        {
+                            @string.Join(" ", titleParts.Take(titleParts.Length - 1))
+                            <span class="text-pink">
+                                @titleParts.Last()
+                            </span>
+                        }
+                        else
+                        {
+                            @formTitle
+                        }
+                    }
+                    else
+                    {
+                        <text>Enquire <span class="text-pink">Now</span></text>
+                    }
+                </h1>
+
+
+                <form id="contactForm" class="contact-form needs-validation" method="post" action="@Url.Action("GenericEnquire", "Form")" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div id="formSuccessMessage" class="alert alert-success d-none mb-4" role="alert">
+                        Your enquiry has been sent successfully. We will get back to you soon!
+                    </div>
+
+                    <div id="formErrorMessage" class="alert alert-danger d-none mb-4" role="alert"> </div>
+                    <input type="hidden" asp-for="Form.Reason" value="Enquiry" />
+
+                    <div class="row g-3 mb-3">
+
+                        <div class="col-md-6">
+                            <label asp-for="Form.FirstName" class="form-label">
+                                First name
+                            </label>
+                            <input asp-for="Form.FirstName"
+                                   type="text"
+                                   class="form-control contact-input"
+                                   id="firstName"
+                                   autocomplete="given-name"
+                                   required
+                                   aria-required="true" />
+                            <div class="invalid-feedback">
+                                Please enter your first name.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Form.LastName"
+                                   class="form-label">
+                                Last name
+                            </label>
+                            <input asp-for="Form.LastName"
+                                   type="text"
+                                   class="form-control contact-input"
+                                   id="lastName"
+                                   autocomplete="family-name"
+                                   required
+                                   aria-required="true" />
+                            <div class="invalid-feedback">
+                                Please enter your last name.
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3 mb-3">
+
+                        <div class="col-md-6">
+                            <label asp-for="Form.Email"
+                                   class="form-label">
+                                Email
+                            </label>
+                            <input asp-for="Form.Email"
+                                   type="email"
+                                   class="form-control contact-input"
+                                   id="email"
+                                   required
+                                   aria-required="true"
+                                   autocomplete="email" />
+                            <div class="invalid-feedback">
+                                Please enter a valid email address.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Form.Phone"
+                                   class="form-label">
+                                Phone
+                            </label>
+                            <input asp-for="Form.Phone"
+                                   type="tel"
+                                   class="form-control contact-input"
+                                   id="phone"
+                                   pattern="[0-9\s\+\-]*"
+                                   autocomplete="tel" />
+                            <div class="invalid-feedback">
+                                Please enter a valid numeric phone number.
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+
+                            <div class="mb-4 mt-4">
+                                <label class="form-label d-block">
+                                    Preferred contact method
+                                </label>
+
+                                <div class="form-check form-check-inline mt-1">
+                                    <input asp-for="Form.PreferredContactType"
+                                           class="form-check-input"
+                                           type="radio"
+                                           id="methodEmail"
+                                           value="Email" />
+                                    <label class="form-check-label"
+                                           for="methodEmail">
+                                        Email
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-check-inline mt-1">
+                                    <input asp-for="Form.PreferredContactType"
+                                           class="form-check-input"
+                                           type="radio"
+                                           id="methodPhone"
+                                           value="Phone" />
+                                    <label class="form-check-label"
+                                           for="methodPhone">
+                                        Phone
+                                    </label>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="mb-4">
+
+                                <label asp-for="Form.PreferredTourType"
+                                       class="form-label">
+                                    Preferred tour type
+                                </label>
+                                <select asp-for="Form.PreferredTourType"
+                                        class="form-select contact-input">
+                                    <option value="" hidden>
+                                        Select tour type
+                                    </option>
+                                    <option value="Small group tours">
+                                        Small group tours
+                                    </option>
+                                    <option value="Escorted group tours">
+                                        Escorted group tours
+                                    </option>
+                                    <option value="Private tours">
+                                        Private tours
+                                    </option>
+                                    <option value="Independent tours">
+                                        Independent tours
+                                    </option>
+                                    <option value="Packaged tours">
+                                        Packaged tours
+                                    </option>
+                                    <option value="Day tours">
+                                        Day tours
+                                    </option>
+                                    <option value="Rail Journeys">
+                                        Rail Journeys
+                                    </option>
+                                    <option value="Cruise Journeys">
+                                        Cruise Journeys
+                                    </option>
+                                    <option value="Group Journeys">
+                                        Group Journeys
+                                    </option>
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3 mb-3">
+
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label asp-for="Form.PreferredDestination"
+                                       class="form-label">
+                                    Preferred destination
+                                </label>
+                                <select asp-for="Form.PreferredDestination"
+                                        asp-items="Model.Destinations"
+                                        class="form-select contact-input">
+                                    <option value="" hidden>
+                                        Select destination
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label asp-for="Form.PreferredExperience"
+                                       class="form-label">
+                                    Preferred experience (optional)
+                                </label>
+                                <select asp-for="Form.PreferredExperience"
+                                        asp-items="Model.Experiences"
+                                        class="form-select contact-input">
+                                    <option value="" hidden>
+                                        Select experience
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Form.Message"
+                               class="form-label">
+                            Questions or comments
+                        </label>
+                        <textarea asp-for="Form.Message"
+                                  class="form-control contact-input"
+                                  id="comments"
+                                  rows="5"></textarea>
+                        <div class="invalid-feedback">
+                            Please enter your questions or comments.
+                        </div>
+                    </div>
+
+                    <div class="mb-4 form-check mt-3">
+                        <input type="hidden"
+                               name="Form.SubscribeToNewsletter"
+                               value="false" />
+                        <input asp-for="Form.SubscribeToNewsletter"
+                               type="checkbox"
+                               class="form-check-input"
+                               id="subscribeNews"
+                               value="true" />
+                        <label class="form-check-label"
+                               for="subscribeNews">
+                            Subscribe to our newsletter for special deals.
+                        </label>
+                    </div>
+                    
+                    <input type="hidden"
+                           id="recaptchaToken"
+                           name="g-recaptcha-response" />
+
+                    <input type="hidden"
+                           id="recaptchaAction"
+                           name="g-recaptcha-action"
+                           value="generic_enquire_submit" />
+
+                    <button type="submit" class="btn btn-pink contact-submit-btn">
+                        SUBMIT
+                    </button>
+                </form>
+            </div>
+            <vc:generic-enquire-sidebar />
+        </div>
+    </div>
+</div>
+
+<editable-area area-identifier="editableBottom" />
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const form = document.getElementById("contactForm");
+
+        if (!form) {
+            return;
+        }
+
+        const firstName = document.getElementById("firstName");
+        const lastName = document.getElementById("lastName");
+        const email = document.getElementById("email");
+
+        const successMessage =
+            document.getElementById("formSuccessMessage");
+
+        const errorMessage =
+            document.getElementById("formErrorMessage");
+
+        const submitButton =
+            form.querySelector(".contact-submit-btn");
+
+        function isValidEmail(value) {
+            return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(value);
+        }
+
+        function showFieldError(field, message) {
+
+            if (!field) {
+                return;
+            }
+
+            field.classList.add("is-invalid");
+            field.setAttribute("aria-invalid", "true");
+
+            const feedback =
+                field.parentElement.querySelector(".invalid-feedback");
+
+            if (feedback) {
+                feedback.textContent = message;
+            }
+
+            const label =
+                form.querySelector(`label[for="${field.id}"]`);
+
+            if (label) {
+                label.classList.add("text-danger");
+            }
+        }
+
+        function clearFieldError(field) {
+
+            if (!field) {
+                return;
+            }
+
+            field.classList.remove("is-invalid");
+            field.removeAttribute("aria-invalid");
+
+            const label =
+                form.querySelector(`label[for="${field.id}"]`);
+
+            if (label) {
+                label.classList.remove("text-danger");
+            }
+        }
+
+        function validateForm() {
+
+            let isValid = true;
+
+            clearFieldError(firstName);
+            clearFieldError(lastName);
+            clearFieldError(email);
+
+            if (!firstName.value.trim()) {
+
+                showFieldError(
+                    firstName,
+                    "Please enter a valid first name"
+                );
+
+                isValid = false;
+            }
+
+            if (!lastName.value.trim()) {
+
+                showFieldError(
+                    lastName,
+                    "Please enter a valid last name"
+                );
+
+                isValid = false;
+            }
+
+            const emailValue = email.value.trim();
+
+            if (!emailValue) {
+
+                showFieldError(
+                    email,
+                    "Email must be a valid e-mail"
+                );
+
+                isValid = false;
+
+            }
+            else if (!isValidEmail(emailValue)) {
+
+                showFieldError(
+                    email,
+                    "Email must be a valid e-mail"
+                );
+
+                isValid = false;
+            }
+            return isValid;
+        }
+
+        firstName.addEventListener("input", function () {
+
+            if (this.value.trim()) {
+                clearFieldError(this);
+            }
+        });
+
+        lastName.addEventListener("input", function () {
+
+            if (this.value.trim()) {
+                clearFieldError(this);
+            }
+        });
+
+        email.addEventListener("input", function () {
+            if (isValidEmail(this.value.trim())) {
+                clearFieldError(this);
+            }
+        });
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+        
+            if (successMessage) {
+                successMessage.classList.add("d-none");
+            }
+
+            if (errorMessage) {
+                errorMessage.classList.add("d-none");
+                errorMessage.textContent = "";
+            }
+
+            if (!validateForm()) {
+                const firstInvalidField =
+                    form.querySelector(".is-invalid");
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                }
+                return;
+            }
+
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+
+            try {
+                const formData = new FormData(form);
+
+                const response = await fetch(
+                    form.action,
+                    {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    }
+                );
+
+                if (response.redirected) {
+
+                    window.location.href = response.url;
+
+                    return;
+                }
+
+                const contentType =
+                    response.headers.get("content-type") || "";
+
+                if (contentType.includes("application/json")) {
+                    const result = await response.json();
+
+                    if (!result.success) {
+
+                        if (result.errors) {
+                            if (result.errors.firstName) {
+                                showFieldError(
+                                    firstName,
+                                    result.errors.firstName
+                                );
+                            }
+
+                            if (result.errors.lastName) {
+
+                                showFieldError(
+                                    lastName,
+                                    result.errors.lastName
+                                );
+                            }
+
+                            if (result.errors.email) {
+                                showFieldError(
+                                    email,
+                                    result.errors.email
+                                );
+                            }
+                            const firstInvalidField =
+                                form.querySelector(".is-invalid");
+                            if (firstInvalidField) {
+                                firstInvalidField.focus();
+                            }
+                        }
+
+                        else if (errorMessage) {
+                            errorMessage.textContent =
+                                result.message ||
+                                "Please check the form.";
+                            errorMessage.classList.remove("d-none");
+                        }
+                        return;
+                    }
+
+                    if (result.redirectUrl) {
+                        window.location.href =
+                            result.redirectUrl;
+                        return;
+                    }
+
+                    if (successMessage) {
+                        successMessage.textContent =
+                            result.message ||
+                            "Your enquiry has been sent successfully.";
+                        successMessage.classList.remove("d-none");
+                    }
+                    form.reset();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Form submission failed."
+                    );
+                }
+
+            }
+            catch (error) {
+                console.error(
+                    "Enquiry form submission error:",
+                    error
+                );
+
+                if (errorMessage) {
+
+                    errorMessage.textContent =
+                        "Something went wrong. Please try again.";
+                    errorMessage.classList.remove("d-none");
+                }
+            }
+            finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            }
+        });
+    });
+</script>

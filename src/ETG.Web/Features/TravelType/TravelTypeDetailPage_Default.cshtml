@@ -1,0 +1,50 @@
+@using System.Linq
+@using ETG.Web.Features.TravelType
+@using Kentico.PageBuilder.Web.Mvc.PageTemplates
+@model TemplateViewModel<TravelTypeDetailPageTemplateProperties>
+
+    @{
+    var viewModel = Model.GetTemplateModel<TravelTypeDetailPageViewModel>();
+    }
+
+    <vc:bread-crumb />
+    @await Html.PartialAsync(
+    "~/Views/Shared/Partial/Common/_Hero.cshtml",
+    viewModel.Hero
+    )
+    <div class="container">
+        <div class="row">
+          <div class="col-lg-10" style="
+    margin-top: 30px;
+">
+      
+                <div class="title-div">
+                    <h2 id="tahiti-info-title" class="section-title">
+
+                        @viewModel.Heading
+                    </h2>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(viewModel.Summary))
+            {
+                <p class="text-muted" style="line-height:1.8;">
+                    @viewModel.Summary
+                </p>
+            }
+            </div>
+        </div>
+    </div>
+
+    <editable-area area-identifier="Zone1" />
+    <editable-area area-identifier="Zone2" />
+
+    @if (viewModel.RelatedArticles?.Any() == true)
+{
+    <div class="spacer"></div>
+
+    @await Html.PartialAsync(
+        "~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml",
+        viewModel.RelatedArticles
+    )
+}
+

@@ -1,0 +1,42 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.SingleColumn
+@using Kentico.PageBuilder.Web.Mvc
+@using Kentico.Web.Mvc
+
+@model SingleColumnWidgetViewModel
+
+<section class="section-pad bg-lightgray" aria-labelledby="tahiti-info-title">
+    <div class="container single-column-text">
+        <div class="row">
+            <div class="col-lg-10">
+                <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+                    @if (!string.IsNullOrWhiteSpace(Model.LargeContent))
+                    {
+                        <h2 id="destinations-title" class="section-title mb-0">@Model.LargeContent</h2>
+                    }
+                     @if (!string.IsNullOrWhiteSpace(Model.CTALabel) &&
+                                  !string.IsNullOrWhiteSpace(Model.CTAUrl))
+                    {
+                        <a href="@Model.CTAUrl" class="view-all-btn">
+                            @Model.CTALabel
+                        </a>
+                    }
+                </div>           
+                @if (!string.IsNullOrWhiteSpace(Model.Content))
+                {
+                    @if (Context.Kentico().PageBuilder().GetMode() == PageBuilderMode.Edit)
+                    {
+                        Html.Kentico().RichTextEditor(
+                            nameof(SingleColumnWidgetProperties.Content));
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            @Html.Raw(
+                                Html.Kentico().ResolveRichText(Model.Content))
+                        </div>
+                    }
+                }
+            </div>
+         </div>
+   </div>
+</section>

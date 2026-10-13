@@ -1,0 +1,39 @@
+﻿@using ETG.Web.Features.Destinations
+@model IReadOnlyList<DestinationLandingItemViewModel>
+
+@if (Model?.Any() != true)
+{
+    return;
+}
+
+<section class="hd-dest-listing section-pad">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            @foreach (var item in Model)
+            {
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <a href="@item.Path"
+                       class="hd-dest-card d-flex flex-column h-100">
+
+                        <div class="hd-dest-card__img-wrap">
+                            @if (item.Image?.LegacyMediaFileAsset is not null)
+                            {
+                                <img src="@item.Image.LegacyMediaFileAsset.Url"
+                                     alt="@item.Heading"
+                                     loading="lazy" />
+                            }
+                        </div>
+
+                        <div class="hd-dest-card__body d-flex flex-column flex-grow-1">
+                            <p class="hd-dest-card__label">@item.Heading</p>
+
+                            <p class="hd-dest-card__desc flex-grow-1">
+                                @item.Summary
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>

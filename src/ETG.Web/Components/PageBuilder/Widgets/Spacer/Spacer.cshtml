@@ -1,0 +1,16 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.Spacer
+
+@model SpacerWidgetViewModel
+
+@if (Model is null)
+{
+    return;
+}
+@if (Model.Padding == 0)
+{
+    <div class="spacer"></div>
+}
+else
+{
+    <div class="spacer-@(Model.Padding)"></div>
+}

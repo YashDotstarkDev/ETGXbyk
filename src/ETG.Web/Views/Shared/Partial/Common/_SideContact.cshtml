@@ -1,0 +1,105 @@
+﻿@using ETG.Web.Features.FAQs
+@model GenericSideContactViewModel
+
+@{
+    var contact = Model?.GeneralContact;
+}
+
+@if (contact is not null)
+{
+    <div class="contact-sidebar">
+        <h3 class="contact-sidebar-title">
+            ENTIRE TRAVEL GROUP
+        </h3>
+
+        @if (!string.IsNullOrWhiteSpace(contact.PhoneNumber)
+            || !string.IsNullOrWhiteSpace(contact.DisplayAddress))
+        {
+            <div class="contact-sidebar-item">
+                <div class="contact-region">Australia</div>
+
+                @if (!string.IsNullOrWhiteSpace(contact.PhoneNumber))
+                {
+                    <div class="contact-detail">
+                        <i class="bi bi-telephone-fill text-pink"
+                           aria-hidden="true"></i>
+
+                        <span>@contact.PhoneNumber</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(contact.DisplayAddress))
+                {
+                    <div class="contact-detail mt-1">
+                        <i class="bi bi-envelope-fill text-pink"
+                           aria-hidden="true"></i>
+
+                        <span>
+                            @{
+                                var lines = contact.DisplayAddress
+                                    .Replace("\r\n", "\n")
+                                    .Replace("\r", "\n")
+                                    .Split('\n');
+                            }
+
+                            @for (var i = 0; i < lines.Length; i++)
+                            {
+                                @lines[i]
+
+                                if (i < lines.Length - 1)
+                                {
+                                    <br />
+                                }
+                            }
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(contact.PhoneNumber2))
+        {
+            <div class="contact-sidebar-item">
+                <div class="contact-region">New Zealand</div>
+
+                <div class="contact-detail">
+                    <i class="bi bi-telephone-fill text-pink"
+                       aria-hidden="true"></i>
+
+                    <span>@contact.PhoneNumber2</span>
+                </div>
+            </div>
+        }
+
+        <div class="side-contact-actions d-flex flex-column gap-3 mt-4">
+            @if (ViewBag.ShowEmailTo != null && ViewBag.ShowEmailTo)
+            {
+                <a href="mailto:info@entiretravel.com.au"
+                   class="btn btn-pink px-4 m-0 text-white fw-bold w-100"
+                   style="border-radius: 4px; font-size: 0.85rem;
+                          padding: 6px 24px;">
+                    Send an email
+                </a>
+            }
+
+            <a href="https://calendly.com/entiretravelgroup/30mins"
+               class="btn btn-pink px-4 m-0 text-white fw-bold w-100 calendry-button"
+               data-link="https://calendly.com/entiretravelgroup/30mins"
+               style="border-radius: 4px; font-size: 0.85rem;
+                      padding: 6px 24px;">
+                Schedule a meeting
+            </a>
+
+            @if (ViewBag.HideFaqsButton == null)
+            {
+                <a href="#faqZone"
+                   class="btn btn-pink px-4 m-0 text-white fw-bold w-100 scrollto"
+                   data-scrollto="faqZone"
+                   style="border-radius: 4px; font-size: 0.85rem;
+                          padding: 6px 24px;">
+                    FAQs
+                </a>
+            }
+        </div>
+    </div>
+}

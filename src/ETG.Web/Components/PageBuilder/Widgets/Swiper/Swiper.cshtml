@@ -1,0 +1,154 @@
+@using ETG.Web.Components.PageBuilder.Widgets.Swiper
+@model SwiperWidgetViewModel
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+
+<div xpc-preview-outline="Swiper Widget" class="swiper-widget @(Model.CustomCssClass) @Model.Padding.ToString().ToLower()">
+    @if (Model.HasLabel)
+    {
+        string slug = View.SlugHelper.GenerateSlug($"swiper-{Model.DisplayLabel}");
+        <div class="mb-3">
+            <h3 id="@slug" class="mb-0">
+                @Model.DisplayLabel
+                <a title="Navigate to this heading" aria-label="Navigate to this heading" class="heading-link" href="#@(slug)"></a>
+            </h3>
+            @if (Model.IsFromGroup && !string.IsNullOrWhiteSpace(Model.GroupDescription))
+            {
+                <p class="text-muted mb-0 mt-1">@Model.GroupDescription</p>
+            }
+        </div>
+    }
+
+    <div class="swiper-container" id="swiper-@Model.WidgetInstanceID">
+        <div class="swiper-wrapper">
+            @for (var i = 0; i < Model.Slides.Count; i++)
+            {
+                var slide = Model.Slides[i];
+                var slideId = $"swiper-{Model.WidgetInstanceID}-slide-{i}";
+
+                @if (slide.MobileUrl != null)
+                {
+                    <style>
+                        @Html.Raw($"@media (max-width: 767.98px) {{ #{slideId} {{ background-image: url('{slide.MobileUrl.LegacyMediaFileAsset.Url.Replace("~","")}') !important; }} }}")
+                    </style>
+                }
+
+                <div id="@slideId" class="swiper-slide @(slide.CustomCSSClass ?? "")" style="@(string.IsNullOrWhiteSpace(slide.DesktopUrl.LegacyMediaFileAsset.Url.Replace("~", "")) ? string.Empty : $"background-image: url('{slide.DesktopUrl.LegacyMediaFileAsset.Url.Replace("~", "")}'); background-size: cover; background-position: center;")">
+                    @if (slide.MobileUrl != null)
+                    {
+                        <div class="d-md-none swiper-slide-mobile-image">
+                            <img src="@slide.MobileUrl.LegacyMediaFileAsset.Url.Replace("~", "")" alt="@slide.MobileUrl.LegacyMediaFileTitle" class="img-fluid w-100" />
+                        </div>
+                    }
+
+                    <div class="swiper-slide-content">
+                        <h4>@slide.LegacyMediaFileTitle</h4>
+                        <p>@slide.BasicItemShortDescription</p>
+                    @if (!string.IsNullOrWhiteSpace(slide.CTAText))
+                    {
+                        <a href="@(slide.CTAUrl ?? "#")" target="@(slide.OpenInNewTab ? "_blank" : "_self")" class="btn btn-primary">@slide.CTAText</a>
+                    }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (Model.Navigation)
+        {
+            <div class="swiper-button-prev" data-swiper-prev-@Model.WidgetInstanceID></div>
+            <div class="swiper-button-next" data-swiper-next-@Model.WidgetInstanceID></div>
+        }
+
+        @if (Model.Pagination)
+        {
+            <div class="swiper-pagination" data-swiper-pagination-@Model.WidgetInstanceID></div>
+        }
+
+        @if (Model.Scrollbar)
+        {
+            <div class="swiper-scrollbar" data-swiper-scrollbar-@Model.WidgetInstanceID></div>
+        }
+    </div>
+</div>
+
+<script>
+    (function () {
+        function init() {
+            var id = "swiper-@Model.WidgetInstanceID";
+            var container = document.getElementById(id);
+            if (!container) return;
+
+            var options = {
+                loop: @Model.Loop.ToString().ToLower(),
+                initialSlide: @Model.InitialSlide,
+                slidesPerView: @Model.SlidesPerView,
+                spaceBetween: @Model.SpaceBetween,
+                centeredSlides: @Model.CenteredSlides.ToString().ToLower(),
+                effect: "@Model.Effect",
+                keyboard: { enabled: @Model.Keyboard.ToString().ToLower() },
+                mousewheel: { forceToAxis: @Model.Mousewheel.ToString().ToLower() },
+                // autoplay
+                @if (Model.Autoplay)
+                {
+                    <text>autoplay: { delay: @Model.AutoplayDelay, disableOnInteraction: false },</text>
+                }
+                // pagination
+                @if (Model.Pagination)
+                {
+                    <text>pagination: { el: '[data-swiper-pagination-@Model.WidgetInstanceID]', type: '@Model.PaginationType.ToString().ToLower()' },</text>
+                }
+                // navigation
+                @if (Model.Navigation)
+                {
+                    <text>navigation: { nextEl: '[data-swiper-next-@Model.WidgetInstanceID]', prevEl: '[data-swiper-prev-@Model.WidgetInstanceID]' },</text>
+                }
+                // scrollbar
+                @if (Model.Scrollbar)
+                {
+                    <text>scrollbar: { el: '[data-swiper-scrollbar-@Model.WidgetInstanceID]', draggable: @Model.ScrollbarDraggable.ToString().ToLower() },</text>
+                }
+                // accessibility
+                a11y: { enabled: true },
+            };
+
+            // Initialize Swiper
+            if (typeof Swiper === 'undefined') {
+                console.warn('Swiper library not loaded.');
+                return;
+            }
+
+            /* global Swiper */
+            var swiper = new Swiper(container, options);
+
+            // If pagination type is fraction, update formatting
+            if (("@Model.PaginationType") === "Fraction") {
+                // Swiper will handle fraction rendering
+            }
+        }
+
+        function ensureAndInit() {
+            if (typeof Swiper !== 'undefined') {
+                init();
+                return;
+            }
+
+            // Load Swiper script dynamically from CDN
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js';
+            script.async = true;
+            script.onload = function () {
+                init();
+            };
+            script.onerror = function () {
+                console.error('Failed to load Swiper script from CDN.');
+            };
+            document.head.appendChild(script);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ensureAndInit);
+        } else {
+            ensureAndInit();
+        }
+    })();
+</script>

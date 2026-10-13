@@ -1,0 +1,54 @@
+﻿@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel
+
+@{
+    var hasColumns = Model.Children.Any(c => c.HasChildren);
+}
+
+@if (hasColumns)
+{
+    <div class="row mb-4">
+        @foreach (var column in Model.Children)
+        {
+            <div class="col-3">
+                @if (!string.IsNullOrWhiteSpace(column.LinkTo) && column.LinkTo != "#")
+                {
+                    <a href="@column.LinkTo" class="dest-col-title">@column.Name</a>
+                }
+                else
+                {
+                    <div class="dest-col-title">@column.Name</div>
+                }
+                <ul class="dest-list">
+                    @foreach (var link in column.Children)
+                    {
+                        <li><a href="@link.LinkTo" class="dest-link" target="@link.Target">@link.Name</a></li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="exp-grid">
+        @foreach (var item in Model.Children)
+        {
+           <a href="@item.LinkTo" class="exp-item" target="@item.Target">
+    @if (!string.IsNullOrWhiteSpace(item.SvgIcon))
+    {
+        <span class="exp-svg-icon">@Html.Raw(item.SvgIcon)</span>
+    }
+    else if (!string.IsNullOrWhiteSpace(item.IconClass))
+    {
+        <i class="@item.IconClass"></i>
+    }
+    <span>@item.Name</span>
+</a>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ViewAllUrl))
+{
+    <a href="@Model.ViewAllUrl" class="btn-enquire desktop-only mt-4">@(string.IsNullOrWhiteSpace(Model.ViewAllCaption) ? "View All" : Model.ViewAllCaption)</a>
+}

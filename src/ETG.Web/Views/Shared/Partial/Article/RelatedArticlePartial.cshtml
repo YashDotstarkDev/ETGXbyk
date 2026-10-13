@@ -1,0 +1,84 @@
+﻿@using System.Linq
+@using ETG.Web.Features
+@model IEnumerable<ArticleViewModel>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row g-4 justify-content-center">
+        @foreach (var article in Model)
+        {
+            var imageUrl = article.HeroImage?.LegacyMediaFileAsset?.Url;
+
+            var imageAlt = !string.IsNullOrWhiteSpace(article.HeroImageAltTag)
+                ? article.HeroImageAltTag
+                : article.Title;
+
+            var category = article.Categories;
+            var destination = article.Destinations;
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="blog-list-card d-flex flex-column h-100">
+                    @if (!string.IsNullOrWhiteSpace(imageUrl))
+                    {
+                        <img src="@imageUrl"
+                             class="blog-list-img"
+                             alt="@imageAlt"
+                             loading="lazy" />
+                    }
+
+                    <div class="blog-list-body flex-grow-1 d-flex flex-column p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            @if (!string.IsNullOrWhiteSpace(category))
+                            {
+                                <span class="blog-list-tag m-0 fw-bold"
+                                      style="font-size:10px; text-transform:uppercase;">
+                                    @category
+                                </span>
+                            }
+
+                            @if (article.ArticleDate != DateTime.MinValue)
+                            {
+                                <!-- FIX: The 'ms-auto' class pushes the Date to the right even if category is absent! -->
+                                <span class="text-muted ms-auto" style="font-size:11px;">
+                                    @article.ArticleDate.ToString("MMM dd, yyyy")
+                                </span>
+                            }
+                        </div>
+
+                        <a href="@article.LinkPath"
+                           class="text-decoration-none text-dark d-flex flex-column flex-grow-1">
+                            <h3 class="blog-list-title mb-2 fs-5 fw-bold">
+                                @article.Title
+                            </h3>
+
+                            @if (!string.IsNullOrWhiteSpace(article.Summary))
+                            {
+                                <p class="text-muted small mb-3 flex-grow-1"
+                                   style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                    @article.Summary
+                                </p>
+                            }
+                        </a>
+
+                        <!-- FIX: Prioritizes Category, then Destination, then just outputs 'Holidays' -->
+                        @{
+                            string relatedText = "";
+                            if (!string.IsNullOrWhiteSpace(category))
+                            {
+                                relatedText = category + " ";
+                            }
+                            else if (!string.IsNullOrWhiteSpace(destination))
+                            {
+                                relatedText = destination + " ";
+                            }
+                        }
+
+                        <span class="text-pink fw-bold mt-auto" style="font-size:12px; letter-spacing:0.5px;">
+                            Related: @(relatedText)Holidays
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

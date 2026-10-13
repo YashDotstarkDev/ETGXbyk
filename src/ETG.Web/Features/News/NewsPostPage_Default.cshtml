@@ -1,0 +1,534 @@
+@using Microsoft.AspNetCore.Html
+@using ETG.Web.Features.News
+@model TemplateViewModel<NewsPostPageTemplateProperties>
+
+@{
+    var post = Model.GetTemplateModel<NewsPostDetailViewModel>();
+    var encodedTitle = Uri.EscapeDataString(post.Title);
+}
+
+@section Styles {
+    <style>
+        .news-hero-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+
+        .news-hero-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .news-breadcrumb {
+            background-color: #f8f9fa;
+            padding: 12px 0;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+            .news-breadcrumb .breadcrumb {
+                margin: 0;
+            }
+
+            .news-breadcrumb .breadcrumb-item {
+                color: #6c757d;
+            }
+
+                .news-breadcrumb .breadcrumb-item.active {
+                    color: #495057;
+                    font-weight: 500;
+                }
+
+            .news-breadcrumb a {
+                color: #1e3c72;
+                text-decoration: none;
+            }
+
+                .news-breadcrumb a:hover {
+                    color: #2a5298;
+                    text-decoration: underline;
+                }
+
+        .news-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 25px;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .news-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .news-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .news-category-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+            .news-category-badge:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+
+        .news-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin: 20px 0 15px;
+            line-height: 1.2;
+        }
+
+        @@media (max-width: 768px) {
+            .news-title {
+                font-size: 1.75rem;
+            }
+        }
+
+        .news-image {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 40px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-content-wrapper {
+            background: white;
+            padding: 40px 0;
+        }
+
+        .news-main-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .news-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+            .news-content p {
+                margin-bottom: 20px;
+            }
+
+            .news-content h2 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin: 40px 0 20px;
+                padding-top: 20px;
+            }
+
+            .news-content h3 {
+                font-size: 1.4rem;
+                font-weight: 600;
+                color: #2c3e50;
+                margin: 30px 0 15px;
+            }
+
+            .news-content h4,
+            .news-content h5,
+            .news-content h6 {
+                font-weight: 600;
+                margin: 20px 0 10px;
+            }
+
+            .news-content ul,
+            .news-content ol {
+                margin: 20px 0 20px 30px;
+            }
+
+            .news-content li {
+                margin-bottom: 10px;
+            }
+
+            .news-content blockquote {
+                border-left: 4px solid #1e3c72;
+                padding: 20px 25px;
+                margin: 25px 0;
+                background-color: #f8f9fa;
+                font-style: italic;
+                color: #555;
+            }
+
+            .news-content img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                margin: 30px 0;
+            }
+
+            .news-content code {
+                background-color: #f4f4f4;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                font-size: 0.9em;
+            }
+
+            .news-content pre {
+                background-color: #f4f4f4;
+                padding: 15px;
+                border-radius: 5px;
+                overflow-x: auto;
+                margin: 20px 0;
+            }
+
+        .news-author-section {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 50px 0;
+            border-left: 4px solid #1e3c72;
+        }
+
+        .news-author-header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .news-author-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #1e3c72;
+        }
+
+        .news-author-info h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 5px;
+            color: #1a1a1a;
+        }
+
+        .news-author-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .news-author-bio {
+            margin-top: 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .news-share-section {
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 30px 0;
+            margin: 50px 0;
+        }
+
+        .news-share-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+        }
+
+        .news-share-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .share-btn-linkedin {
+            background-color: #0a66c2;
+            color: white;
+        }
+
+            .share-btn-linkedin:hover {
+                background-color: #084a96;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3);
+            }
+
+        .share-btn-facebook {
+            background-color: #1877f2;
+            color: white;
+        }
+
+            .share-btn-facebook:hover {
+                background-color: #165ec9;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+            }
+
+        .share-btn-twitter {
+            background-color: #000;
+            color: white;
+        }
+
+            .share-btn-twitter:hover {
+                background-color: #1a1a1a;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+        .share-btn-email {
+            background-color: #ea4c89;
+            color: white;
+        }
+
+            .share-btn-email:hover {
+                background-color: #d63666;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(234, 76, 137, 0.3);
+            }
+
+        .news-related-section {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .news-related-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+        }
+
+        .news-related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .news-related-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+            .news-related-card:hover {
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            }
+
+        .news-related-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .news-related-card:hover .news-related-card-image {
+            transform: scale(1.08);
+        }
+
+        .news-related-card-content {
+            padding: 20px;
+        }
+
+        .news-related-card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+            .news-related-card-title a {
+                color: inherit;
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }
+
+                .news-related-card-title a:hover {
+                    color: #1e3c72;
+                }
+
+        .news-related-card-meta {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .news-related-card-excerpt {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<!-- Hero Section -->
+<div class="news-hero-section">
+    <div class="container">
+        <div class="news-hero-content">
+            <!-- Meta Information -->
+            <div class="news-meta">
+                <span class="news-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    @post.PublishedDate
+                </span>
+                @if (post.Author != null)
+                {
+                    <span class="news-meta-item">
+                        <i class="fas fa-user"></i>
+                        @post.Author.FullName
+                    </span>
+                }
+            </div>
+
+            <!-- Categories -->
+            @if (post.NewsCategory.Any())
+            {
+                <div class="news-categories">
+                    @foreach (var category in post.NewsCategory)
+                    {
+                        <span class="news-category-badge">@category.Title</span>
+                    }
+                </div>
+            }
+
+            <!-- Title -->
+            <h1 class="news-title">@post.Title</h1>
+            <p style="font-size: 1.1rem; margin: 0; opacity: 0.9;">@post.ShortDescription</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="news-content-wrapper">
+    <div class="container">
+        <article class="news-main-content">
+            <!-- Featured Image -->
+            @if (post.Image != null)
+            {
+                <img src="@post.Image.LegacyMediaFileAsset.Url" alt="@post.Title" class="news-image" loading="lazy">
+            }
+
+            <!-- Article Content -->
+            <div class="news-content">
+                @Html.Raw(post.UnsanitizedContentHTML)
+            </div>
+
+            <!-- Author Section -->
+            @if (post.Author != null)
+            {
+                <div class="news-author-section">
+                    <div class="news-author-header">
+                        @if (post.Author.Photo != null)
+                        {
+                            <img src="@post.Author.Photo.LegacyMediaFileAsset.Url" alt="@post.Author.FullName" class="news-author-photo">
+                        }
+                        <div class="news-author-info">
+                            <h4>About the Author</h4>
+                            <p style="margin: 5px 0 0;">@post.Author.FullName</p>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(post.Author.Biography))
+                    {
+                        <div class="news-author-bio">
+                            @Html.Raw(post.Author.Biography)
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Share Section -->
+            <div class="news-share-section">
+                <h3 class="news-share-title">Share this news</h3>
+                <div class="news-share-buttons">
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=@Uri.EscapeDataString(post.AbsoluteURL)"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="share-btn share-btn-linkedin"
+                       title="Share on LinkedIn">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(post.AbsoluteURL)"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="share-btn share-btn-facebook"
+                       title="Share on Facebook">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(post.AbsoluteURL)&text=@Uri.EscapeDataString(post.Title)"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="share-btn share-btn-twitter"
+                       title="Share on Twitter">
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Related News -->
+            @if (post.NewsPostContentRelatedNews.Any())
+            {
+                <div class="news-related-section">
+                    <h2 class="news-related-title">Related News</h2>
+                    <div class="news-related-grid">
+                        @foreach (var relatedNews in post.NewsPostContentRelatedNews.Take(3))
+                        {
+                            <article class="news-related-card">
+                                @if (relatedNews.Image != null)
+                                {
+                                    <img src="@relatedNews.Image.LegacyMediaFileAsset.Url"
+                                         alt="@relatedNews.Title"
+                                         class="news-related-card-image"
+                                         loading="lazy">
+                                }
+                                <div class="news-related-card-content">
+                                    <div class="news-related-card-meta">
+                                        @relatedNews.PublishedDate
+                                    </div>
+                                    <h3 class="news-related-card-title">
+                                        <a href="@relatedNews.AbsoluteURL">@relatedNews.Title</a>
+                                    </h3>
+                                    <p class="news-related-card-excerpt">@relatedNews.ShortDescription</p>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </div>
+            }
+        </article>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+﻿@model ETG.Web.Components.PageBuilder.Widgets.IconsContent.IconsContentWidgetViewModel
+
+<section class="section-pad careers-why-join" aria-labelledby="why-join-title">
+    <div class="container">
+        @if (!string.IsNullOrWhiteSpace(Model.Heading))
+        {
+            <h2 id="why-join-title" class="section-title text-start mb-5">@Model.Heading</h2>
+        }
+        <div class="widget iconigraphical-content wp" data-widget="iconigraphical-content" style="opacity: 1;">
+            <div class="wrapper">
+                <div class="content-container row">
+                    @if (!string.IsNullOrWhiteSpace(Model.Stat1Icon) || !string.IsNullOrWhiteSpace(Model.Stat1Title))
+                    {
+                        <div class="item col">
+                            <div class="pin-container">
+                                <i class="fa-solid @Model.Stat1Icon icon" style="color:#cb538d !important; font-size:30px"></i>
+                                <img class="pin-bg" alt="" src="/images/pin-bg.png">
+                            </div>
+
+                            <div class="title">@Model.Stat1Title</div>
+
+                            <div class="description">@Model.Stat1Description</div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Stat2Icon) || !string.IsNullOrWhiteSpace(Model.Stat2Title))
+                    {
+                        <div class="item col">
+                            <div class="pin-container">
+                                <i class="fa-solid @Model.Stat2Icon icon" style="color:#cb538d !important; font-size:30px"></i>
+                                <img class="pin-bg" alt="" src="/images/pin-bg.png">
+                            </div>
+                            <div class="title">@Model.Stat2Title</div>
+                            <div class="description">@Model.Stat2Description</div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Stat3Icon) || !string.IsNullOrWhiteSpace(Model.Stat3Title))
+                    {
+                        <div class="item col">
+                            <div class="pin-container">
+                                <i class="fa-solid @Model.Stat3Icon icon" style="color:#cb538d !important; font-size:30px"></i>
+                                <img class="pin-bg" alt="" src="/images/pin-bg.png">
+                            </div>
+                            <div class="title">@Model.Stat3Title</div>
+                            <div class="description">@Model.Stat3Description</div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Stat4Icon) || !string.IsNullOrWhiteSpace(Model.Stat4Title))
+                    {
+                        <div class="item col">
+                            <div class="pin-container">
+                                <i class="fa-solid @Model.Stat4Icon icon" style="color:#cb538d !important; font-size:30px"></i>
+                                <img class="pin-bg" alt="" src="/images/pin-bg.png">
+                            </div>
+                            <div class="title">@Model.Stat4Title</div>
+                            <div class="description">@Model.Stat4Description</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

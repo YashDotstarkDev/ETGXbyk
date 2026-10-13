@@ -1,0 +1,72 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.Testimonial
+@model TestimonialWidgetViewModel
+
+<section class="careers-culture-section position-relative overflow-hidden" aria-label="Company Culture">
+    @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
+    {
+        <img loading="lazy"
+             src="@Model.Image.LegacyMediaFileAsset.Url"
+             data-src="@Model.Image.LegacyMediaFileAsset.Url"
+             alt="@(string.IsNullOrEmpty(Model.Heading) ? (Model.Image.LegacyMediaFileTitle ?? "Culture background") : Model.Heading)"
+             class="cta-bg bg lazyload position-absolute w-100 h-100 top-0 start-0 object-fit-cover"
+             style="z-index: 0;" />
+        <div class="cta-overlay tint position-absolute w-100 h-100 top-0 start-0" style="z-index: 1;"></div>
+    }
+
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center">
+            <div class="col-lg-5">
+                <div class="culture-quote-left">
+                    <div class="culture-quote-mark">
+                        <svg width="45" height="45" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 0H12L8 24H0L0 0Z" fill="#CA568E" />
+                            <path d="M18 0H30L26 24H18L18 0Z" fill="#CA568E" />
+                        </svg>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Heading))
+                    {
+                        <h2 class="careers-culture-heading">@Model.Heading</h2>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Date))
+                    {
+                        <div class="date text-white-50 mt-2">@Model.Date</div>
+                    }
+                </div>
+            </div>
+
+
+            <div class="col-lg-7">
+                <div class="careers-culture-quote mt-5 mt-lg-0">
+                    @if (!string.IsNullOrEmpty(Model.TextContent))
+                    {
+                        var cleanText = Model.TextContent.Trim().Trim('"');
+                        <p class="careers-quote-text">"@cleanText"</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Source) || !string.IsNullOrEmpty(Model.SourceLocation))
+                    {
+                        <div class="careers-quote-author">
+                            @if (!string.IsNullOrEmpty(Model.Source))
+                            {
+                                <div class="author-name text-uppercase fw-bold text-white">@Model.Source</div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.SourceLocation))
+                            {
+                                <div class="author-title text-white-50">@Model.SourceLocation</div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Path) && !string.IsNullOrEmpty(Model.CTALabel))
+                    {
+                        <div class="mt-4">
+                            <a href="@Model.Path" class="btn btn-pink btn-lg button ui transparent white outline">@Model.CTALabel</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

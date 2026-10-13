@@ -1,0 +1,40 @@
+﻿
+
+@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel
+
+@{
+    string href = string.IsNullOrWhiteSpace(Model.LinkTo) ? "#" : Model.LinkTo!;
+}
+
+@if (Model.HasChildren)
+{
+    <div class="etg-nav__dropdown">
+        <a href="@href" class="nav-item-link" target="@Model.Target">
+            @Model.Name <i class="bi bi-chevron-down ms-1" style="font-size: 11px; color: rgb(189 184 184);"></i>
+        </a>
+        <div class="etg-mega">
+            <div class="etg-mega__sidebar">
+                @for (int i = 0; i < Model.Children.Count; i++)
+                {
+                    var panel = Model.Children[i];
+                    <div class="sidebar-btn @(i == 0 ? "active" : "")" data-panel="panel-@panel.Id">
+                        @panel.Name <i class="bi bi-chevron-right"></i>
+                    </div>
+                }
+            </div>
+            <div class="etg-mega__content">
+                @for (int i = 0; i < Model.Children.Count; i++)
+                {
+                    var panel = Model.Children[i];
+                    <div class="panel @(i == 0 ? "active" : "")" id="panel-@panel.Id">
+                       <partial name="~/Components/ViewComponents/MainNavigation/NavigationPanelContent.cshtml" model="panel" />
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <a href="@href" class="nav-item-link" target="@Model.Target">@Model.Name</a>
+}

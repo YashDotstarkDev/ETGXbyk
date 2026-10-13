@@ -1,0 +1,69 @@
+@using ETG.Web.Components.PageBuilder.Widgets.Image
+
+@model ImageWidgetViewModel
+
+@{
+    string containerClasses = Model.Alignment switch
+    {
+        ImageAlignments.Left => "justify-content-start",
+        ImageAlignments.Right => "justify-content-end",
+        ImageAlignments.Center or _ => "justify-content-center",
+    };
+
+    string figureStyles = Model.Size switch
+    {
+        ImageSizes.Small => "--size-preferred: 50cqi",
+        ImageSizes.Medium => "--size-preferred: 70cqi",
+        ImageSizes.Large => "--size-preferred: 80cqi",
+        ImageSizes.Full_Width or _ => "--size-preferred: 100cqi",
+    };
+
+    // CSS class selection for responsive behavior
+    // All image sizes use full width on mobile for better UX
+    string widthClass = "clamp-width-mobile-full";
+
+    // Sizes optimized for multi-device, multi-DPR scenarios
+    // All sizes use full width on mobile, then size-appropriate widths on desktop
+    string sizesAttribute = Model.Size switch
+    {
+        ImageSizes.Small => "(max-width: 767px) 100vw, 200px", // Mobile: full width, Desktop: 200px
+        ImageSizes.Medium => "(max-width: 767px) 100vw, 300px", // Mobile: full width, Desktop: 300px
+        ImageSizes.Large => "(max-width: 767px) 100vw, 450px", // Mobile: full width, Desktop: 450px
+        ImageSizes.Full_Width or _ => "(max-width: 767px) 100vw, 600px", // Mobile: full width, Desktop: 600px
+    };
+
+    string themeClasses = Model.Theme switch
+    {
+        ImageThemes.Shadow => "shadow",
+        ImageThemes.Border => "border border-3 border-purple-300",
+        ImageThemes.None or _ => "",
+    };
+}
+
+<div class="d-flex align-content-center @containerClasses container-inline-size"
+    xpc-preview-outline="@Model.ComponentName">
+    <figure class="figure @widthClass" style="@figureStyles">
+        @if (Model.LinkToFullsizeImage)
+        {
+            <a href="@Model.Image.LegacyMediaFileAsset.Url">
+                <picture>
+                    <img class="img-fluid @themeClasses" src="@Model.Image.LegacyMediaFileAsset.Url" alt="@Model.Image.LegacyMediaFileTitle"
+                        sizes="@sizesAttribute">
+                </picture>
+            </a>
+        }
+        else
+        {
+            <picture>
+                <img class="img-fluid @themeClasses" src="@Model.Image.LegacyMediaFileAsset.Url" alt="@Model.Image.LegacyMediaFileTitle"
+                    sizes="@sizesAttribute">
+            </picture>
+        }
+        @if (Model.ShowDescriptionAsCaption)
+        {
+            <figcaption class="figure-caption">
+                @Model.Image.LegacyMediaFileTitle
+            </figcaption>
+        }
+    </figure>
+</div>

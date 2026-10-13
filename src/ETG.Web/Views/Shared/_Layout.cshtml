@@ -1,0 +1,67 @@
+﻿@using Kentico.Activities.Web.Mvc
+@inject Kentico.Content.Web.Mvc.IWebPageDataContextRetriever DataContextRetriever
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <vc:page-custom-meta />            
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="~/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/style.css" rel="stylesheet" />
+    <link href=https://assets.calendly.com/assets/external/widget.css rel="stylesheet">
+    <link href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu" rel="stylesheet">
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Lato:400,700,900|Raleway:400,900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu">
+    <link rel="stylesheet" href="@Url.Content("~/css/style.css")?v=2" />
+    @if (DataContextRetriever.TryRetrieve(out _))
+    {
+    <page-builder-styles />
+    }
+
+    @RenderSection("Styles", required: false)
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://kit.fontawesome.com/d67a31d7e1.js" crossorigin="anonymous"></script>
+
+    @RenderSection("Scripts", required: false)
+
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <vc:top-navigation/>
+
+    <vc:navigation/>
+
+    <main class="flex-grow-1">
+        @RenderBody()       
+    </main>
+
+    <vc:subscribe-now />
+
+    <vc:footer />
+
+    <vc:sticky-bar />
+
+     <vc:tracking-consent />
+
+    @if (DataContextRetriever.TryRetrieve(out _))
+    {
+        <page-builder-scripts />
+    }
+
+  
+<!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://kit.fontawesome.com/d67a31d7e1.js" crossorigin="anonymous"></script>
+  <script src=https://assets.calendly.com/assets/external/widget.js type="text/javascript" async></script>
+  <script src="~/js/script.js"></script>  
+</body>
+</html>

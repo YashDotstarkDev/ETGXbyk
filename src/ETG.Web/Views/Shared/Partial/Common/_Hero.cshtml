@@ -1,0 +1,109 @@
+﻿@using System.Linq
+@using ETG.Core.Models
+@model HeroViewModel
+
+@if (Model is null)
+{
+    return;
+}
+
+@{
+    var words = (Model.Heading ?? "")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    var headingBeforeLastWord = words.Length > 1
+        ? string.Join(" ", words.Take(words.Length - 1))
+        : "";
+
+    var pinkWord = words.LastOrDefault() ?? "";
+}
+
+<section class="about-hero position-relative"
+         aria-label="@($"{Model.Heading} hero banner")">
+
+    @if (!string.IsNullOrWhiteSpace(Model.HeroImageUrl))
+    {
+        <img src="@Model.HeroImageUrl"
+             alt="@Model.HeroImageAltText"
+             class="about-hero-img w-100 object-fit-cover"
+             loading="lazy" />
+    }
+
+    @if (Model.DisableOverlay == false)
+    {
+        <div class="about-hero-shade position-absolute top-0 start-0 w-100 h-100"
+             aria-hidden="true"></div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.HeroForegroundImageUrl))
+    {
+        <img src="@Model.HeroForegroundImageUrl"
+             alt=""
+             class="about-hero-foreground position-absolute"
+             aria-hidden="true" />
+    }
+
+    <div class="about-hero-overlay position-absolute top-0 start-0 w-100 h-100
+        d-flex align-items-end justify-content-center">
+        <div class="container text-white">
+            <div class="about-hero__content text-center">
+                @if (!string.IsNullOrWhiteSpace(Model.HeroImageAccreditation))
+                {
+                    <span class="tahiti-hero__eyebrow">
+                        @Model.HeroImageAccreditation
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                {
+                    <h1 class="about-hero-title text-white fw-bold display-4"
+                        style="font-size: 50px;">
+                        @if (words.Length > 1)
+                        {
+                            @headingBeforeLastWord
+                            <text> </text><span class="text-pink">@pinkWord</span>
+                        }
+                        else
+                        {
+                            @Model.Heading
+                        }
+                    </h1>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.HeroCaption))
+                {
+                    <p class="hero-caption">
+                        @Model.HeroCaption
+                    </p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.HeadingText))
+                {
+                    <p>@Model.HeadingText</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.HeroAccreditation))
+                {
+                    <p class="hero-accreditation">@Model.HeroAccreditation</p>
+                }
+
+
+                @if (!string.IsNullOrWhiteSpace(Model.HeroContactUsPath))
+                {
+                    <a href="@Model.HeroContactUsPath">Contact us</a>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.HeroPhone))
+                {
+                    <a href="tel:@Model.HeroPhone">@Model.HeroPhone</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.HeroIconSvg))
+    {
+        <div class="experience-icon position-absolute">
+            @Html.Raw(Model.HeroIconSvg)
+        </div>
+    }
+</section>

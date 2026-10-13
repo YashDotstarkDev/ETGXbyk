@@ -1,0 +1,131 @@
+﻿@using ETG.Web.Features.Career
+
+@model CareerRoleDetailPageViewModel
+
+
+@{
+
+    var viewModel = Model;
+
+
+    if (viewModel?.BasicInfo is null)
+
+    {
+
+        return;
+
+    }
+
+
+    var title = viewModel.BasicInfo.Title?.Trim() ?? "";
+
+    var lastSpace = title.LastIndexOf(' ');
+
+    var titleStart = lastSpace >= 0 ? title[..lastSpace] : "";
+
+    var titleLastWord = lastSpace >= 0
+
+        ? title[(lastSpace + 1)..]
+
+        : title;
+
+}
+
+<vc:bread-crumb />
+
+<main class="career-page">
+    <section class="career-hero section-pad">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="career-hero-title">
+                        @if (!string.IsNullOrEmpty(titleStart))
+                        {
+                            @titleStart
+                            <text> </text>
+                        }
+                        <span class="text-pink">@titleLastWord</span>
+                    </h1>
+
+                    <p class="career-hero-subtitle">
+                        @viewModel.BasicInfo.Location@(!string.IsNullOrEmpty(viewModel.State) ? $", {viewModel.State}" : "")
+                        <span>|</span>
+                        @viewModel.BasicInfo.PositionType
+                    </p>
+
+                    <editable-area area-identifier="Top" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container html-text">
+        <div class="row article-layout">
+            <div class="col-lg-8 main">
+                @if (!string.IsNullOrEmpty(viewModel.Description))
+                {
+                    <section class="career-intro">
+                        <div class="career-body-text">
+                            @Html.Raw(viewModel.Description)
+                        </div>
+                    </section>
+                }
+
+                @if (!string.IsNullOrEmpty(viewModel.SummaryOfPosition))
+                {
+                    <section class="career-intro">
+                        <h3>Summary of position</h3>
+                        <div class="career-body-text">
+                            @Html.Raw(viewModel.SummaryOfPosition)
+                        </div>
+                    </section>
+                }
+
+                @if (!string.IsNullOrEmpty(viewModel.DutiesAndResponsibilities))
+                {
+                    <section class="career-responsibilities section-pad">
+                        <h3>Duties and Responsibilities</h3>
+                        <article class="career-block">
+                            @Html.Raw(viewModel.DutiesAndResponsibilities)
+                        </article>
+                    </section>
+                }
+            </div>
+
+            <div class="col-lg-4 side">
+                <div class="widget stats-side"
+                     data-widget="stats-side"
+                     style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-wrap: wrap; gap: 1rem;">
+
+                    <!-- Dynamic Apply URL -->
+                    <a href="@viewModel.ApplyUrl"
+                       class="view-all-btn"
+                       style="margin-left: 0px; padding: 10px;">
+                        APPLY NOW
+                    </a>
+
+                    @if (!string.IsNullOrEmpty(viewModel.BasicInfo.PositionType))
+                    {
+                        <article class="career-block">
+                            <h3 class="career-block-title">Position:</h3>
+                            <ul class="career-list">
+                                <li>@viewModel.BasicInfo.PositionType</li>
+                            </ul>
+                        </article>
+                    }
+
+                    @if (!string.IsNullOrEmpty(viewModel.Address))
+                    {
+                        <article class="career-block">
+                            <h3 class="career-block-title">Location:</h3>
+                            <div>
+                                @Html.Raw(viewModel.Address.Replace("\n", "<br>"))
+                            </div>
+                        </article>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+

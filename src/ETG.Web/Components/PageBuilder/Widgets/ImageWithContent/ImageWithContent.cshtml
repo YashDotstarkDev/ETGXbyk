@@ -1,0 +1,65 @@
+@using ETG.Web.Components.PageBuilder.Widgets.ImageWithContent
+
+@model ImageWithContentWidgetViewModel
+
+@{
+    string bgClass = Model.Background switch
+    {
+        BackgroundOptions.Light => "bg-light",
+        BackgroundOptions.Dark => "bg-dark text-white",
+        _ => "",
+    };
+
+    string topMarginClass = Model.TopMargin switch
+    {
+        ImageWithContentMarginSizes.None => "pt-0",
+        ImageWithContentMarginSizes.Small => "pt-1",
+        ImageWithContentMarginSizes.Medium => "pt-3",
+        ImageWithContentMarginSizes.Large => "pt-5",
+        _ => "pt-0",
+    };
+
+    string bottomMarginClass = Model.BottomMargin switch
+    {
+        ImageWithContentMarginSizes.None => "pb-0",
+        ImageWithContentMarginSizes.Small => "pb-1",
+        ImageWithContentMarginSizes.Medium => "pb-3",
+        ImageWithContentMarginSizes.Large => "pb-5",
+        _ => "pb-0",
+    };
+
+    string sectionClasses = $"{bgClass} {topMarginClass} {bottomMarginClass} py-3".Trim();
+
+    bool isStacked = Model.Layout == ImageWithContentLayouts.ImageAbove;
+
+    string imageColClass = isStacked ? "col-12 mb-3" : "col-md-6";
+    string contentColClass = isStacked ? "col-12" : "col-md-6";
+
+    string rowClasses = Model.Layout == ImageWithContentLayouts.ImageRight ? "row flex-row-reverse align-items-center" : "row align-items-center";
+}
+
+<section class="container-fluid @sectionClasses" xpc-preview-outline="@Model.ComponentName">
+    <div class="container">
+        <div class="@rowClasses">
+            <div class="@imageColClass">
+                <img src="@Model.Image.LegacyMediaFileAsset.Url" alt="@Model.Image.LegacyMediaFileTitle" class="img-fluid" />
+            </div>
+            <div class="@contentColClass">
+                @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                {
+                    <h3>@Model.Heading</h3>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Content))
+                {
+                    @Html.Raw(Model.Content)
+                }
+
+                @if (Model.ShowCta && !string.IsNullOrWhiteSpace(Model.CtaText))
+                {
+                    <a href="@Model.CtaUrl" class="btn btn-primary mt-3">@Model.CtaText</a>
+                }
+            </div>
+        </div>
+    </div>
+</section>

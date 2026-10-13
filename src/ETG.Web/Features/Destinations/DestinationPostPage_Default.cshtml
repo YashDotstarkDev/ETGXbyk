@@ -1,0 +1,299 @@
+﻿@using System.Linq
+@using ETG.Web.Features.DestinationPostPage
+@model DestinationPostPageViewModel
+
+@functions {
+    private static string EscapeJsonStringLineBreaks(string value)
+    {
+        var result = new System.Text.StringBuilder();
+        var insideString = false;
+        var escaped = false;
+
+        foreach (var character in value)
+        {
+            if (!insideString)
+            {
+                result.Append(character);
+
+                if (character == '"')
+                {
+                    insideString = true;
+                }
+
+                continue;
+            }
+
+            if (character == '\r' || character == '\n')
+            {
+                if (escaped)
+                {
+                    result.Append(character == '\r' ? "r" : "n");
+                }
+                else
+                {
+                    result.Append(character == '\r' ? "\\r" : "\\n");
+                }
+
+                escaped = false;
+                continue;
+            }
+
+            result.Append(character);
+
+            if (escaped)
+            {
+                escaped = false;
+            }
+            else if (character == '\\')
+            {
+                escaped = true;
+            }
+            else if (character == '"')
+            {
+                insideString = false;
+            }
+        }
+
+        return result.ToString();
+    }
+}
+
+@{
+    var pageModel = Model;
+    var sticky = pageModel.DestinationStickyModel;
+
+    var schema = Model.DestinationJsonSchema ?? string.Empty;
+    var pattern = @"<script\b[^>]*>([\s\S]*?)</script\s*>";
+    var options =
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+
+    var blocks = System.Text.RegularExpressions.Regex
+        .Matches(schema, pattern, options)
+        .Cast<System.Text.RegularExpressions.Match>()
+        .Select(match => match.Groups[1].Value)
+        .Append(System.Text.RegularExpressions.Regex.Replace(
+            schema, pattern, "", options));
+}
+
+@section Scripts
+{
+    @foreach (var block in blocks.Where(
+        value => !string.IsNullOrWhiteSpace(value)))
+    {
+        string? json = null;
+
+        try
+        {
+            var normalizedBlock = EscapeJsonStringLineBreaks(block);
+
+            using var document =
+                System.Text.Json.JsonDocument.Parse(normalizedBlock);
+
+            if (document.RootElement.ValueKind is
+                System.Text.Json.JsonValueKind.Object or
+                System.Text.Json.JsonValueKind.Array)
+            {
+                json = System.Text.Json.JsonSerializer.Serialize(
+                    document.RootElement,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Invalid JSON: render nothing.
+        }
+
+        if (json is not null)
+        {
+            @Html.Raw("\n<script type=\"application/ld+json\">\n")
+            @Html.Raw(json)
+            @Html.Raw("\n</script>\n")
+        }
+    }
+}
+
+<vc:bread-crumb />
+
+<section class="hero tahiti-hero"
+         aria-label="@($"{pageModel.DestinationName} hero banner")">
+
+    @if (pageModel.DestinationHeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <picture>
+            <img src="@pageModel.DestinationHeroImage.LegacyMediaFileAsset.Url"
+                 alt="@pageModel.DestinationHeroImageAltTag"
+                 class="hero-bg" />
+        </picture>
+    }
+
+    @if (!pageModel.DestinationHeroDisableOverlay)
+    {
+        <div class="hero-overlay tahiti-hero__overlay"></div>
+    }
+
+    <div class="container text-white">
+        <div class="tahiti-hero__content">
+            <span class="tahiti-hero__eyebrow">
+                @pageModel.DestinationCampaignTitle
+            </span>
+
+            <h1 class="tahiti-hero__title">
+                @pageModel.DestinationHeading
+            </h1>
+
+            <a href="#" class="tahiti-hero__cta">
+                <i class="bi bi-chat-square-text"
+                   aria-hidden="true"></i>
+                Speak to a Tahiti specialist
+            </a>
+        </div>
+    </div>
+</section>
+
+@* Summary and detail from the currently routed destination. *@
+@if (!string.IsNullOrWhiteSpace(pageModel.DestinationSummary)
+    || !string.IsNullOrWhiteSpace(pageModel.DestinationDetail))
+{
+    var infoHeading =
+        !string.IsNullOrWhiteSpace(pageModel.DestinationHeading)
+            ? pageModel.DestinationHeading
+            : pageModel.DestinationName;
+
+    <section class="section-pad bg-lightgray"
+             aria-labelledby="tahiti-info-title">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-10">
+                    <div class="title-div">
+                        <h2 id="tahiti-info-title"
+                            class="section-title">
+                            @infoHeading
+                        </h2>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        pageModel.DestinationSummary))
+                    {
+                        <p class="text-muted"
+                           style="line-height:1.8;">
+                            @pageModel.DestinationSummary
+                        </p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        pageModel.DestinationDetail))
+                    {
+                        <div class="text-muted"
+                             style="line-height:1.8;">
+                            @Html.Raw(pageModel.DestinationDetail)
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="Zone1" />
+    </div>
+</section>
+
+@* Helpful Information between Zone1 and Zone2. *@
+@if (!string.IsNullOrWhiteSpace(pageModel.DestinationWhenToVisit))
+{
+    <section class="section-pad destination-helpful-section"
+             aria-labelledby="destination-helpful-title">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-10">
+                    <h2 id="destination-helpful-title"
+                        class="destination-helpful__title">
+                        Helpful Information
+                    </h2>
+
+                    <div class="accordion pkg-accordion"
+                         id="destinationHelpfulAccordion">
+                        <div class="accordion-item">
+                            <h3 class="accordion-header"
+                                id="destinationWhenToVisitHeading">
+                                <button class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#destinationWhenToVisit"
+                                        aria-expanded="false"
+                                        aria-controls="destinationWhenToVisit">
+                                    When to visit
+                                </button>
+                            </h3>
+
+                            <div id="destinationWhenToVisit"
+                                 class="accordion-collapse collapse"
+                                 aria-labelledby="destinationWhenToVisitHeading"
+                                 data-bs-parent="#destinationHelpfulAccordion">
+                                <div class="accordion-body">
+                                    @Html.Raw(pageModel.DestinationWhenToVisit)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="Zone2" />
+    </div>
+</section>
+
+@if (Model.CTA != null)
+{
+    <partial name="~/Views/Shared/Partial/Common/_ContactUs.cshtml"
+             model="Model.CTA" />
+}
+
+@if (pageModel?.RelatedArticles?.Any() == true)
+{
+    <section class="related-articles-section py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <h2 class="section-title mb-2">
+                        Travel Blogs &amp; Guides
+                    </h2>
+
+                    <div class="section-title-line"></div>
+                </div>
+
+                <a href="/articles" class="view-all-btn">
+                    View All
+                </a>
+            </div>
+
+            <p class="related-articles-description mb-4">
+                Inspiration, tips and travel stories from our team
+                of experts to help you plan your next unforgettable
+                journey.
+            </p>
+            <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml"
+                     model="pageModel.RelatedArticles.Take(3)" />
+        </div>
+    </section>
+}
+
+                    @if (sticky is not null
+    && sticky.DisplaySticky
+    && (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail2)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
+{
+    <partial name="~/Views/Shared/Partial/Common/_CampaignStickyBar.cshtml"
+             model="pageModel" />
+}

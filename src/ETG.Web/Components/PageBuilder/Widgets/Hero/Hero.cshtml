@@ -1,0 +1,46 @@
+@using ETG.Web.Components.PageBuilder.Widgets.Hero
+
+@model HeroWidgetViewModel
+
+@{
+    string alignmentClass = Model.TextAlignment switch
+    {
+        HeroTextAlignments.Left => "text-start",
+        HeroTextAlignments.Right => "text-end",
+        HeroTextAlignments.Center or _ => "text-center",
+    };
+
+    string overlayClass = Model.Overlay switch
+    {
+        HeroOverlayOptions.Dark_25 => "hero-overlay-25",
+        HeroOverlayOptions.Dark_50 => "hero-overlay-50",
+        HeroOverlayOptions.None or _ => "",
+    };
+
+    string paddingClass = Model.Padding switch
+    {
+        MarginSizes.Small => "py-3",
+        MarginSizes.Medium => "py-4",
+        MarginSizes.Large => "py-5",
+        MarginSizes.None or _ => "py-1"
+    };
+}
+
+<div class="hero-banner position-relative @overlayClass" xpc-preview-outline="@Model.ComponentName" style="background-image: url('@Model.Image.LegacyMediaFileAsset.Url'); background-size: cover; background-position: center;">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 @alignmentClass @paddingClass">
+                <h1 class="display-4">@Model.Title</h1>
+                @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+                {
+                    <p class="lead">@Model.Subtitle</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.CTAButtonText))
+                {
+                    <a href="@(Model.CTAUrl ?? "#")" class="btn btn-primary btn-lg">@Model.CTAButtonText</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

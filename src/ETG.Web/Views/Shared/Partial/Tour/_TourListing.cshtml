@@ -1,0 +1,137 @@
+﻿@using ETG.Core.Models.Tour
+@using ETG.Web.Components.PageBuilder.Widgets.Products
+
+@model TourListingViewModel
+
+@if (Model is null || !Model.Tours.Any())
+{
+    return;
+}
+
+<!-- ============ Tour packages ============ -->
+<section class="section-pad tahiti-v2-packages"
+    @(string.IsNullOrWhiteSpace(Model.SectionId) ? "" : $"id=\"{Html.Encode(Model.SectionId)}\"") aria-labelledby="packages-title-@Model.SectionId">
+    <div class="container">
+
+        <!-- Section Heading + View All -->
+         <div class="d-flex justify-content-between align-items-end mb-4 title-div">
+
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+            {
+                <h2 id="packages-title-@Model.SectionId"
+                    class="section-title">
+                    @Model.Heading
+                </h2>
+            }
+            @if (!Model.HideViewAllButton && !string.IsNullOrWhiteSpace(Model.ViewAllUrl))
+            {
+                <a href="@Model.ViewAllUrl" class="view-all-btn">
+                    @Model.ViewAllButtonLabel
+                </a>
+            }
+
+        </div>
+
+        <!-- Product Cards -->
+        <div class="row g-4">
+
+            @foreach (var tour in Model.Tours)
+            {
+                <div class="col-12 col-md-6 col-lg-3">
+                    <a href="@tour.Path" class="product-card-vertical">
+                        <div class="img-wrap">
+
+                            @if (!string.IsNullOrWhiteSpace(tour.HeroImageUrl))
+                            {
+                                <img loading="lazy" src="@tour.HeroImageUrl" alt="@tour.HeroImageAlt">
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(tour.Badge))
+                            {
+                                <span class="card-badge">@tour.Badge</span>
+                            }
+
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body-content">
+                            <h3 class="card-title">@Html.Raw(tour.Name)</h3>
+                            @if (!string.IsNullOrWhiteSpace(tour.Description))
+                            {
+                                <p class="card-desc">@tour.Description</p>
+                            }
+
+                            <!-- Price Block -->
+                            <div class="tahiti-v2-price-block mt-auto">
+                                @if (!string.IsNullOrWhiteSpace(tour.DaysFromLabel) || !string.IsNullOrWhiteSpace(tour.OriginalPrice))
+                                {
+                                    <div class="original-price text-uppercase">
+
+                                        @tour.DaysFromLabel
+
+                                        @if (!string.IsNullOrWhiteSpace(tour.OriginalPrice))
+                                        {
+                                            <del>@tour.OriginalPrice</del>
+                                        }
+
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(tour.CurrentPrice))
+                                {
+                                    <div class="current-price text-pink">
+
+                                        @tour.CurrentPrice
+                                        <span style="font-size: 0.55em; margin-left: 2px; font-weight: 700;">
+                                            @tour.Currency
+                                        </span>
+
+                                    </div>
+                                }
+
+                                <div class="price-note mb-3">
+
+                                    @if (!string.IsNullOrWhiteSpace(tour.PriceTypeLabel))
+                                    {
+                                        @Html.Raw(tour.PriceTypeLabel.Replace(","," <span class=\"pink-v-line\"></span> "))
+                                    }
+
+                                </div>
+
+                                <!-- Inclusion Icons (Font Awesome) -->
+                                @if (tour.InclusionIcons.Any())
+                                {
+                                    <div class="card-icons text-pink">
+
+                                        @for (var i = 0; i < tour.InclusionIcons.Count; i++)
+                                        {
+                                            var icon = tour.InclusionIcons[i];
+
+                                            <div class="icon-wrapper">
+                                                <i class="@icon.FaClass" aria-hidden="true"></i>
+                                                <span class="tooltip-text">@icon.Label</span>
+                                            </div>
+
+                                            @if (i < tour.InclusionIcons.Count - 1)
+                                            {
+                                                <span class="pink-v-line icon-divider"></span>
+                                            }
+                                        }
+
+                                    </div>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </a>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</section>

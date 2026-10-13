@@ -1,0 +1,82 @@
+@using ETG.Web.Components.PageBuilder.Widgets.CardList
+
+@model CardListWidgetViewModel
+
+@{
+    string topMarginClass = Model.TopMargin switch
+    {
+        CardListMarginSizes.Small => "pt-3",
+        CardListMarginSizes.Medium => "pt-4",
+        CardListMarginSizes.Large => "pt-5",
+        CardListMarginSizes.None or _ => ""
+    };
+
+    string bottomMarginClass = Model.BottomMargin switch
+    {
+        CardListMarginSizes.Small => "pb-3",
+        CardListMarginSizes.Medium => "pb-4",
+        CardListMarginSizes.Large => "pb-5",
+        CardListMarginSizes.None or _ => ""
+    };
+
+    // Map enum to Bootstrap column classes (mobile-first: 1 col on xs, responsive on md+)
+    string colClass = Model.Columns switch
+    {
+        CardListColumns.One => "col-12",
+        CardListColumns.Two => "col-12 col-sm-6",
+        CardListColumns.Four => "col-12 col-sm-6 col-lg-3",
+        CardListColumns.Three or _ => "col-12 col-sm-6 col-lg-4"
+    };
+}
+
+<div class="card-list-widget @topMarginClass @bottomMarginClass" xpc-preview-outline="@Model.ComponentName">
+    @if (Model.HasHeading)
+    {
+        string slug = View.SlugHelper.GenerateSlug($"card-list-{Model.Heading}");
+        <div class="mb-4">
+            <h3 id="@slug" class="mb-0">
+                @Model.Heading
+                <a title="Navigate to this heading" aria-label="Navigate to this heading" class="heading-link" href="#@slug"></a>
+            </h3>
+        </div>
+    }
+
+    <div class="row g-4">
+        @foreach (var card in Model.Cards)
+        {
+            <div class="@colClass">
+                <div class="card h-100 shadow-sm">
+                     @if (Model.ShowImage && card.Image?.LegacyMediaFileAsset != null)
+                    {
+                        <img src="@card.Image.LegacyMediaFileAsset.Url"
+                             alt="@(string.IsNullOrWhiteSpace(card.Image.LegacyMediaFileTitle) ? card.Title : card.Image.LegacyMediaFileTitle)"
+                             class="card-img-top object-fit-cover"
+                             style="max-height: 220px;"
+                             loading="lazy" />
+                    }
+
+                    <div class="card-body d-flex flex-column">
+                        @if (!string.IsNullOrWhiteSpace(card.Title))
+                        {
+                            <h5 class="card-title">@card.Title</h5>
+                        }
+
+                        @if (Model.ShowDescription && !string.IsNullOrWhiteSpace(card.Description))
+                        {
+                            <p class="card-text text-muted flex-grow-1">@card.Description</p>
+                        }
+
+                        @if (Model.ShowCta && card.HasLink)
+                        {
+                            <div class="mt-auto pt-3">
+                                <a href="@card.LinkUrl" class="btn btn-primary">
+                                    @(string.IsNullOrWhiteSpace(card.LinkTitle) ? "Learn more" : card.LinkTitle)
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

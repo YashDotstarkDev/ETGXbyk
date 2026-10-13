@@ -1,0 +1,327 @@
+﻿@using System
+@using System.Linq
+@model ETG.Web.Features.AgentPortal.AgentPortalPageViewModel
+
+@{
+    var requestedTab = Context.Request.Query["tab"]
+        .ToString()
+        .Trim()
+        .ToLowerInvariant();
+
+    var validTabs = new[]
+    {
+        "welcome", "more-info", "payment-options",
+        "marketing", "incentives", "training"
+    };
+
+    var active = validTabs.Contains(requestedTab)
+        ? requestedTab
+        : "welcome";
+
+    var heading = Model.Heading?.Trim() ?? string.Empty;
+    var lastSpace = heading.LastIndexOf(' ');
+}
+
+<vc:bread-crumb />
+
+<nav aria-label="Travel agent sections">
+    <div class="agent-tabs nav nav-tabs" role="tablist">
+        <button type="button"
+                class="agent-tab @(active == "welcome" ? "active" : "")"
+                id="welcome-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-welcome"
+                role="tab"
+                aria-controls="tab-welcome">
+            WELCOME
+        </button>
+
+        <button type="button"
+                class="agent-tab @(active == "more-info" ? "active" : "")"
+                id="more-info-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-more-info"
+                role="tab"
+                aria-controls="tab-more-info">
+            MORE INFO
+        </button>
+
+        <button type="button"
+                class="agent-tab @(active == "payment-options" ? "active" : "")"
+                id="payment-options-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-payment-options"
+                role="tab"
+                aria-controls="tab-payment-options">
+            PAYMENT OPTIONS
+        </button>
+
+        <button type="button"
+                class="agent-tab @(active == "marketing" ? "active" : "")"
+                id="marketing-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-marketing"
+                role="tab"
+                aria-controls="tab-marketing">
+            MARKETING CAMPAIGNS
+        </button>
+
+        <button type="button"
+                class="agent-tab @(active == "incentives" ? "active" : "")"
+                id="incentives-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-incentives"
+                role="tab"
+                aria-controls="tab-incentives">
+            AGENT INCENTIVES
+        </button>
+
+        <button type="button"
+                class="agent-tab @(active == "training" ? "active" : "")"
+                id="training-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tab-training"
+                role="tab"
+                aria-controls="tab-training">
+            TRAINING &amp; UPDATES
+        </button>
+    </div>
+</nav>
+
+<div class="tab-content" id="agentTabsContent">
+
+    <section class="tab-pane fade @(active == "welcome" ? "show active" : "")"
+             id="tab-welcome"
+             role="tabpanel"
+             aria-labelledby="welcome-tab">
+        <div class="agent-welcome">
+            <div class="container">
+                <h1>
+                    @if (lastSpace > 0)
+                    {
+                        @heading[..lastSpace]
+                        <span>@heading[(lastSpace + 1)..]</span>
+                    }
+                    else
+                    {
+                        @heading
+                    }
+                </h1>
+
+                <div class="agent-welcome-copy">
+                    @Html.Raw(Model.MainDescription)
+                </div>
+            </div>
+        </div>
+
+        <section class="destination-content-section py-5">
+            <div class="container">
+                <editable-area area-identifier="WelcomeZone" />
+            </div>
+        </section>
+    </section>
+
+    <section class="tab-pane fade @(active == "more-info" ? "show active" : "")"
+             id="tab-more-info"
+             role="tabpanel"
+             aria-labelledby="more-info-tab">
+        <div class="container agent-pane">
+            @if (!string.IsNullOrWhiteSpace(Model.BookingHeading))
+            {
+                <h2>@Model.BookingHeading</h2>
+            }
+
+            <div class="agent-rich-text">
+                @Html.Raw(Model.BookingDescription)
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.InstructionHeading))
+            {
+                <h3>@Model.InstructionHeading</h3>
+                <div class="agent-rich-text">
+                    @Html.Raw(Model.InstructionDescription)
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.BookingOptionsHeading) &&
+                 !string.IsNullOrWhiteSpace(Model.BookingOptionsDescription))
+            {
+                <h3>@Model.BookingOptionsHeading</h3>
+                <div class="agent-rich-text">
+                    @Html.Raw(Model.BookingOptionsDescription)
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="tab-pane fade @(active == "payment-options" ? "show active" : "")"
+             id="tab-payment-options"
+             role="tabpanel"
+             aria-labelledby="payment-options-tab">
+        <div class="container agent-pane">
+            @if (!string.IsNullOrWhiteSpace(Model.PaymentsHeading))
+            {
+                <h2>@Model.PaymentsHeading</h2>
+            }
+
+            <div class="agent-rich-text">
+                @Html.Raw(Model.PaymentsDescription)
+            </div>
+        </div>
+    </section>
+
+    <section class="tab-pane fade @(active == "marketing" ? "show active" : "")"
+             id="tab-marketing"
+             role="tabpanel"
+             aria-labelledby="marketing-tab">
+        <div class="container agent-pane">
+            <div class="agent-rich-text">
+                @Html.Raw(Model.ToolkitDescription)
+            </div>
+
+            <div class="agent-card-grid">
+                @foreach (var toolkit in Model.Toolkits)
+                {
+                    <article class="agent-card campaign-card">
+                        @if (!string.IsNullOrWhiteSpace(toolkit.ImageUrl))
+                        {
+                            <img class="agent-card-image"
+                                 src="@toolkit.ImageUrl"
+                                 alt="@toolkit.Name"
+                                 loading="lazy" />
+                        }
+
+                        <h2 class="agent-card-title">
+                            @if (!string.IsNullOrWhiteSpace(toolkit.Url))
+                            {
+                                <a href="@toolkit.Url"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    @toolkit.Name
+                                </a>
+                            }
+                            else
+                            {
+                                @toolkit.Name
+                            }
+                        </h2>
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="tab-pane fade @(active == "incentives" ? "show active" : "")"
+             id="tab-incentives"
+             role="tabpanel"
+             aria-labelledby="incentives-tab">
+        <div class="container agent-pane">
+            @if (!string.IsNullOrWhiteSpace(Model.IncentiveDescription))
+            {
+                <div class="agent-rich-text">
+                    @Html.Raw(Model.IncentiveDescription)
+                </div>
+            }
+
+            <div class="agent-incentives-grid">
+                @foreach (var incentive in Model.Incentives)
+                {
+                    <article class="agent-incentive-card">
+                        @if (!string.IsNullOrWhiteSpace(incentive.ImageUrl))
+                        {
+                            <img class="agent-incentive-card__image"
+                                 src="@incentive.ImageUrl"
+                                 alt="@incentive.Name"
+                                 loading="lazy" />
+                        }
+
+                        <div>
+                            <span class="agent-incentive-card__label">
+                                @incentive.Name
+                            </span>
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                incentive.Description))
+                            {
+                                <div class="agent-incentive-card__title">
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        incentive.Url))
+                                    {
+                                        <a href="@incentive.Url">
+                                            @Html.Raw(incentive.Description)
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        @Html.Raw(incentive.Description)
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="tab-pane fade @(active == "training" ? "show active" : "")"
+             id="tab-training"
+             role="tabpanel"
+             aria-labelledby="training-tab">
+        <div class="container agent-pane">
+            <div class="agent-rich-text">
+                @Html.Raw(Model.WebinarDescription)
+            </div>
+
+            <div class="agent-card-grid">
+                @foreach (var webinar in Model.Webinars)
+                {
+                    <article class="agent-card">
+                        @if (!string.IsNullOrWhiteSpace(webinar.ImageUrl))
+                        {
+                            <img class="agent-card-image"
+                                 src="@webinar.ImageUrl"
+                                 alt="@webinar.Name"
+                                 loading="lazy" />
+                        }
+
+                        <h2 class="agent-card-title">
+                            @if (!string.IsNullOrWhiteSpace(
+                                webinar.RecordingUrl))
+                            {
+                                <a href="@webinar.RecordingUrl"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    @webinar.Name
+                                </a>
+                            }
+                            else
+                            {
+                                @webinar.Name
+                            }
+                        </h2>
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            webinar.Description))
+                        {
+                            <div class="agent-card-description">
+                                @Html.Raw(webinar.Description)
+                            </div>
+                        }
+
+                        @if (string.IsNullOrWhiteSpace(
+                                webinar.RecordingUrl) &&
+                             webinar.ComingSoonDate != default &&
+                             webinar.ComingSoonDate != DateTime.MaxValue)
+                        {
+                            <p>
+                                Coming soon:
+                                @webinar.ComingSoonDate.ToString("dd MMM yyyy")
+                            </p>
+                        }
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+</div>

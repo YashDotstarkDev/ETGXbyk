@@ -1,0 +1,27 @@
+﻿@using ETG.Web.Components.ViewComponents.CurrencyDropdown
+@model CurrencyDropdownViewModel
+
+@if (Model.Currencies.Any())
+{
+    var returnUrl = Uri.EscapeDataString($"{Context.Request.Path}{Context.Request.QueryString}");
+
+   <select class="currency-select"
+        name="currency"
+        onchange="window.location.href='/currency/set/' + this.value + '?returnUrl=@returnUrl'">
+
+    @foreach (var currency in Model.Currencies)
+    {
+        <option value="@currency"
+                selected="@(currency == Model.CurrentCurrency)">
+            @currency
+        </option>
+    }
+</select>
+
+    <div class="conversion" style="display:none;"
+         data-currency="@Model.CurrentCurrency"
+         data-symbol="@Model.CurrentCurrencySymbol"
+         data-rate="@Model.ConversionRate"
+         data-discount="@Model.CurrencyApplyDiscounts.ToString().ToLower()">
+    </div>
+}

@@ -1,0 +1,135 @@
+﻿@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationViewModel
+
+@{
+    void RenderMobileItem(ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel item)
+    {
+        if (item.HasChildren)
+        {
+       <a  class="mob-nav-link" onclick="toggleMob('lvl-@item.Id')">
+               @item.Name <i class="bi bi-chevron-down"></i>
+         </a>
+            <div id="lvl-@item.Id" class="mob-sub-container">
+                @{ RenderChildren(item.Children, 1); }
+            </div>
+        }
+        else
+        {
+            <a href="@(string.IsNullOrWhiteSpace(item.LinkTo) ? "#" : item.LinkTo)" class="mob-nav-link" target="@item.Target">@item.Name</a>
+        }
+    }
+
+    void RenderChildren(List<ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel> children, int depth)
+    {
+        var categories = children.Where(c => c.HasChildren).ToList();
+        var leaves = children.Where(c => !c.HasChildren).ToList();
+
+        foreach (var category in categories)
+        {
+            RenderMobileCategory(category, depth);
+        }
+
+        if (leaves.Any())
+        {
+            var linkPadding = 15 + (depth * 15);
+            var listStyle = depth > 1 ? "background-color: #f9f9f9;" : "";
+
+            <ul id="@(categories.Any() ? "" : $"lvl-{leaves.First().Id}-group")" class="mob-sub-list show" style="@listStyle">
+                @foreach (var leaf in leaves)
+                {
+                    <li><a href="@(string.IsNullOrWhiteSpace(leaf.LinkTo) ? "#" : leaf.LinkTo)" target="@leaf.Target" style="padding-left: @(linkPadding)px;">@leaf.Name</a></li>
+                }
+            </ul>
+        }
+    }
+
+    void RenderMobileCategory(ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel category, int depth)
+    {
+        var triggerPadding = 15 + (depth * 15);
+        var triggerStyle = depth > 1
+            ? $"padding-left: {triggerPadding}px; text-transform: capitalize; border-bottom: none; padding-bottom: 5px; font-weight: 600;"
+            : "";
+
+        <div class="mob-sub-trigger" style="@triggerStyle" onclick="toggleMob('lvl-@category.Id')">
+            @category.Name <i class="bi bi-plus"></i>
+        </div>
+
+        var allLeaves = category.Children.All(c => !c.HasChildren);
+
+        if (allLeaves)
+        {
+            var linkPadding = 15 + ((depth + 1) * 15);
+            var listStyle = depth > 1 ? "background-color: #f9f9f9;" : "";
+
+            <ul id="lvl-@category.Id" class="mob-sub-list" style="@listStyle">
+                @foreach (var link in category.Children)
+                {
+                    <li><a href="@(string.IsNullOrWhiteSpace(link.LinkTo) ? "#" : link.LinkTo)" target="@link.Target" style="padding-left: @(linkPadding)px;">@link.Name</a></li>
+                }
+            </ul>
+        }
+        else
+        {
+            <div id="lvl-@category.Id" class="mob-sub-list">
+                @{ RenderChildren(category.Children, depth + 1); }
+            </div>
+        }
+    }
+}   
+
+<header class="etg-navbar">
+    <div class="etg-navbar__inner">
+
+        <a href="/" class="etg-logo">
+    @if (!string.IsNullOrWhiteSpace(Model.Layout?.BrandLogoSvg))
+    {
+        @Html.Raw(Model.Layout.BrandLogoSvg)
+    }
+    @* else
+    {
+        <img src="./images/Entire Travel Group_Horizontal_Positive.png" alt="logo">
+    } *@
+</a>
+
+       
+
+        <nav class="etg-nav__center">
+            @foreach (var item in Model.RootItems)
+            {
+                @await Html.PartialAsync("~/Components/ViewComponents/MainNavigation/NavigationItem.cshtml", item)
+            }
+        </nav>
+
+        <div class="etg-nav__right">
+            <div class="mob-icons d-md-none">
+                <a href="tel:@(Model.Layout?.ContactNumber)" class="mob-btn"><img src="~/images/PhoneIcon.svg" alt="Phone"></a>
+                <a href="@(Model.Layout.SearchPageUrl)" class="mob-btn"><img src="~/images/SearchIcon.svg" alt="search"></a>
+            </div>
+            <a href="tel:@(Model.Layout?.ContactNumber )" class="phone-block d-none d-lg-block">  
+               @* ?? "0290943322" *@
+    <i class="bi bi-telephone" style="margin-right: 7px;"></i>@(Model.Layout?.ContactNumber )
+</a>
+            <a href="@(Model.Layout.ContactPageUrl)" class="btn-enquire d-none d-md-block">@(Model.Layout?.NavCtaText)</a>
+            @* ?? "Enquire Now" *@
+            <button class="btn d-md-none p-0" data-bs-toggle="offcanvas" data-bs-target="#mMenu">
+                <img src="~/images/Hamburger.svg" alt="menu">
+            </button>
+        </div>
+
+    </div>
+</header>
+
+<div class="offcanvas offcanvas-end w-75" id="mMenu">
+    <div class="offcanvas-header">
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div class="p-3 px-5 mob-cta">
+            <a href="@(Model.Layout.ContactPageUrl)" class="btn-enquire w-100 d-block text-center py-3">@(Model.Layout?.NavCtaText)</a>
+        </div>
+
+        @foreach (var item in Model.RootItems)
+        {
+            RenderMobileItem(item);
+        }
+    </div>
+</div>

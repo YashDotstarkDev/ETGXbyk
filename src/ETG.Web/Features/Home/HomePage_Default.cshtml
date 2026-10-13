@@ -1,0 +1,367 @@
+@model ETG.Web.Features.Home.HomePageViewModel
+
+@{
+    var pageModel = Model;
+
+    var schema = Model.HomepageJsonSchema ?? "";
+    var pattern = @"<script\b[^>]*>([\s\S]*?)</script\s*>";
+    var options =
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+
+    var blocks = System.Text.RegularExpressions.Regex
+        .Matches(schema, pattern, options)
+        .Cast<System.Text.RegularExpressions.Match>()
+        .Select(m => m.Groups[1].Value)
+        .Append(System.Text.RegularExpressions.Regex.Replace(
+            schema, pattern, "", options));
+}
+
+@section Scripts
+{
+    @foreach (var block in blocks.Where(
+        b => !string.IsNullOrWhiteSpace(b)))
+    {
+        string? json = null;
+
+        try
+        {
+            using var doc =
+                System.Text.Json.JsonDocument.Parse(block);
+
+            if (doc.RootElement.ValueKind is
+                System.Text.Json.JsonValueKind.Object or
+                System.Text.Json.JsonValueKind.Array)
+            {
+                json = System.Text.Json.JsonSerializer.Serialize(
+                    doc.RootElement,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Invalid JSON: render nothing.
+        }
+
+        if (json is not null)
+        {
+            @Html.Raw("\n<script type=\"application/ld+json\">\n")
+            @Html.Raw(json)
+            @Html.Raw("\n</script>\n")
+        }
+    }
+}
+
+<style>
+    .proof-points-no-line .section-title::before,
+    .proof-points-no-line .section-title::after,
+    .proof-points-no-line .title-div::before,
+    .proof-points-no-line .title-div::after {
+        display: none !important;
+    }
+
+    .proof-points-no-line .section-title {
+        border-bottom: none !important;
+        text-decoration: none !important;
+    }
+</style>
+<!-- HERO -->
+<section class="hero hero-sec-pad" aria-label="Hero">
+
+    @if (Model.HeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <picture>
+            <img src="@Model.HeroImage.LegacyMediaFileAsset.Url"
+                 alt=""
+                 class="hero-bg" />
+        </picture>
+    }
+
+    <div class="hero-overlay"></div>
+
+    <div class="container hero-content text-center text-white">
+
+        @if (!string.IsNullOrWhiteSpace(Model.HeroCaption))
+        {
+            var title = Model.HeroCaption.Trim();
+            var lastSpace = title.LastIndexOf(' ');
+            var titleStart = lastSpace < 0 ? "" : title[..lastSpace];
+            var lastWord = title[(lastSpace + 1)..];
+
+            <h1 class="display-4 fw-bold">
+                @if (!string.IsNullOrEmpty(titleStart))
+                {
+                    @titleStart
+                    <text> </text>
+                }
+
+                <span class="accent-italic" style="color: #c65391;">
+                    @lastWord
+                </span>
+            </h1>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.HeroSubCaption))
+        {
+            <p>@Model.HeroSubCaption</p>
+        }
+
+        <form class="hero-search shadow-lg"
+              role="search"
+              id="heroSearchForm"
+              data-app-id="@Model.SearchAppId"
+              data-api-key="@Model.SearchApiKey"
+              data-index-name="@Model.SearchIndexName">
+
+            <div class="row g-0 align-items-center">
+
+                <!-- 1. Destination (DYNAMIC from Algolia) -->
+                <div class="col-4 col-md-3 search-field">
+                    <label class="form-label">Destination</label>
+
+                    <select class="form-select tom-select"
+                            aria-label="Destination"
+                            id="heroDestination">
+                        <option value="all">Select destination</option>
+                    </select>
+                </div>
+
+                <!-- 2. Experience (DYNAMIC from Algolia) -->
+                <div class="col-4 col-md-3 search-field">
+                    <label class="form-label">Experience</label>
+
+                    <select class="form-select tom-select"
+                            aria-label="Experience"
+                            id="heroExperience">
+                        <option value="all">Select experience</option>
+                    </select>
+                </div>
+
+                <!-- 3. Keyword -->
+                <div class="col-4 col-md-3 search-field">
+                    <label class="form-label">Keyword</label>
+
+                    <input type="text"
+                           name="Keyword"
+                           id="heroKeyword"
+                           placeholder="Keyword"
+                           class="form-control">
+                </div>
+
+                <!-- 4. Button -->
+                <div class="col-12 col-md-3 d-grid mt-3 mt-md-0 text-center">
+                    <button type="submit"
+                            class="btn btn-pink btn-lg search-btn">
+                        Find
+                    </button>
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+</section>
+
+
+<!-- WHEN EXPERIENCE MATTERS -->
+@if (!string.IsNullOrWhiteSpace(Model.ProofPointsTitle))
+{
+    <section class="hero-sec-pad hero-sec-pad2 proof-points-no-line">
+        <div class="container">
+            <div class="d-flex justify-content-center border-0 align-items-end title-div">
+                <h2 class="section-title text-center">
+                    @Model.ProofPointsTitle
+                </h2>
+            </div>
+
+            <div class="container">
+                <editable-area area-identifier="editableAreaTop" />
+            </div>
+        </div>
+    </section>
+}
+<div class="container">
+<editable-area area-identifier="editableAreaTop" />
+</div>
+
+<!-- TOP DESTINATIONS -->
+@if (!string.IsNullOrWhiteSpace(Model.DestinationsTitle))
+{
+    <section class="section-pad pt-4"
+             aria-labelledby="destinations-title">
+
+        <div class="container">
+
+            @if (!string.IsNullOrWhiteSpace(Model.DestinationsTitle))
+            {
+                <div class="title-div mb-4">
+                    <h2 id="destinations-title"
+                        class="section-title mb-0">
+                        @Model.DestinationsTitle
+                    </h2>
+                </div>
+            }
+
+            <editable-area area-identifier="homeDestinations" />
+
+        </div>
+    </section>
+}
+        <div class="container">
+<editable-area area-identifier="editableAreaTop" />
+</div>
+
+<!-- EXPLORE EXPERIENCES -->
+@if (Model.Experiences.Count > 0)
+{
+    <partial name="~/Views/Shared/Partial/Experience/_ExploreExperiences.cshtml"
+             model="Model.Experiences" />
+}
+
+<section class="section-pad bg-lightgray" aria-labelledby="expertise-title">
+    <div class="container">
+        <div class="title-div">
+            <h2 id="expertise-title" class="section-title">Destination expertise you can trust</h2>
+        </div>
+        <p class="text-muted mb-4" style="max-width:640px">
+            Backed by decades of expertise, industry partnerships and award
+            winning service.
+        </p>
+
+        <div class="row g-4 text-center">
+            <!-- Card 1 -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
+                    <div class="expertise-icon-wrap mb-3 mx-auto">
+                        <img src="@Url.Content("~/images/w-50-experience.png")" width="20px" alt="" srcset="">
+                    </div>
+                    <h3 class="expertise-number text-pink fw-bold mb-2">50+</h3>
+                    <h6 class="fw-bold text-dark mb-2">Years of experience</h6>
+                    <p class="small text-muted mb-0">Founded in 1971 — five decades of crafting travel experiences.</p>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
+                    <div class="expertise-icon-wrap mb-3 mx-auto">
+                        <img src="@Url.Content("~/images/w-handpicked-suppliars.svg")" width="30px" alt="" srcset="">
+                    </div>
+                    <h3 class="expertise-number text-pink fw-bold mb-2">20+</h3>
+                    <h6 class="fw-bold text-dark mb-2">Tourism board partnerships</h6>
+                    <p class="small text-muted mb-0">Official partnerships across our key destinations.</p>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
+                    <div class="expertise-icon-wrap mb-3 mx-auto">
+                        <i class="bi bi-people text-pink"></i>
+                    </div>
+                    <h3 class="expertise-number text-pink fw-bold mb-2">100+</h3>
+                    <h6 class="fw-bold text-dark mb-2">Years of team knowledge</h6>
+                    <p class="small text-muted mb-0">A team of specialists with first-hand destination knowledge.</p>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
+                    <div class="expertise-icon-wrap mb-3 mx-auto">
+                        <img src="@Url.Content("~/images/award winning.svg")" width="120px" srcset="">
+                    </div>
+                    <h3 class="expertise-number text-pink fw-bold mb-2">Awards</h3>
+                    <h6 class="fw-bold text-dark mb-2">Winning service</h6>
+                    <p class="small text-muted mb-0">Multiple awards from peak industry bodies.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5 text-muted" style="font-size: 0.85rem;">
+            Official partners with <span class="fw-bold text-dark">Destination Canada</span>,
+            <span class="fw-bold text-dark">Switzerland Tourism</span>,
+            <span class="fw-bold text-dark">Tahiti Tourisme</span>
+            and more.
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <editable-area area-identifier="middle" />
+    </div>
+    
+    <div class="container">
+        <editable-area area-identifier="bottom" />
+        </div>
+
+<!-- BLOGS -->
+@{
+    var articles = Model.RelatedArticles?.Take(3).ToList();
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.BlogsTitle)
+    || !string.IsNullOrWhiteSpace(Model.BlogsDescription)
+    || articles?.Any() == true)
+{
+    <section class="section-pad related-articles-section"
+             aria-labelledby="blogs-title">
+
+        <div class="container">
+
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+
+                <div>
+                    <h2 id="blogs-title"
+                        class="section-title mb-2">
+                        @(string.IsNullOrWhiteSpace(Model.BlogsTitle)
+                            ? "Travel Blogs & Guides"
+                            : Model.BlogsTitle)
+                    </h2>
+
+                    <div class="section-title-line"></div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.BlogsViewAllUrl))
+                {
+                    <a href="@Model.BlogsViewAllUrl"
+                       class="view-all-btn">
+                        View All
+                    </a>
+                }
+
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.BlogsDescription))
+            {
+                <div class="related-articles-description mb-4">
+                    @Html.Raw(Model.BlogsDescription)
+                </div>
+            }
+
+            @if (articles?.Any() == true)
+            {
+                <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml"
+                         model="articles" />
+            }
+
+        </div>
+    </section>
+}
+
+
+
+      <div class="container">
+          <editable-area area-identifier="bottom2" />          
+      </div>
+
+<!-- ============================================== -->
+<!-- ALGOLIA EXTERNAL SCRIPTS                      -->
+<!-- ============================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+
+<script src="~/algolia/homepagescript.js"
+        asp-append-version="true"></script>

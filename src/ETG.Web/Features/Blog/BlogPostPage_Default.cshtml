@@ -1,0 +1,537 @@
+@using Microsoft.AspNetCore.Html
+@using ETG.Web.Features.Blog
+@model TemplateViewModel<BlogPostPageTemplateProperties>
+
+@{
+    var post = Model.GetTemplateModel<BlogPostDetailViewModel>();
+    var encodedTitle = Uri.EscapeDataString(post.Title);
+}
+
+@section Styles {
+    <style>
+        .blog-hero-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+
+        .blog-hero-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .blog-breadcrumb {
+            background-color: #f8f9fa;
+            padding: 12px 0;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+            .blog-breadcrumb .breadcrumb {
+                margin: 0;
+            }
+
+            .blog-breadcrumb .breadcrumb-item {
+                color: #6c757d;
+            }
+
+                .blog-breadcrumb .breadcrumb-item.active {
+                    color: #495057;
+                    font-weight: 500;
+                }
+
+            .blog-breadcrumb a {
+                color: #007bff;
+                text-decoration: none;
+            }
+
+                .blog-breadcrumb a:hover {
+                    color: #0056b3;
+                    text-decoration: underline;
+                }
+
+        .blog-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 25px;
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .blog-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .blog-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .blog-category-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background-color: #e7f3ff;
+            color: #0066cc;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+            .blog-category-badge:hover {
+                background-color: #0066cc;
+                color: white;
+            }
+
+        .blog-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 20px 0 15px;
+            line-height: 1.2;
+        }
+
+        @@media (max-width: 768px) {
+            .blog-title {
+                font-size: 1.75rem;
+            }
+        }
+
+        .blog-teaser-image {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 40px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .blog-content-wrapper {
+            background: white;
+            padding: 40px 0;
+        }
+
+        .blog-main-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .blog-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+            .blog-content p {
+                margin-bottom: 20px;
+            }
+
+            .blog-content h2 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin: 40px 0 20px;
+                padding-top: 20px;
+            }
+
+            .blog-content h3 {
+                font-size: 1.4rem;
+                font-weight: 600;
+                color: #2c3e50;
+                margin: 30px 0 15px;
+            }
+
+            .blog-content ul,
+            .blog-content ol {
+                margin: 20px 0 20px 30px;
+            }
+
+            .blog-content li {
+                margin-bottom: 10px;
+            }
+
+            .blog-content blockquote {
+                border-left: 4px solid #007bff;
+                padding: 20px 25px;
+                margin: 25px 0;
+                background-color: #f8f9fa;
+                font-style: italic;
+                color: #555;
+            }
+
+            .blog-content img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                margin: 30px 0;
+            }
+
+            .blog-content code {
+                background-color: #f4f4f4;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                font-size: 0.9em;
+            }
+
+            .blog-content pre {
+                background-color: #f4f4f4;
+                padding: 15px;
+                border-radius: 5px;
+                overflow-x: auto;
+                margin: 20px 0;
+            }
+
+        .blog-share-section {
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 30px 0;
+            margin: 50px 0;
+        }
+
+        .blog-share-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+        }
+
+        .blog-share-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .share-btn-linkedin {
+            background-color: #0a66c2;
+            color: white;
+        }
+
+            .share-btn-linkedin:hover {
+                background-color: #084a96;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3);
+            }
+
+        .share-btn-facebook {
+            background-color: #1877f2;
+            color: white;
+        }
+
+            .share-btn-facebook:hover {
+                background-color: #165ec9;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+            }
+
+        .share-btn-twitter {
+            background-color: #000;
+            color: white;
+        }
+
+            .share-btn-twitter:hover {
+                background-color: #333;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+        .blog-author-section {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 50px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .blog-author-header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .blog-author-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #667eea;
+        }
+
+        .blog-author-info h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 5px;
+            color: #1a1a1a;
+        }
+
+        .blog-author-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .blog-author-bio {
+            margin-top: 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .blog-related-posts {
+            margin-top: 60px;
+            padding-top: 40px;
+        }
+
+        .blog-related-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+        }
+
+        .blog-post-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+
+            .blog-post-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            }
+
+        .blog-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .blog-card-body {
+            padding: 20px;
+        }
+
+        .blog-card-date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .blog-card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+            .blog-card-title a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+                .blog-card-title a:hover {
+                    color: #007bff;
+                }
+
+        .blog-card-description {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .blog-card-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .blog-card-category {
+            display: inline-block;
+            padding: 3px 10px;
+            background-color: #f0f0f0;
+            color: #666;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+            .blog-card-category:hover {
+                background-color: #007bff;
+                color: white;
+            }
+    </style>
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<!-- Blog Hero Section -->
+<div class="blog-hero-section">
+    <div class="container blog-hero-content">
+        <!-- Meta Information -->
+        <div class="blog-meta">
+            <div class="blog-meta-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>@post.PublishedDate</span>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <h1 class="blog-title">@post.Title</h1>
+
+        <!-- Categories -->
+        @if (post.BlogCategory?.Any() == true)
+        {
+            <div class="blog-categories">
+                @foreach (var category in post.BlogCategory)
+                {
+                    <span class="blog-category-badge">@category.Title</span>
+                }
+            </div>
+        }
+
+        <!-- Short Description -->
+        @if (!string.IsNullOrWhiteSpace(post.ShortDescription))
+        {
+            <p style="font-size: 1.1rem; color: #666; margin-top: 20px; font-style: italic;">
+                @post.ShortDescription
+            </p>
+        }
+    </div>
+</div>
+
+<!-- Featured Image -->
+@if (post.TeaserImage?.LegacyMediaFileAsset != null)
+{
+    <div class="container">
+        <img src="@post.TeaserImage.LegacyMediaFileAsset.Url" alt="@post.TeaserImage.LegacyMediaFileTitle" class="blog-teaser-image" loading="lazy">
+    </div>
+}
+
+<!-- Blog Content -->
+<div class="blog-content-wrapper">
+    <div class="container blog-main-content">
+        <div class="blog-content">
+            @Html.Raw(post.UnsanitizedContentHTML)
+        </div>
+
+        <!-- Author Section -->
+        @if (post.Author != null)
+        {
+            <div class="blog-author-section">
+                <div class="blog-author-header">
+                    @if (post.Author.Photo != null)
+                    {
+                        <img src="@post.Author.Photo.LegacyMediaFileAsset.Url" alt="@post.Author.FullName" class="blog-author-photo">
+                    }
+                    <div class="blog-author-info">
+                        <h4>About the Author</h4>
+                        <p>@post.Author.FullName</p>
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(post.Author.Biography))
+                {
+                    <div class="blog-author-bio">
+                        @Html.Raw(post.Author.Biography)
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Share Section -->
+        <div class="blog-share-section">
+            <div class="blog-share-title">Share This Blog</div>
+            <div class="blog-share-buttons">
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url=@post.AbsoluteURL"
+                       target="_blank"
+                       rel="nofollow"
+                       class="share-btn share-btn-linkedin"
+                       title="Share on LinkedIn"
+                       aria-label="Share on LinkedIn">
+                    <i class="fa-brands fa-linkedin-in"></i>
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=@post.AbsoluteURL"
+                       target="_blank"
+                       rel="nofollow"
+                       class="share-btn share-btn-facebook"
+                       title="Share on Facebook"
+                       aria-label="Share on Facebook">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </a>
+                <a href="https://twitter.com/intent/tweet?url=@post.AbsoluteURL&text=@encodedTitle"
+                       target="_blank"
+                       rel="nofollow"
+                       class="share-btn share-btn-twitter"
+                       title="Share on Twitter"
+                       aria-label="Share on Twitter">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Related Posts -->
+        @if (post.BlogPostContentRelatedBlogs?.Any() == true)
+        {
+            <div class="blog-related-posts">
+                <h2 class="blog-related-title">Related Blogs</h2>
+                <div class="row">
+                    @foreach (var relatedPost in post.BlogPostContentRelatedBlogs.Take(3))
+                    {
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="blog-post-card">
+                               @if (!string.IsNullOrEmpty(relatedPost.TeaserImage?.LegacyMediaFileAsset?.Url))
+                               {
+                                   <img src="@relatedPost.TeaserImage.LegacyMediaFileAsset.Url"
+                                   alt="@relatedPost.TeaserImage.LegacyMediaFileTitle"
+                                   class="blog-card-image"
+                                   loading="lazy">
+                               }
+                                <div class="blog-card-body">
+                                    <div class="blog-card-date">@relatedPost.PublishedDate</div>
+                                    <div class="blog-card-title">
+                                        <a href="@relatedPost.AbsoluteURL">@relatedPost.Title</a>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(relatedPost.ShortDescription))
+                                    {
+                                        <p class="blog-card-description">@relatedPost.ShortDescription</p>
+                                    }
+                                    @if (relatedPost.BlogCategory?.Any() == true)
+                                    {
+                                        <div class="blog-card-categories">
+                                            @foreach (var category in relatedPost.BlogCategory.Take(2))
+                                            {
+                                                <span class="blog-card-category">@category.Title</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

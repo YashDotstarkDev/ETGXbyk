@@ -1,0 +1,102 @@
+﻿@using System.Collections.Generic
+@using System.Text.Json
+
+@model ETG.Web.Components.ViewComponents.BreadCrumb.BreadCrumbViewModel
+
+@if (Model == null || !Model.Items.Any())
+{
+    return;
+}
+
+@{
+    var siteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var currentPath = Context.Request.Path.Value ?? "/";
+    var currentUrl = $"{siteUrl}{currentPath}";
+
+    var breadcrumbLabels = new List<string> { "Home" };
+
+    var breadcrumbItems = new List<Dictionary<string, object?>>()
+    {
+        new Dictionary<string, object?>
+        {
+            ["@type"] = "ListItem",
+            ["position"] = 1,
+            ["item"] = new Dictionary<string, string>
+            {
+                ["name"] = "Home",
+                ["@id"] = $"{siteUrl}/"
+            }
+        }
+    };
+
+    var position = 1;
+
+    foreach (var item in Model.Items)
+    {
+        breadcrumbLabels.Add(item.Label);
+
+        position++;
+
+        var itemUrl = item.IsCurrentPage || string.IsNullOrWhiteSpace(item.Url)
+            ? currentUrl
+            : $"{siteUrl}{item.Url}";
+
+        breadcrumbItems.Add(new Dictionary<string, object?>
+        {
+            ["@type"] = "ListItem",
+            ["position"] = position,
+            ["item"] = new Dictionary<string, string>
+            {
+                ["name"] = item.Label,
+                ["@id"] = itemUrl
+            }
+        });
+    }
+
+    var breadcrumbText = string.Join(" | ", breadcrumbLabels);
+
+    var webPageSchema = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "WebPage",
+        ["breadcrumb"] = breadcrumbText,
+        ["mainEntity"] = new Dictionary<string, string>
+        {
+            ["@type"] = "Service",
+            ["url"] = currentUrl
+        }
+    };
+
+    var breadcrumbSchema = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "BreadcrumbList",
+        ["itemListElement"] = breadcrumbItems
+    };
+}
+
+<div class="breadcrumb-custom">
+    <a href="/">Home</a>
+
+    @foreach (var item in Model.Items)
+    {
+        <span> / </span>
+
+        if (item.IsCurrentPage)
+        {
+            <span>@item.Label</span>
+        }
+        else
+        {
+            <a href="@item.Url">@item.Label</a>
+        }
+    }
+</div>
+
+<script type="application/ld+json">
+    @Html.Raw(JsonSerializer.Serialize(webPageSchema))
+</script>
+
+<script type="application/ld+json">
+    @Html.Raw(JsonSerializer.Serialize(breadcrumbSchema))
+</script>

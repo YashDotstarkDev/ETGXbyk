@@ -1,0 +1,85 @@
+﻿@model ETG.Web.Features.Brochures.BrochuresPageViewModel
+
+@{
+    var heading = Model.Heading?.Trim() ?? string.Empty;
+    var lastSpace = heading.LastIndexOf(' ');
+
+    var hasMultipleWords = lastSpace > 0;
+    var blackText = hasMultipleWords ? heading[..lastSpace] : heading;
+    var pinkText = hasMultipleWords ? heading[(lastSpace + 1)..] : string.Empty;
+}
+
+<vc:bread-crumb />
+
+<main class="container-fluid brochure-section bg-lightgray">
+    <div class="container brochure-container">
+
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="brochure-main-title">
+                    @blackText
+                    @if (hasMultipleWords)
+                    {
+                        <text> </text><span class="text-pink">@pinkText</span>
+                    }
+                </h1>
+            </div>
+        </div>
+
+        @if (Model.Brochures.Count == 0)
+        {
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p>No brochures are available yet.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 brochure-grid">
+                @foreach (var brochure in Model.Brochures)
+                {
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="brochure-card">
+                            <div class="brochure-img-wrapper">
+                                @if (!string.IsNullOrWhiteSpace(
+                                    brochure.CoverImage?.LegacyMediaFileAsset?.Url))
+                                {
+                                    <img src="@brochure.CoverImage.LegacyMediaFileAsset.Url"
+                                         alt="@brochure.CoverAlt"
+                                         loading="lazy"
+                                         class="img-fluid brochure-img" />
+                                }
+                            </div>
+
+                            <h2 class="brochure-card-title">
+                                @brochure.Name
+                            </h2>
+
+                            @if (brochure.CanView)
+                            {
+                                <a href="@brochure.ViewUrl"
+                                   class="brochure-cta brochure-cta-active"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   aria-label="View @brochure.Name">
+                                    <span class="brochure-cta-div">
+                                        View Now
+                                    </span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="brochure-cta brochure-cta-disabled">
+                                    <span class="brochure-cta-div-disabled">
+                                        Coming Soon
+                                    </span>
+                                </span>
+                            }
+                        </article>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</main>

@@ -1,0 +1,37 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.HtmlText
+@using Kentico.PageBuilder.Web.Mvc
+@using Kentico.Web.Mvc
+
+@model HtmlTextWidgetViewModel
+
+<div class="container html-text">
+    @if (Model.HasSidePadding)
+    {
+        <div class="text-wrapper contained section-pad">
+
+            @if (Context.Kentico().PageBuilder().GetMode() == PageBuilderMode.Edit)
+            {
+                Html.Kentico().RichTextEditor(
+                    nameof(Model.Text));
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.Text))
+            {
+                @Html.Raw(Model.Text)
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-wrapper section-pad">
+            @if (Context.Kentico().PageBuilder().GetMode() == PageBuilderMode.Edit)
+            {
+                Html.Kentico().RichTextEditor(
+                    nameof(Model.Text));
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.Text))
+            {
+                @Html.Raw(Model.Text)
+            }
+        </div>
+    }
+</div>

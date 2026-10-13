@@ -1,0 +1,53 @@
+﻿@using ETG.Web.Components.PageBuilder.Widgets.FeaturedContentPanel
+@model FeaturedContentPanelWidgetViewModel
+
+<section class="section-pad" aria-labelledby="every-traveller-title">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5 position-relative z-2">
+                @if (!string.IsNullOrEmpty(Model.Heading))
+                {
+                    <h2 id="every-traveller-title" class="display-5 fw-bold mb-2" style="color: #1a1a1a;">
+                        @Model.Heading
+                    </h2>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.TextContent))
+                {
+                    <div class="bg-white text-box-overlap">
+                        <div class="text-muted" style="line-height: 1.8;">
+                            @Html.Raw(Model.TextContent)
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Path) && !string.IsNullOrEmpty(Model.CTALabel))
+                {
+                    <a href="@Model.Path" class="btn btn-pink px-4 py-2 text-uppercase mb-4 fw-bold mt-1 d-none d-lg-inline-block">
+                        @Model.CTALabel
+                    </a>
+                }
+            </div>
+
+            <div class="col-lg-7 position-relative z-1">
+                @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
+                {
+                    <img src="@Model.Image.LegacyMediaFileAsset.Url"
+                         alt="@(string.IsNullOrEmpty(Model.ImageCaption) ? (Model.Image.LegacyMediaFileTitle ?? Model.Heading) : Model.ImageCaption)"
+                         class="img-fluid overlap-img w-100" />
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Path) && !string.IsNullOrEmpty(Model.CTALabel))
+                {
+                    <div class="text d-lg-none">
+                        <a href="@Model.Path"
+                           class="btn btn-pink px-4 py-2 text-uppercase mt-3 fw-bold d-inline-block"
+                           style="font-size: 13px; letter-spacing: 0.5px; border-radius: 6px;">
+                            @Model.CTALabel
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>

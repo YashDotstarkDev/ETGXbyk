@@ -1,0 +1,161 @@
+@using ETG.Web.Components.PageBuilder.Widgets.RelatedBlogs
+
+@model RelatedBlogsWidgetViewModel
+
+@{
+    string topMarginClass = Model.TopMargin switch
+    {
+        RelatedBlogsMargin.Small  => "pt-3",
+        RelatedBlogsMargin.Medium => "pt-4",
+        RelatedBlogsMargin.Large  => "pt-5",
+        _                         => ""
+    };
+
+    string bottomMarginClass = Model.BottomMargin switch
+    {
+        RelatedBlogsMargin.Small  => "pb-3",
+        RelatedBlogsMargin.Medium => "pb-4",
+        RelatedBlogsMargin.Large  => "pb-5",
+        _                         => ""
+    };
+
+    // WithBorder = Bootstrap card with border and a subtle shadow
+    // Minimal    = flush card, no border, no shadow
+    string cardExtraClass = Model.CardStyle == RelatedBlogsCardStyle.WithBorder
+        ? "border shadow-sm"
+        : "border-0";
+}
+
+<div class="related-blogs-widget @topMarginClass @bottomMarginClass"
+     xpc-preview-outline="@Model.ComponentName">
+
+    @* ── Section heading ──────────────────────────────────────────────────────── *@
+    @if (Model.HasHeading)
+    {
+        string slug = View.SlugHelper.GenerateSlug($"related-blogs-{Model.Heading}");
+        <div class="mb-4">
+            <h3 id="@slug" class="mb-0">
+                @Model.Heading
+                <a title="Navigate to this heading"
+                   aria-label="Navigate to this heading"
+                   class="heading-link"
+                   href="#@slug"></a>
+            </h3>
+        </div>
+    }
+
+    @* ── Card grid ────────────────────────────────────────────────────────────── *@
+    <div class="row g-4">
+        @foreach (var post in Model.Posts)
+        {
+            <div class="@Model.ColClass">
+                <article class="card h-100 @cardExtraClass related-blogs-widget__card">
+
+                    @* ── Teaser image ──────────────────────────────────────────── *@
+                    @if (Model.ShowImage && post.TeaserImage != null)
+                    {
+                        @* Prefer thumbnail if it has a URL, fall back to full-size asset *@
+                        @* string imageUrl = !string.IsNullOrEmpty(post.TeaserImage.ThumbnailLegacyMediaFileAsset?.Url)
+                            ? post.TeaserImage.ThumbnailLegacyMediaFileAsset.Url
+                            : post.TeaserImage.LegacyMediaFileAsset.Url; *@
+
+                        string imageUrl = post.TeaserImage?.LegacyMediaFileAsset?.Url;
+                        <a href="@post.LinkPath"
+                           tabindex="-1"
+                           aria-hidden="true"
+                           class="related-blogs-widget__img-link d-block overflow-hidden">
+                            <img src="@imageUrl"
+                                 alt="@post.TeaserImage.LegacyMediaFileTitle"
+                                 class="card-img-top object-fit-cover related-blogs-widget__img"
+                                 style="max-height: 210px; width: 100%;"
+                                 loading="lazy">
+                        </a>
+                    }
+
+                    <div class="card-body d-flex flex-column">
+
+                        @* ── Tags ─────────────────────────────────────────────── *@
+                        @if (Model.ShowTags && post.Tags.Any())
+                        {
+                            <div class="mb-2 d-flex flex-wrap gap-1">
+                                @foreach (var tag in post.Tags.Take(3))
+                                {
+                                    <span class="badge text-bg-primary fw-normal">@tag.Title</span>
+                                }
+                            </div>
+                        }
+
+                        @* ── Title ────────────────────────────────────────────── *@
+                        <h5 class="card-title mb-2">
+                            <a href="@post.LinkPath"
+                               class="text-decoration-none text-body related-blogs-widget__title"
+                               title="@post.Title">
+                                @post.Title
+                            </a>
+                        </h5>
+
+                        @* ── Meta: date + author ──────────────────────────────── *@
+                        @if (Model.ShowDate || Model.ShowAuthor)
+                        {
+                            <div class="related-blogs-widget__meta d-flex flex-wrap align-items-center gap-2 text-muted small mb-2">
+
+                                @if (Model.ShowDate)
+                                {
+                                    <span class="d-flex align-items-center gap-1">
+                                        <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                        <time datetime="@post.PublishedDate.ToString("yyyy-MM-dd")">
+                                            @post.PublishedDate.ToString("MMM d, yyyy")
+                                        </time>
+                                    </span>
+                                }
+
+                                @if (Model.ShowDate && Model.ShowAuthor && post.Author != null)
+                                {
+                                    <span aria-hidden="true">&middot;</span>
+                                }
+
+                                @if (Model.ShowAuthor && post.Author != null)
+                                {
+                                    <span class="d-flex align-items-center gap-1">
+                                        @if (post.Author.Photo != null && !string.IsNullOrEmpty(post.Author.Photo.LegacyMediaFileAsset?.Url))
+                                        {
+                                            <img src="@post.Author.Photo.LegacyMediaFileAsset.Url"
+                                                 alt="@post.Author.FullName"
+                                                 width="20"
+                                                 height="20"
+                                                 class="rounded-circle object-fit-cover"
+                                                 loading="lazy">
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-person-circle" aria-hidden="true"></i>
+                                        }
+                                        <span>@post.Author.FullName</span>
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        @* ── Short description ────────────────────────────────── *@
+                        @if (Model.ShowDescription && !string.IsNullOrWhiteSpace(post.ShortDescription))
+                        {
+                            <p class="card-text text-muted flex-grow-1 related-blogs-widget__desc">
+                                @post.ShortDescription
+                            </p>
+                        }
+
+                        @* ── Read more CTA — pushed to bottom of card body ────── *@
+                        <div class="mt-auto pt-3">
+                            <a href="@post.LinkPath"
+                               class="btn btn-sm btn-outline-primary related-blogs-widget__cta"
+                               aria-label="Read more about @post.Title">
+                                Read more <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                            </a>
+                        </div>
+
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+</div>

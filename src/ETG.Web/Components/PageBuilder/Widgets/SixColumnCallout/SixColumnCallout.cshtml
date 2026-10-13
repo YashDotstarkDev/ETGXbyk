@@ -1,0 +1,304 @@
+﻿@using System.Linq
+@using System.Net
+@using System.Text.RegularExpressions
+
+@model ETG.Web.Components.PageBuilder.Widgets.SixColumnCallout.SixColumnCalloutWidgetViewModel
+
+@functions {
+    private static string FormatLabel(string? label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return string.Empty;
+        }
+
+        var text = WebUtility.HtmlDecode(label);
+        var options = RegexOptions.IgnoreCase;
+
+        text = Regex.Replace(
+            text,
+            @"<(script|style)\b[^>]*>[\s\S]*?</\1\s*>",
+            "",
+            options);
+
+        text = Regex.Replace(
+            text,
+            @"<br\b[^>]*>|</(?:h[1-6]|p|div|li)\s*>",
+            "\n",
+            options);
+
+        text = Regex.Replace(text, @"<[^>]*>", "");
+
+        text = WebUtility.HtmlDecode(text)
+            .Replace("\r\n", "\n")
+            .Replace("\r", "\n")
+            .Trim();
+
+        return WebUtility.HtmlEncode(text)
+            .Replace("\n", "<br />");
+    }
+
+    private static string FormatSvg(string? svg)
+    {
+        if (string.IsNullOrWhiteSpace(svg))
+        {
+            return string.Empty;
+        }
+
+        return Regex.Replace(
+            svg.Trim(),
+            @"^\s*<\?xml[^>]*\?>\s*",
+            "",
+            RegexOptions.IgnoreCase);
+    }
+}
+
+@{
+    var sixItems = new[]
+    {
+        new { Label = Model.Label1, Svg = Model.SVGCode1 },
+        new { Label = Model.Label2, Svg = Model.SVGCode2 },
+        new { Label = Model.Label3, Svg = Model.SVGCode3 },
+        new { Label = Model.Label4, Svg = Model.SVGCode4 },
+        new { Label = Model.Label5, Svg = Model.SVGCode5 },
+        new { Label = Model.Label6, Svg = Model.SVGCode6 }
+    }
+    .Where(item => !string.IsNullOrWhiteSpace(item.Label)
+                && !string.IsNullOrWhiteSpace(item.Svg))
+    .ToList();
+
+    var brandItems = new[]
+    {
+        new { Label = Model.Label1, Svg = Model.SVGCode1 },
+        new { Label = Model.Label2, Svg = Model.SVGCode2 },
+        new { Label = Model.Label3, Svg = Model.SVGCode3 },
+        new { Label = Model.Label4, Svg = Model.SVGCode4 }
+    }
+    .Where(item => !string.IsNullOrWhiteSpace(item.Label)
+                && !string.IsNullOrWhiteSpace(item.Svg))
+    .ToList();
+
+    var pomItems = new[]
+    {
+        new
+        {
+            Top = "CHANGE",
+            Bottom = "OF MIND",
+            Svg = Model.SVGCode1,
+            Label = Model.Label1
+        },
+        new
+        {
+            Top = "ON GROUND",
+            Bottom = "SUPPORT",
+            Svg = Model.SVGCode2,
+            Label = Model.Label2
+        },
+        new
+        {
+            Top = "FIXED",
+            Bottom = "PRICES",
+            Svg = Model.SVGCode3,
+            Label = Model.Label3
+        },
+        new
+        {
+            Top = "PROUDLY",
+            Bottom = "AUSTRALIAN",
+            Svg = Model.SVGCode4,
+            Label = Model.Label4
+        },
+        new
+        {
+            Top = "ATIA & CATO",
+            Bottom = "ACCREDITED",
+            Svg = Model.SVGCode5,
+            Label = Model.Label5
+        },
+        new
+        {
+            Top = "SUSTAINABLE",
+            Bottom = "TRAVEL",
+            Svg = Model.SVGCode6,
+            Label = Model.Label6
+        }
+    }
+    .Where(item => !string.IsNullOrWhiteSpace(item.Label)
+                && !string.IsNullOrWhiteSpace(item.Svg))
+    .ToList();
+}
+
+<style>
+    .tahiti-v2-pom-container .tv2-pom-icon {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+    }
+
+    .tahiti-v2-pom-container .tv2-pom-icon svg {
+        display: block;
+        width: 42px;
+        height: 42px;
+    }
+
+    .tahiti-v2-brand-bar .tahiti-v2-feature-item > svg,
+    .six-column-callout .feature-item > svg {
+        display: block;
+        width: 42px;
+        height: 42px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Align every caption at the top, regardless of line count. */
+.pom-section .tv2-pom-grid > .tv2-pom-item {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    min-width: 0;
+}
+
+.pom-section .tv2-pom-item > .tv2-pom-top-box {
+    box-sizing: border-box;
+    height: 150px !important;
+    min-height: 150px !important;
+    flex: 0 0 150px !important;
+    margin: 0 !important;
+}
+
+.pom-section .tv2-pom-item > .tv2-pom-bottom-text {
+    position: static !important;
+    transform: none !important;
+    display: block !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 60px;
+    margin: 0 !important;
+    padding: 20px 8px 0 !important;
+    text-align: center;
+    line-height: 1.3;
+}
+</style>
+
+@if (Model.DisplayType == "Feature Highlights" && pomItems.Any())
+{
+    <section id="@Model.SectionId"
+             class="pom-section section-pad"
+             aria-labelledby="pom-section-title">
+
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-end title-div">
+                <h2 id="pom-section-title" class="section-title">
+                    Peace Of Mind Booking Plan
+                </h2>
+
+                <a href="#" class="view-all-btn">Learn More</a>
+            </div>
+
+            <div class="pom-custom-body">
+                <div class="tahiti-v2-pom-container pt-3">
+                    <div class="tv2-pom-grid text-center"
+                         style="grid-template-columns: repeat(@pomItems.Count, minmax(0, 1fr));">
+
+                        @foreach (var item in pomItems)
+                        {
+                            <div class="tv2-pom-item">
+                                <div class="tv2-pom-top-box">
+                                    <span class="tv2-pom-text-bold">
+                                        @item.Top
+                                    </span>
+
+                                    <div class="tv2-pom-icon-wrapper">
+                                        <span class="tv2-pom-dot">&#183;</span>
+
+                                        <div class="tv2-pom-icon">
+                                            @Html.Raw(FormatSvg(item.Svg))
+                                        </div>
+
+                                        <span class="tv2-pom-dot">&#183;</span>
+                                    </div>
+
+                                    <span class="tv2-pom-text-bold">
+                                        @item.Bottom
+                                    </span>
+                                </div>
+
+                                <div class="tv2-pom-bottom-text">
+                                    @Html.Raw(FormatLabel(item.Label))
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@if (Model.DisplayType == "Brand Highlights" && brandItems.Any())
+{
+    <section id="@Model.SectionId" class="tahiti-v2-brand-bar">
+        <div class="container">
+            <div class="tahiti-v2-brand-logo-area">
+                <img src="@Url.Content("~/images/group-journey.png")"
+                     alt="Tahiti Travel Logo"
+                     class="tahiti-v2-brand-icon">
+            </div>
+
+            <div class="tahiti-v2-features"
+                 style="grid-template-columns: repeat(@brandItems.Count, minmax(0, 1fr));">
+
+                @foreach (var item in brandItems)
+                {
+                    <div class="tahiti-v2-feature-item">
+                        @Html.Raw(FormatSvg(item.Svg))
+
+                        <p>@Html.Raw(FormatLabel(item.Label))</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@if (Model.DisplayType == "Experience Highlights" && sixItems.Any())
+{
+    <section id="@Model.SectionId"
+             class="hero-sec-pad hero-sec-pad2 six-column-callout">
+
+        <div class="container">
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+            {
+                <div class="d-flex justify-content-center border-0 align-items-end title-div"
+                     style="padding-bottom:20px;">
+
+                    <h2 id="experience-title"
+                        class="section-title text-center">
+                        @Html.Raw(FormatLabel(Model.Heading))
+                    </h2>
+                </div>
+            }
+
+            <div class="row g-lg-4 text-center experience-matters-row row-cols-2 row-cols-md-@sixItems.Count">
+                @foreach (var item in sixItems)
+                {
+                    <div class="col feature-item">
+                        @Html.Raw(FormatSvg(item.Svg))
+
+                        <p>@Html.Raw(FormatLabel(item.Label))</p>
+                    </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CTALabel)
+                && !string.IsNullOrWhiteSpace(Model.CTAUrl))
+            {
+                <a href="@Model.CTAUrl"
+                   class="link-pink small d-flex justify-content-center mt-3 text-uppercase">
+                    @Html.Raw(FormatLabel(Model.CTALabel))
+                </a>
+            }
+        </div>
+    </section>
+}

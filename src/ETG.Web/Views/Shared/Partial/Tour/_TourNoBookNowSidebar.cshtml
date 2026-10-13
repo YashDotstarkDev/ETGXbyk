@@ -1,0 +1,130 @@
+﻿@using ETG.Core.Content
+@using ETG.Web.Rendering
+@using ETG.Core.Models.Tour
+
+@model (ETG.Core.Content.Tour Tour, ETG.Web.Services.Tour.TourPricingResult PriceInfo)
+
+@{
+    var tour = Model.Tour;
+    var priceInfo = Model.PriceInfo;
+
+    var price = priceInfo.CurrentPrice;
+
+    var discount = tour.TourDiscountAndOffer?
+         .SelectMany(folder =>
+             folder.SelectedDiscountAndOffers
+             ?? Enumerable.Empty<ETG.DiscountAndOffer>())
+         .FirstOrDefault();
+}
+
+@if (discount != null)
+{
+    @if (discount.DiscountExpiry > DateTime.UtcNow.Date)
+    {
+        <!-- Top On Sale Bar -->
+        <div class="widget-offer-bar">
+            <div class="widget-offer-left">
+                <div>SAVE $1,250</div>
+                <div style="font-size: 10px;">
+                        @Html.Raw(
+                        tour.TourPriceTypeLabel.Replace(
+                            ",",
+                            "<br>" ))
+                </div>
+            </div>        
+            <div class="widget-offer-right">
+                <div style="font-size: 10px;">OFFER ENDS IN</div>
+                <div class="js-offer-countdown"
+                data-end="@discount.DiscountExpiry.Date.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ss")"
+                style="display: flex; align-items: center; gap: 3px;">
+                    <i class="bi bi-clock" style="margin-right: 5px;"></i>
+                    <span data-countdown="days">00</span>D :
+                    <span data-countdown="hours">00</span>H :
+                    <span data-countdown="minutes">00</span>M :
+                    <span data-countdown="seconds">00</span>S
+                </div>                  
+            </div>        
+        </div>
+    }
+}
+
+<!-- Price Section -->
+<div class="widget-price-section">
+    @if (tour != null && tour.TourNights > 0)
+    {
+        <div class="widget-price-from">@(tour.TourNights + 1) DAYS</div>
+    }
+
+    @if (priceInfo.CurrentPrice > 0)
+    {
+        <div class="widget-price-from">
+            FROM @priceInfo.CurrencyCode <del>@priceInfo.OriginalPrice</del>
+        </div>
+    }
+
+    <div class="widget-price-main">
+        @if (priceInfo.CurrentPrice > 0)
+        {
+            <span class="widget-price-aud-label">
+                @priceInfo.CurrencyCode
+            </span>
+
+            <span class="widget-price-amount">
+                @priceInfo.CurrentPrice.ToString("N0")
+            </span>
+        }
+    </div>
+    
+
+    @if (!string.IsNullOrWhiteSpace(tour.TourPriceTypeLabel))
+    {
+        <div class="widget-price-note">
+            @Html.Raw(
+                tour.TourPriceTypeLabel.Replace(
+                    ",",
+                    " <span class=\"widget-price-separator\"> | </span> "
+                )
+            )
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(tour.TourPriceInclusions))
+    {
+        var inclusionIcons =
+            TourSummaryViewModel.ParseInclusions(tour.TourPriceInclusions);
+
+        if (inclusionIcons.Any())
+        {
+            <div class="widget-icons-row">
+
+                @foreach (var icon in inclusionIcons)
+                {
+                    <div class="widget-icon-wrapper">
+                        <i class="@icon.FaClass" aria-hidden="true"></i>
+                    </div>
+
+                    @if (icon != inclusionIcons.Last())
+                    {
+                        <span class="widget-icon-divider"></span>
+                    }
+                }
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrWhiteSpace(tour.TourCode))
+    {
+        <!-- Button -->
+        <a href="/enquire/@tour.TourCode" class="btn btn-pink widget-enquiry-btn">ENQUIRE NOW</a>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(tour.TourCode))
+    {
+        <!-- Download Link -->
+        <div class="widget-download-link">
+            <a href="/pdf/@tour.TourCode">
+                <i class="bi bi-download widget-download-icon"></i>Download Itinerary PDF
+            </a>
+        </div>
+    }
+</div>

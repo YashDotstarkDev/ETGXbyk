@@ -1,0 +1,67 @@
+@using System.Linq
+@using ETG.Web.Features.TravelType
+
+@model TravelTypeLandingPageViewModel
+@{
+    TravelTypeLandingPageViewModel? viewModel = null;
+
+    try
+    {
+        viewModel = Model;
+    }
+    catch (System.InvalidCastException)
+    {
+        viewModel = null;
+    }
+
+    if (viewModel is null)
+    {
+        return;
+    }
+}
+
+    
+
+    <vc:bread-crumb />
+
+    @await Html.PartialAsync(
+    "~/Views/Shared/Partial/Common/_Hero.cshtml",
+    viewModel.Hero)
+
+    <div class="widget new-destination-page" data-widget="new-destination-page">
+
+        <editable-area area-identifier="LandingUpper" />
+
+        <section class="intro">
+            <div class="wrapper contained">
+
+                @if (!string.IsNullOrWhiteSpace(viewModel.Intro))
+            {
+                <div class="intro-text">
+                    @viewModel.Intro
+                </div>
+            }
+
+                @if (!string.IsNullOrWhiteSpace(viewModel.Summary))
+            {
+                <p>@viewModel.Summary</p>
+            }
+            </div>
+        </section>
+        @if (viewModel.TravelTypeDetails.Any())
+    {
+        <section class="widget why-we-love-it" data-widget="why-we-love-it">
+            <div class="wrapper">
+                <partial name="~/Views/Shared/Partial/Common/_Callout.cshtml"
+                         model="viewModel.TravelTypeDetails" />
+            </div>
+        </section>
+    }
+
+
+        <editable-area area-identifier="LandingBody" />
+
+        <editable-area area-identifier="Bottom" />
+    </div>
+
+    <script src="/scripts/primary-landing.js"></script>

@@ -1,0 +1,73 @@
+﻿@using ETG.Web.Features.Destinations
+@model DestinationLandingPageViewModel
+
+@{
+    var pageModel = Model;
+
+    var heading = pageModel.Page.Heading?.Trim() ?? "";
+    var headingParts = heading.Split(
+        ' ',
+        StringSplitOptions.RemoveEmptyEntries);
+
+    var headingPrefix = headingParts.Length > 1
+        ? string.Join(" ", headingParts.Take(headingParts.Length - 1))
+        : "";
+
+    var headingHighlight = headingParts.LastOrDefault() ?? "";
+}
+
+@if (!string.IsNullOrWhiteSpace(pageModel.ContainerJsonSchema))
+{
+    <script type="application/ld+json">
+        @Html.Raw(pageModel.ContainerJsonSchema)
+    </script>
+}
+
+<vc:bread-crumb />
+
+<section class="about-hero position-relative">
+    @if (pageModel.Page.HeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <img src="@pageModel.Page.HeroImage.LegacyMediaFileAsset.Url"
+             alt="@pageModel.Page.HeroImageAltText"
+             class="about-hero-img w-100 object-fit-cover"
+             loading="lazy" />
+    }
+
+    <div class="about-hero-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end justify-content-center">
+        @if (!string.IsNullOrWhiteSpace(heading))
+        {
+            <h1 class="about-hero-title text-white fw-bold display-4"
+                style="font-size: 50px;">
+                @if (!string.IsNullOrWhiteSpace(headingPrefix))
+                {
+                    @headingPrefix
+                    <span> </span>
+                }
+
+                <span class="text-pink" style="font-size: 50px;">
+                    @headingHighlight
+                </span>
+            </h1>
+        }
+    </div>
+</section>
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="LandingBody" />
+    </div>
+</section>
+
+@if (pageModel.Items.Any())
+{
+    @await Html.PartialAsync(
+        "~/Views/Shared/Partial/Destination/_DestinationLandingListing.cshtml",
+        pageModel.Items)
+}
+
+<section class="destination-content-section py-5">
+    <div class="container">
+        <editable-area area-identifier="Bottom" />
+    </div>
+</section>
