@@ -1,19 +1,22 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.FormEngine;
 using CMS.Helpers;
 using CMS.OnlineForms;
+using CMS.OnlineForms.Types;
 using CMS.Websites;
 using ETG.Core;
 using ETG.Core.Content;
 using ETG.Core.Content.Forms;
-using ETG.Core.Models.Tour;
-using ETG.Web.Infrastructure;
 using ETG.Core.Models;
+using ETG.Core.Models.Tour;
 using ETG.Web.Components.ViewComponents.SubscribeNow;
+using ETG.Web.Infrastructure;
+using ETG.Web.Services.Storage;
+using ETG.Web.Services.Tour;
+using ETG.Web.Services.Utm;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
-
 namespace ETG.Web.Controllers;
 
 [Route("form")]
@@ -24,15 +27,24 @@ public class FormController : Controller
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ReCaptchaSettings _captchaOptions;
     private readonly ILogger<FormController> logger;
+    private readonly IUtmService _utmService;
+    private readonly IShareLinksService _shareLinksService;
+    private readonly IBlobStorageService _blobStorageService;
 
     public FormController(
         IContentQueryExecutor executor,
         IContentQueryExecutionOptionsCreator queryOptionsCreator,
         IHttpContextAccessor httpContextAccessor,
         ILogger<FormController> logger,
+        IUtmService utmService,
+        IShareLinksService shareLinksService,
+        IBlobStorageService blobStorageService,
         IOptions<ReCaptchaSettings> captchaOptions)
     {
         _executor = executor;
+        _utmService = utmService;
+        _shareLinksService = shareLinksService;
+        _blobStorageService = blobStorageService;
         _queryOptionsCreator = queryOptionsCreator;
         _httpContextAccessor = httpContextAccessor;
         _captchaOptions = captchaOptions.Value;
@@ -40,7 +52,7 @@ public class FormController : Controller
     }
 
     #region[Competition/Subscribe now VC]
-    [HttpPost("subscribe-now")]
+    [HttpPost("~/api/competition/subscribe")]
     [ValidateAntiForgeryToken]
     public IActionResult SubscribeNow([FromForm] SubscribeNowViewModel model)
     {
@@ -72,20 +84,12 @@ public class FormController : Controller
 
         try
         {
-            var item = new CompetitionItem
-            {
-                EmailAddress = model.EmailAddress.Trim(),
-                FirstName = string.Empty,
-                LastName = string.Empty
-            };
+            model.EmailAddress = model.EmailAddress.Trim();
+            model.IsTravelAgent = agentSelection;
 
-            item.SetValue(
-                nameof(CompetitionItem.IsTravelAgent),
-                agentSelection == "Yes");
+            var saved = GetSubscribeNowQuery.Save(model);
 
-            BizFormItemProvider.SetItem(item);
-
-            if (item.ItemID <= 0)
+            if (!saved)
             {
                 return StatusCode(500, new
                 {
@@ -93,6 +97,20 @@ public class FormController : Controller
                     message = "Subscription could not be saved."
                 });
             }
+
+            // ADDED: Set the cookie only after a successful save.
+            Response.Cookies.Append(
+                "ETGSubscriptionCompleted",
+                "true",
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddYears(1),
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
+                    IsEssential = false
+                });
 
             return Ok(new
             {
@@ -118,51 +136,6 @@ public class FormController : Controller
 
     #region Tour Enquiry
 
-    [HttpGet("~/enquire/{tourCode}")]
-    public async Task<IActionResult> Enquire(string tourCode, string? date = null, string? flightclass = null, string? city = null)
-    {
-        if (string.IsNullOrWhiteSpace(tourCode))
-        {
-            return NotFound();
-        }
-
-        var query = new ContentItemQueryBuilder()
-            .ForContentType(
-                Tour.CONTENT_TYPE_NAME,
-                config => config
-                    .ForWebsite("ETG")
-                    .Where(where =>
-                        where.WhereEquals(
-                            nameof(Tour.TourCode),
-                            tourCode)));
-
-        var tours = await _executor.GetMappedWebPageResult<Tour>(query, _queryOptionsCreator.Create());
-
-        var tour = tours.FirstOrDefault();
-        if (tour == null)
-        {
-            return NotFound();
-        }
-
-        var viewModel = new TourEnquireViewModel
-        {
-            Tour = tour,
-            Form = new TourEnquireFormViewModel
-            {
-                TourCode = tour.TourCode,
-                TourName = tour.TourName,
-                TourDepartureCity = !string.IsNullOrWhiteSpace(city)
-                                     ? city
-                                     : tour.TourDepartureCity,
-                TourClass = flightclass ?? string.Empty,
-                TourDate = date ?? string.Empty,
-                DepartureDate = date ?? string.Empty,
-                PriceCurrency = "AUD"
-            }
-        };
-        return View("~/Features/TourPackage/TourEnquire.cshtml", viewModel);
-    }
-
     [HttpPost("~/enquire/submit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Submit(TourEnquireViewModel model)
@@ -175,8 +148,8 @@ public class FormController : Controller
         if (!ValidateRecaptcha(
         "tour_enquire_submit",
         out var recaptchaError))
-        
-        if (string.IsNullOrWhiteSpace(model.Form.FirstName))
+
+            if (string.IsNullOrWhiteSpace(model.Form.FirstName))
             {
                 model.Form.ErrorMessage = "Please enter your first name.";
                 return await ReturnEnquireView(model);
@@ -214,28 +187,22 @@ public class FormController : Controller
             return await ReturnEnquireView(model);
         }
 
-        var tour = await GetTour(model.Form.TourCode);
-        if (tour == null)
-        {
-            return NotFound();
-        }
-
         var enquireItem = new EnquireItem
         {
-            FirstName = model.Form.FirstName.Trim(),
-            LastName = model.Form.LastName.Trim(),
+            Firstname = model.Form.FirstName.Trim(),
+            Lastname = model.Form.LastName.Trim(),
             Email = model.Form.Email?.Trim() ?? string.Empty,
             Phone = model.Form.Phone?.Trim() ?? string.Empty,
             PreferredContactMethod = model.Form.PreferredContactMethod,
-            TourCode = tour.TourCode,
-            TourName = tour.TourName,
+            TourCode = model.Form.TourCode,
+            TourName = model.Form.TourName,
             TourClass = model.Form.TourClass,
             TourDepartureCity = model.Form.TourDepartureCity,
             TourQuotedPrice = ParseQuotedPrice(model.Form.TourQuotedPrice),
             PriceCurrency = string.IsNullOrWhiteSpace(model.Form.PriceCurrency)
                             ? "AUD"
                             : model.Form.PriceCurrency,
-
+            PreferredDestination = model.Form.PreferredDestination,
             TourDiscountText = model.Form.TourDiscountText,
             TourDate = model.Form.TourDate,
             DepartureDate = model.Form.DepartureDate,
@@ -243,8 +210,28 @@ public class FormController : Controller
             SubscribeToNewsletter = model.Form.SubscribeToNewsletter,
             Message = model.Form.Message
         };
-        var tourUrl = tour.GetUrl();
-        enquireItem.TourLink = tourUrl.AbsoluteUrl;
+        var tourUrl = model.Form.TourLink;
+        enquireItem.TourLink = tourUrl;
+
+        var utm = _utmService.GetUtmCookie();
+        if (utm != null)
+        {
+            enquireItem.UTMSource =
+                utm.utm_source ?? string.Empty;
+
+            enquireItem.UTMMedium =
+                utm.utm_medium ?? string.Empty;
+
+            enquireItem.UTMCampaign =
+                utm.utm_campaign ?? string.Empty;
+
+            enquireItem.UTMContent =
+                utm.utm_content ?? string.Empty;
+
+            enquireItem.UTMTerm =
+                utm.utm_term ?? string.Empty;
+        }
+
         BizFormItemProvider.SetItem(enquireItem);
         return Redirect("/enquire/thank-you");
     }
@@ -400,13 +387,18 @@ public class FormController : Controller
             });
         }
 
+
         var enquireItem = new EnquireItem
         {
-            FirstName = model.Form.FirstName.Trim(),
-            LastName = model.Form.LastName.Trim(),
+            Firstname = model.Form.FirstName.Trim(),
+            Lastname = model.Form.LastName.Trim(),
 
             Email = model.Form.Email?.Trim() ?? string.Empty,
             Phone = model.Form.Phone?.Trim() ?? string.Empty,
+
+            DepartureDate = model.Form.DepartureDate?.Trim() ?? string.Empty,
+            ReturnDate = model.Form.ReturnDate?.Trim() ?? string.Empty,
+
 
             PreferredContactMethod =
                 model.Form.PreferredContactType,
@@ -426,6 +418,25 @@ public class FormController : Controller
             SubscribeToNewsletter =
                 model.Form.SubscribeToNewsletter
         };
+
+        var utm = _utmService.GetUtmCookie();
+        if (utm != null)
+        {
+            enquireItem.UTMSource =
+                utm.utm_source ?? string.Empty;
+
+            enquireItem.UTMMedium =
+                utm.utm_medium ?? string.Empty;
+
+            enquireItem.UTMCampaign =
+                utm.utm_campaign ?? string.Empty;
+
+            enquireItem.UTMContent =
+                utm.utm_content ?? string.Empty;
+
+            enquireItem.UTMTerm =
+                utm.utm_term ?? string.Empty;
+        }
 
         BizFormItemProvider.SetItem(enquireItem);
 
@@ -539,10 +550,10 @@ public class FormController : Controller
 
             var enquireItem = new EnquireItem
             {
-                FirstName =
+                Firstname =
                     form.FirstName.Trim(),
 
-                LastName =
+                Lastname =
                     form.LastName.Trim(),
 
                 Email =
@@ -564,6 +575,25 @@ public class FormController : Controller
 
                 Status = "New"
             };
+
+            var utm = _utmService.GetUtmCookie();
+            if (utm != null)
+            {
+                enquireItem.UTMSource =
+                    utm.utm_source ?? string.Empty;
+
+                enquireItem.UTMMedium =
+                    utm.utm_medium ?? string.Empty;
+
+                enquireItem.UTMCampaign =
+                    utm.utm_campaign ?? string.Empty;
+
+                enquireItem.UTMContent =
+                    utm.utm_content ?? string.Empty;
+
+                enquireItem.UTMTerm =
+                    utm.utm_term ?? string.Empty;
+            }
 
             BizFormItemProvider.SetItem(enquireItem);
 
@@ -604,6 +634,104 @@ public class FormController : Controller
     }
 
     #endregion
+    #region Career Application Form
+
+    [HttpPost("career-apply")]
+    [HttpPost("~/api/careers/apply")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CareerApply([FromForm] ETG.Web.Features.Careers.CareerApplyFormViewModel form)
+    {
+        if (form == null)
+        {
+            return BadRequest(new { success = false, message = "Invalid form submission." });
+        }
+
+        try
+        {
+            if (!ValidateRecaptcha("career_apply_submit", out var recaptchaError))
+            {
+                return Json(new { success = false, message = recaptchaError });
+            }
+
+            var errors = new Dictionary<string, string>();
+
+            if (string.IsNullOrWhiteSpace(form.FirstName))
+                errors["firstName"] = "Please enter a valid first name";
+
+            if (string.IsNullOrWhiteSpace(form.LastName))
+                errors["lastName"] = "Please enter a valid last name";
+
+            if (string.IsNullOrWhiteSpace(form.Email) || !new EmailAddressAttribute().IsValid(form.Email))
+                errors["email"] = "Please enter a valid email address";
+
+            if (string.IsNullOrWhiteSpace(form.Phone))
+                errors["phone"] = "Please enter a valid phone number";
+
+            if (form.CVFile == null || form.CVFile.Length == 0)
+                errors["cvFile"] = "Please upload your CV/Resume";
+
+            // K13 Spam Filter: Candidate names must contain at least one vowel
+            if (!HasVowel(form.FirstName) || !HasVowel(form.LastName))
+            {
+                return Json(new { success = false, message = "Please enter a valid first and last name." });
+            }
+
+            // Honeypot check
+            if (!string.IsNullOrWhiteSpace(form.Friend))
+            {
+                return Json(new { success = false, message = "Please enter valid values." });
+            }
+
+            if (errors.Any())
+            {
+                return Json(new { success = false, errors });
+            }
+
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+            var extension = Path.GetExtension(form.CVFile!.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                return Json(new { success = false, message = "Only PDF, DOC, and DOCX files are allowed." });
+            }
+
+            // Upload to Azure Blob Storage (or local fallback) and get /getfile download link
+            var cvRelativePath = await _blobStorageService.UploadCvAsync(form.CVFile, "jobs");
+
+            var applicationItem = new ETG.Core.Content.Forms.CareerRoleApplicationItem
+            {
+                FirstName = form.FirstName.Trim(),
+                LastName = form.LastName.Trim(),
+                Phone = form.Phone.Trim(),
+                Email = form.Email.Trim(),
+                PreferredContactMethod = form.PreferredContactMethod ?? "Email",
+                Comments = form.Comments?.Trim() ?? string.Empty,
+                CVFilePath = cvRelativePath,
+                Role = form.Role?.Trim() ?? string.Empty
+            };
+
+            BizFormItemProvider.SetItem(applicationItem);
+
+            if (applicationItem.ItemID <= 0)
+            {
+                logger.LogError("Career application could not be saved to BizForm.CareerRoleApplication.");
+                return StatusCode(500, new { success = false, message = "Your application could not be saved. Please try again." });
+            }
+
+            logger.LogInformation(
+                "Career application saved successfully. Career Item ID: {ItemID}",
+                applicationItem.ItemID);
+
+            return Json(new { success = true, redirectUrl = "/careers/apply/thank-you" });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error while processing career application.");
+            return StatusCode(500, new { success = false, message = "Something went wrong while submitting your application. Please try again." });
+        }
+    }
+
+    #endregion
+
 
 
     private bool ValidateRecaptcha(
@@ -701,4 +829,7 @@ public class FormController : Controller
 
         return true;
     }
+
+    private static bool HasVowel(string? input) =>
+        !string.IsNullOrWhiteSpace(input) && input.Any(c => "aeiouyAEIOUY".Contains(c));
 }

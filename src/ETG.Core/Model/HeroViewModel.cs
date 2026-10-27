@@ -1,9 +1,13 @@
-﻿namespace ETG.Core.Models;
+namespace ETG.Core.Models;
+
+public record HeroGalleryImageItem(string ImageUrl, string? AltText = "", string? Caption = "");
 
 public class HeroViewModel
 {
     public string HeroImageUrl { get; init; } = "";
     public string HeroImageAltText { get; init; } = "";
+
+    public IReadOnlyList<HeroGalleryImageItem> GalleryImages { get; init; } = [];
 
     public string Heading { get; init; } = "";
     public string? HeadingText { get; init; }

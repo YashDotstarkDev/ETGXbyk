@@ -14,10 +14,19 @@ public sealed class TourSummaryService(
         TourContent tour,
         string path, TourPricingResult? priceInfo)
     {
-        
-        var heroImage = tour.TourHeroImage?
+
+        var heroImages = tour.TourHeroImage?
             .OfType<MediaFile>()
             .FirstOrDefault();
+
+        var heroImage = tour.SelectedImageFolders?
+                        .FirstOrDefault()?
+                        .SelectedImages?
+                        .FirstOrDefault()?
+                        .ImageFilePath?
+                        .OfType<MediaFile>()
+                        .FirstOrDefault()
+                        ?? heroImages;
 
         var primaryCountryGuid =
             tour.TourPrimaryCountry?
@@ -74,6 +83,15 @@ public sealed class TourSummaryService(
                     CultureInfo.InvariantCulture)
                 : string.Empty;
 
+        var displayOriginalPrice = string.Empty;
+
+        if (price.CurrentPrice > 0 &&
+            price.OriginalPrice > 0 &&
+            price.CurrentPrice < price.OriginalPrice)
+        {
+            displayOriginalPrice = originalPriceText;
+        }
+
         return new TourSummaryViewModel
         {
             Name = tour.TourName ?? "",
@@ -88,7 +106,7 @@ public sealed class TourSummaryService(
                 heroImage?.LegacyMediaFileTitle
                 ?? "",
             DaysFromLabel = daysLabel,
-            OriginalPrice = originalPriceText,
+            OriginalPrice = displayOriginalPrice,
             CurrentPrice = string.IsNullOrEmpty(currentPriceText)
                             ? ""
                             : $"{price.CurrencySymbol}{currentPriceText}",

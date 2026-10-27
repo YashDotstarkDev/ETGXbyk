@@ -1,4 +1,5 @@
-﻿@using System.Linq
+@using System.Collections.Generic
+@using System.Linq
 @using ETG.Core.Models
 @model HeroViewModel
 
@@ -16,15 +17,58 @@
         : "";
 
     var pinkWord = words.LastOrDefault() ?? "";
+
+    var slides = new List<HeroGalleryImageItem>();
+
+    if (!string.IsNullOrWhiteSpace(Model.HeroImageUrl))
+    {
+        slides.Add(new HeroGalleryImageItem(
+            Model.HeroImageUrl,
+            Model.HeroImageAltText,
+            Model.HeroCaption ?? ""
+        ));
+    }
+
+    if (Model.GalleryImages is { Count: > 0 })
+    {
+        foreach (var img in Model.GalleryImages)
+        {
+            if (!string.IsNullOrWhiteSpace(img.ImageUrl) &&
+                !slides.Any(s => string.Equals(s.ImageUrl, img.ImageUrl, StringComparison.OrdinalIgnoreCase)))
+            {
+                slides.Add(img);
+            }
+        }
+    }
+
+    var isSlider = slides.Count > 1;
 }
 
 <section class="about-hero position-relative"
          aria-label="@($"{Model.Heading} hero banner")">
 
-    @if (!string.IsNullOrWhiteSpace(Model.HeroImageUrl))
+    @if (isSlider)
     {
-        <img src="@Model.HeroImageUrl"
-             alt="@Model.HeroImageAltText"
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+        <div class="swiper hero-swiper position-absolute top-0 start-0 w-100 h-100">
+            <div class="swiper-wrapper">
+                @foreach (var slide in slides)
+                {
+                    <div class="swiper-slide position-relative w-100 h-100">
+                        <img src="@slide.ImageUrl"
+                             alt="@slide.AltText"
+                             class="about-hero-img w-100 h-100 object-fit-cover"
+                             loading="lazy" />
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (slides.Count == 1)
+    {
+        var singleSlide = slides[0];
+        <img src="@singleSlide.ImageUrl"
+             alt="@singleSlide.AltText"
              class="about-hero-img w-100 object-fit-cover"
              loading="lazy" />
     }
@@ -32,6 +76,7 @@
     @if (Model.DisableOverlay == false)
     {
         <div class="about-hero-shade position-absolute top-0 start-0 w-100 h-100"
+             style="z-index: 1;"
              aria-hidden="true"></div>
     }
 
@@ -40,20 +85,14 @@
         <img src="@Model.HeroForegroundImageUrl"
              alt=""
              class="about-hero-foreground position-absolute"
+             style="z-index: 2;"
              aria-hidden="true" />
     }
 
     <div class="about-hero-overlay position-absolute top-0 start-0 w-100 h-100
-        d-flex align-items-end justify-content-center">
+        d-flex align-items-end justify-content-center" style="z-index: 2;">
         <div class="container text-white">
             <div class="about-hero__content text-center">
-                @if (!string.IsNullOrWhiteSpace(Model.HeroImageAccreditation))
-                {
-                    <span class="tahiti-hero__eyebrow">
-                        @Model.HeroImageAccreditation
-                    </span>
-                }
-
                 @if (!string.IsNullOrWhiteSpace(Model.Heading))
                 {
                     <h1 class="about-hero-title text-white fw-bold display-4"
@@ -68,12 +107,6 @@
                             @Model.Heading
                         }
                     </h1>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.HeroCaption))
-                {
-                    <p class="hero-caption">
-                        @Model.HeroCaption
-                    </p>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(Model.HeadingText))
@@ -99,11 +132,41 @@
             </div>
         </div>
     </div>
-
-    @if (!string.IsNullOrWhiteSpace(Model.HeroIconSvg))
-    {
-        <div class="experience-icon position-absolute">
-            @Html.Raw(Model.HeroIconSvg)
-        </div>
-    }
 </section>
+
+@if (isSlider)
+{
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    <script>
+        (function () {
+            function initHeroSwipers() {
+                if (typeof Swiper === 'undefined') {
+                    setTimeout(initHeroSwipers, 50);
+                    return;
+                }
+                var els = document.querySelectorAll('.hero-swiper');
+                els.forEach(function (el) {
+                    if (el.swiper) return;
+                    new Swiper(el, {
+                        loop: true,
+                        effect: 'fade',
+                        fadeEffect: {
+                            crossFade: true
+                        },
+                        speed: 1200,
+                        autoplay: {
+                            delay: 3500,
+                            disableOnInteraction: false
+                        }
+                    });
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initHeroSwipers);
+            } else {
+                initHeroSwipers();
+            }
+        })();
+    </script>
+}

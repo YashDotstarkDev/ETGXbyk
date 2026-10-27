@@ -1,12 +1,18 @@
-﻿@model ETG.Core.Models.Tour.TourEnquireViewModel
+﻿@using ETG.Core.Content
+@model ETG.Core.Models.Tour.TourEnquireViewModel
 
 @{
     var tour = Model.Tour;
     var form = Model.Form;
+    var shareLinks = Model.ShareLinks;
 }
 
 <partial name="~/Views/Shared/Partial/Tour/_TourHeroImageWithSlider.cshtml"
-         model="tour" />
+         model="tour" 
+         view-data='new ViewDataDictionary(ViewData)
+         {
+             ["ShareLinks"] = shareLinks
+         }' />
 
  @if (!string.IsNullOrWhiteSpace(tour.TourDepartureCity) && !string.IsNullOrWhiteSpace(tour.TourCode))
 {
@@ -30,6 +36,7 @@
                     @Html.AntiForgeryToken()
                     <input asp-for="Form.TourCode" type="hidden" />
                     <input asp-for="Form.TourName" type="hidden" />
+                    <input asp-for="Form.TourLink" type="hidden" />
                     <input asp-for="Form.TourDepartureCity" type="hidden" />
                     <input asp-for="Form.TourClass" type="hidden" />
                     <input asp-for="Form.TourDate" type="hidden" />
@@ -38,6 +45,7 @@
                     <input asp-for="Form.TourQuotedPrice" type="hidden" />
                     <input asp-for="Form.PriceCurrency" type="hidden" />
                     <input asp-for="Form.TourDiscountText" type="hidden" />
+                    <input asp-for="Form.PreferredDestination" type="hidden" />
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">

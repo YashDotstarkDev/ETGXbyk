@@ -4,7 +4,10 @@
 @model GoogleReviewsWidgetViewModel
 
 @{
-    var displayedReviews = Model.Reviews.Reviews.Take(4).ToList();
+    var displayedReviews = Model.Reviews.Reviews
+        .Where(r => !string.IsNullOrWhiteSpace(r.Text))
+        .Take(4)
+        .ToList();
     double avg = Model.Reviews.Totals.AverageRating;
     int fullStars = (int)Math.Floor(avg);
     bool halfStar = (avg - fullStars) >= 0.5;
@@ -40,17 +43,17 @@
 
         @for (int i = 0; i < fullStars; i++)
         {
-            <span aria-hidden="true">&#9733;</span>
+                    <span aria-hidden="true"><i class="bi bi-star-fill"></i></span>
         }
 
         @if (halfStar)
         {
-            <span aria-hidden="true">&#9734;</span>
+                    <span aria-hidden="true"><i class="bi bi-star-half"></i></span>
         }
 
         @for (int i = 0; i < emptyStars; i++)
         {
-            <span class="text-secondary" aria-hidden="true">&#9734;</span>
+                    <span aria-hidden="true"><i class="bi bi-star"></i></span>
         }
 
       </div>
@@ -72,7 +75,7 @@
           string cardId = $"review-text-{System.Math.Abs(review.Reviewer.GetHashCode())}-{review.DateTime.Ticks % 10000}";
           
           <div class="col-md-6 col-lg-3">
-            <article class="p-4 rounded-3 border h-100 d-flex flex-column review-card"
+            <article class="p-4 rounded-3 border  d-flex flex-column review-card"
               style="border-color: #eaeaea !important; background: #fff;">
 
               <div class="mb-3">
@@ -90,13 +93,13 @@
                    aria-label="@review.Rating out of 5 stars">
 
                 @for (int i = 0; i < rFull; i++)
-                {
-                    <span aria-hidden="true">&#9733;</span>
+                            {
+                  <span aria-hidden="true"><i class="bi bi-star-fill"></i></span>
                 }
 
                 @for (int i = 0; i < rEmpty; i++)
-                {
-                    <span class="text-secondary" aria-hidden="true">&#9734;</span>
+                            {
+                  <span aria-hidden="true"><i class="bi bi-star"></i></span>
                 }
 
               </div>

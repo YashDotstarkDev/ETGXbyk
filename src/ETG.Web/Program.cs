@@ -9,7 +9,7 @@ var config = builder.Configuration;
 builder.Services
     .AddAppXperience(config, env)
     .AddAppMvc(env)
-    .AddApp(config)
+     .AddApp(config, env)
     .AddAuthentication();
 builder.Services
     .AddControllersWithViews();
@@ -33,6 +33,12 @@ app
     .IfNotDevelopment(env, b => b.UseHsts())
     .UseAuthorization()
     .UseKenticoRoutes(app)
-    .UseAppRoutes();
+    .UseAppRoutes()
+    .Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Robots-Tag"] =
+                "noindex, nofollow, noarchive";
+            await next();
+        });
 
 app.Run();

@@ -62,7 +62,7 @@ public class GoogleReviewsWidgetProperties : BaseWidgetProperties
         Label = "View all URL",
         ExplanationText = "Link to the business's full Google listing (optional)",
         Order = 2)]
-    public string ViewAllUrl { get; set; } = "";
+    public string ViewAllUrl { get; set; } = "/google-reviews";
 }
 
 public class GoogleReviewsWidgetViewModel : BaseWidgetViewModel
@@ -76,7 +76,7 @@ public class GoogleReviewsWidgetViewModel : BaseWidgetViewModel
     public GoogleReviewsWidgetViewModel(GoogleReviewsWidgetProperties props, ReviewListingResponse reviews)
     {
         Heading = props.Heading;
-        ViewAllUrl = string.IsNullOrWhiteSpace(props.ViewAllUrl) ? null : props.ViewAllUrl;
+        ViewAllUrl = string.IsNullOrWhiteSpace(props.ViewAllUrl) ? new GoogleReviewsWidgetProperties().ViewAllUrl : props.ViewAllUrl;
         Reviews = reviews;
     }
 }

@@ -8,9 +8,9 @@
         }
         @* currency doropdown vc *@
         <vc:currency-dropdown />
-<a href="tel:0290943322" class="phone-block d-none d-md-block d-lg-none">
+        <a href="tel:@(Model.Layout.ContactNumber ?? "0290943322")" class="phone-block d-none d-md-block d-lg-none">
             <i class="bi bi-telephone"></i>
         </a>
-        <a href="@(Model.Layout.SearchPageUrl)" class="topbar-icon-link"><img src="~/images/topbar_search.svg" alt="search" style="width: 18px;"></a>
+        <a href="@(Model.Layout.SearchPageUrl ?? "/search")" class="topbar-icon-link"><img src="~/images/topbar_search.svg" alt="search" style="width: 18px;"></a>
     </div>
 </div>

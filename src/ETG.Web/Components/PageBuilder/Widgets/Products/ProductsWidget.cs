@@ -92,7 +92,17 @@ public class ProductsWidget(
 
     private async Task<TourSummaryViewModel> MapToViewModelAsync(TourContent tour, string path, TourPricingResult priceInfo)
     {
-        var heroImage = tour.TourHeroImage?.OfType<MediaFile>().FirstOrDefault();
+        var heroImages = tour.TourHeroImage?.OfType<MediaFile>().FirstOrDefault();
+
+        var heroImage = tour.SelectedImageFolders?
+                        .FirstOrDefault()?
+                        .SelectedImages?
+                        .FirstOrDefault()?
+                        .ImageFilePath?
+                        .OfType<MediaFile>()
+                        .FirstOrDefault()
+                        ?? heroImages;
+
         var primaryCountryGuid = tour.TourPrimaryCountry?.FirstOrDefault()?.WebPageGuid;
         var primaryCountryName = string.Empty;
         if (primaryCountryGuid is Guid countryGuid && countryGuid != Guid.Empty)
@@ -122,6 +132,15 @@ public class ProductsWidget(
             ? priceInfo.CurrentPrice.ToString("N0", CultureInfo.InvariantCulture)
             : string.Empty;
 
+        var displayOriginalPrice = string.Empty;
+
+        if (priceInfo.CurrentPrice > 0 &&
+            priceInfo.OriginalPrice > 0 &&
+            priceInfo.CurrentPrice < priceInfo.OriginalPrice)
+        {
+            displayOriginalPrice = originalPriceText;
+        }
+
 
         return new TourSummaryViewModel
         {
@@ -133,7 +152,7 @@ public class ProductsWidget(
             HeroImageUrl = heroImage?.LegacyMediaFileAsset?.Url ?? "",
             HeroImageAlt = heroImage?.LegacyMediaFileTitle ?? "",
             DaysFromLabel = daysLabel,
-            OriginalPrice = originalPriceText,
+            OriginalPrice = displayOriginalPrice,
             CurrentPrice = string.IsNullOrEmpty(currentPriceText)
                            ? ""
                            : $"{priceInfo.CurrencySymbol}{currentPriceText}",
@@ -168,10 +187,13 @@ public class ProductsWidgetProperties : BaseWidgetProperties
     [TextInputComponent(Label = "Section ID", Order = 5)]
     public string SectionId { get; set; } = "";
 
-    public IReadOnlyList<string> PackageCodes =>TourCodes
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .ToList();
+    public IReadOnlyList<string> PackageCodes =>
+        string.IsNullOrWhiteSpace(TourCodes)
+            ? []
+            : TourCodes
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToList();
 }
 
 public enum ProductTourType

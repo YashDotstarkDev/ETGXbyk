@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -29,7 +29,6 @@ public class ArticlePostPagesLatestQueryHandler(
         ArticlePostPagesLatestQuery request,
         CancellationToken cancellationToken = default)
     {
-        // MIGRATION FIX: Safely parse new WebPageRelatedItem and Guid types
         var currentCategories = request.CurrentArticle.ArticleCategories?
             .Select(x => x.ToString().ToLower())
             .ToList() ?? new List<string>();
@@ -38,6 +37,7 @@ public class ArticlePostPagesLatestQueryHandler(
             .Select(x => x.WebPageGuid.ToString().ToLower())
             .ToList() ?? new List<string>();
 
+        // Query all published articles without arbitrary TopN(50) cutoff
         var b = new ContentItemQueryBuilder()
             .ForContentType(
                 ETG.Core.Content.Article.CONTENT_TYPE_NAME,
@@ -48,7 +48,6 @@ public class ArticlePostPagesLatestQueryHandler(
                         new OrderByColumn(
                             nameof(ETG.Core.Content.Article.ArticleDate),
                             OrderDirection.Descending))
-                    .TopN(50)
             );
 
         var results = await tools.Executor
@@ -56,28 +55,76 @@ public class ArticlePostPagesLatestQueryHandler(
                 b,
                 cancellationToken: cancellationToken);
 
+        // Exclude current article from candidates
         var otherArticles = results
             .Where(a => a.SystemFields.WebPageItemID != request.CurrentArticle.SystemFields.WebPageItemID)
             .ToList();
 
-        var trulyRelatedArticles = otherArticles
-            .Where(a =>
+        var selectedArticles = new List<ETG.Core.Content.Article>();
+        var selectedItemIds = new HashSet<int>();
+
+        void TryAdd(ETG.Core.Content.Article article)
+        {
+            if (selectedArticles.Count < 3 && selectedItemIds.Add(article.SystemFields.WebPageItemID))
             {
-                var relatedCats = a.ArticleCategories?
-                    .Select(x => x.ToString().ToLower()) ?? Enumerable.Empty<string>();
+                selectedArticles.Add(article);
+            }
+        }
 
-                var relatedDests = a.ArticleDestinations?
-                    .Select(x => x.WebPageGuid.ToString().ToLower()) ?? Enumerable.Empty<string>();
+        // TIER 1: Matches BOTH Category AND Destination
+        if (currentCategories.Any() && currentDestinations.Any())
+        {
+            foreach (var a in otherArticles)
+            {
+                var cats = a.ArticleCategories?.Select(x => x.ToString().ToLower()) ?? Enumerable.Empty<string>();
+                var dests = a.ArticleDestinations?.Select(x => x.WebPageGuid.ToString().ToLower()) ?? Enumerable.Empty<string>();
 
-                bool sharesCategory = currentCategories.Intersect(relatedCats).Any();
-                bool sharesDestination = currentDestinations.Intersect(relatedDests).Any();
+                if (currentCategories.Intersect(cats).Any() && currentDestinations.Intersect(dests).Any())
+                {
+                    TryAdd(a);
+                    if (selectedArticles.Count >= 3) break;
+                }
+            }
+        }
 
-                return sharesCategory || sharesDestination;
-            })
-            .ToList();
+        // TIER 2: Matches Same Destination
+        if (selectedArticles.Count < 3 && currentDestinations.Any())
+        {
+            foreach (var a in otherArticles)
+            {
+                var dests = a.ArticleDestinations?.Select(x => x.WebPageGuid.ToString().ToLower()) ?? Enumerable.Empty<string>();
+                if (currentDestinations.Intersect(dests).Any())
+                {
+                    TryAdd(a);
+                    if (selectedArticles.Count >= 3) break;
+                }
+            }
+        }
 
-        var finalArticles = trulyRelatedArticles.Take(3).ToList();
+        // TIER 3: Matches Same Category
+        if (selectedArticles.Count < 3 && currentCategories.Any())
+        {
+            foreach (var a in otherArticles)
+            {
+                var cats = a.ArticleCategories?.Select(x => x.ToString().ToLower()) ?? Enumerable.Empty<string>();
+                if (currentCategories.Intersect(cats).Any())
+                {
+                    TryAdd(a);
+                    if (selectedArticles.Count >= 3) break;
+                }
+            }
+        }
 
-        return new ArticlePostPagesLatestResult(finalArticles);
+        // FALLBACK: If fewer than 3, fill remaining slots with latest general articles
+        if (selectedArticles.Count < 3)
+        {
+            foreach (var a in otherArticles)
+            {
+                TryAdd(a);
+                if (selectedArticles.Count >= 3) break;
+            }
+        }
+
+        return new ArticlePostPagesLatestResult(selectedArticles);
     }
 }

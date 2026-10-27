@@ -1,42 +1,137 @@
 ﻿@using ETG.Web.Components.PageBuilder.Widgets.CTAPanel
 @model CTAPanelWidgetViewModel
 
-<section class="cta-section" aria-label="Start your journey">
-    @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
-    {
-        <img loading="lazy"
-             src="@Model.Image.LegacyMediaFileAsset.Url"
-             alt="@(string.IsNullOrEmpty(Model.Heading) ? (Model.Image.LegacyMediaFileTitle ?? "CTA Background") : Model.Heading)"
-             class="cta-bg" />
-    }
+@if (Model.DisplayType == "DestinationCta")
+{
+    <!-- ============ DESTINATION CTA ============ -->
+    <section class="cta-section cta-horizontal"
+             aria-label="@Model.Heading">
 
-    <div class="cta-overlay"></div>
-
-    <div class="container text-center text-white cta-content">
-        @if (!string.IsNullOrEmpty(Model.Heading))
+        @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
         {
-            <h2 class="display-5 fw-bold">@Model.Heading</h2>
+            <img loading="lazy"
+                 src="@Model.Image.LegacyMediaFileAsset.Url"
+                 alt="@(Model.Image.LegacyMediaFileTitle ?? "CTA Background")"
+                 class="cta-bg" />
         }
 
-        @if (!string.IsNullOrEmpty(Model.TextContent))
-        {
-            <p class="mb-4">@Model.TextContent</p>
-        }
+        <div class="cta-overlay"></div>
 
-        <div class="d-flex gap-3 justify-content-center flex-wrap">
-            @if (!string.IsNullOrEmpty(Model.Path2) && !string.IsNullOrEmpty(Model.CTALabel2))
-            {
-                <a href="@Model.Path2" class="btn btn-outline-light btn-lg outline-button">@Model.CTALabel2</a>
-            }   
+        <div class="container cta-content text-white">
+            <div class="cta-h-inner">
 
-            @if (!string.IsNullOrEmpty(Model.Path) && !string.IsNullOrEmpty(Model.CTALabel))
-            {
-                <a href="@Model.Path" class="btn btn-pink btn-lg">@Model.CTALabel</a>
-            }
+                <!-- Left: heading + phones -->
+                <div class="cta-h-left">
+                    @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                    {
+                        <h2 class="cta-heading fw-bold">
+                            @Model.HeadingBeforeLastWord <span class="text-pink">@Model.HeadingLastWord</span>
+                        </h2>
+                    }
+
+                    <div class="cta-phones d-flex flex-column gap-2 mt-3">
+                        @if (!string.IsNullOrWhiteSpace(Model.Phone1Href) &&
+                             !string.IsNullOrWhiteSpace(Model.Phone1Text))
+                        {
+                            <a href="@Model.Phone1Href"
+                               class="cta-phone-link">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     width="14"
+                                     height="14"
+                                     fill="currentColor"
+                                     viewBox="0 0 16 16"
+                                     style="margin-right:6px;">
+                                    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58z" />
+                                </svg>
+                                @Model.Phone1Text
+                            </a>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Phone2Href) &&
+                             !string.IsNullOrWhiteSpace(Model.Phone2Text))
+                        {
+                            <a href="@Model.Phone2Href"
+                               class="cta-phone-link">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     width="14"
+                                     height="14"
+                                     fill="currentColor"
+                                     viewBox="0 0 16 16"
+                                     style="margin-right:6px;">
+                                    <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58z" />
+                                </svg>
+                                @Model.Phone2Text
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- Right: CTA button -->
+                <div class="cta-h-right">
+                    @if (!string.IsNullOrEmpty(Model.Path) &&
+                         !string.IsNullOrEmpty(Model.CTALabel))
+                    {
+                        <a href="@Model.Path"
+                           class="btn btn-pink btn-lg cta-enquire-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="16"
+                                 height="16"
+                                 fill="currentColor"
+                                 viewBox="0 0 16 16"
+                                 style="margin-right:8px;">
+                                <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105" />
+                            </svg>
+                            @Model.CTALabel
+                        </a>
+                    }
+                </div>
+
+            </div>
         </div>
+    </section>
+}
+else
+{
+    <!-- ============ EXISTING DISPLAY TYPE 1 ============ -->
+    <section class="cta-section" aria-label="Start your journey">
+        @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
+        {
+            <img loading="lazy"
+                 src="@Model.Image.LegacyMediaFileAsset.Url"
+                 alt="@(string.IsNullOrEmpty(Model.Heading) ? (Model.Image.LegacyMediaFileTitle ?? "CTA Background") : Model.Heading)"
+                 class="cta-bg" />
+        }
 
+        <div class="cta-overlay"></div>
 
-    </div>
-</section>
+        <div class="container text-center text-white cta-content">
+            @if (!string.IsNullOrEmpty(Model.Heading))
+            {
+                <h2 class="display-5 fw-bold">
+                    @Model.HeadingBeforeLastWord <span class="text-pink">@Model.HeadingLastWord</span>
+                </h2>
+            }
 
+            @if (!string.IsNullOrEmpty(Model.TextContent))
+            {
+                <p class="mb-4">@Model.TextContent</p>
+            }
 
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                @if (!string.IsNullOrEmpty(Model.Path2) &&
+                     !string.IsNullOrEmpty(Model.CTALabel2))
+                {
+                    <a href="@Model.Path2"
+                       class="btn btn-outline-light btn-lg outline-button">@Model.CTALabel2</a>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Path) &&
+                     !string.IsNullOrEmpty(Model.CTALabel))
+                {
+                    <a href="@Model.Path"
+                       class="btn btn-pink btn-lg">@Model.CTALabel</a>
+                }
+            </div>
+        </div>
+    </section>
+}

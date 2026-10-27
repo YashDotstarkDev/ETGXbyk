@@ -57,7 +57,7 @@
 </div>
 
       <!-- LOGO -->
-      <div class="col-md-5 col-lg-3 mb-4 order-1 order-md-2 text-center text-md-start">
+      <div class="col-md-5 col-lg-3 mb-4 order-1 order-md-2 text-center">
         @if (!string.IsNullOrWhiteSpace(Model.Layout?.FooterLogoUrl))
   {
               @* ?? "logo" *@
@@ -157,12 +157,14 @@
 }
 
       <!-- AWARDS -->
-      <div class="col-md-12 col-lg-4 mb-4 mt-4 text-center order-4">
-  @if (!string.IsNullOrWhiteSpace(Model.Layout?.AwardsImageSvg))
+      <div class="col-md-12 col-lg-4 mb-4 mt-4 text-center order-4 d-flex justify-content-center">
+  @if (!string.IsNullOrWhiteSpace(Model.Layout?.AwardsImageSvg))    
   {
-      @Html.Raw(Model.Layout.AwardsImageSvg)
+    <div class="award-img">
+                        @Html.Raw(Model.Layout.AwardsImageSvg)
+    </div>
   }
-  @* else
+  @* elsex
   {
       <img src="./images/Awards_Footer.svg" class="award-img">
   } *@
@@ -174,7 +176,7 @@
         <div class="col-lg-4 text-lg-start text-center small-text">
   © @DateTime.UtcNow.Year @(Model.Layout?.CopyrightText)
         </div>
-        <div class="col-lg-8 text-lg-end footer-links">
+        <div class="col-lg-8 text-lg-end footer-links text-center">
           @foreach (var link in Model.BottomLinks)
           {
             <a href="@link.Url" target="@link.Target">@link.Label</a>

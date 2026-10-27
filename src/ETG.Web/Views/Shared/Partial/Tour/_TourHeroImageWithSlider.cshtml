@@ -13,12 +13,6 @@
         .ToList()
         ?? new List<ETG.Image>();
 
-    var mediaFile = heroimages.FirstOrDefault()?.ImageFilePath?
-        .OfType<MediaFile>()
-        .FirstOrDefault();
-
-    var imageUrl = mediaFile?.LegacyMediaFileAsset?.Url;
-
     var total = heroimages.Count;
     var tourName = tour?.TourName?.Trim();
     var lastSpaceIndex = tourName?.LastIndexOf(' ') ?? -1;
@@ -28,9 +22,15 @@
 
     <section class="pkgd-hero">
         <div class="pkgd-hero__counter" id="pkgdCounter">1 / @total</div>
-        <div class="pkgd-hero__track" id="pkgdTrack" style="width: 3981.48px; transition: transform 0.5s; transform: translateX(-796.296px);">
+        <div class="pkgd-hero__track" id="pkgdTrack">
         @foreach (var images in heroimages)
         {
+            var mediaFile = images.ImageFilePath?
+                            .OfType<MediaFile>()
+                            .FirstOrDefault();
+
+            var imageUrl = mediaFile?.LegacyMediaFileAsset?.Url;
+
             <div class="pkgd-hero__slide">  
                 @if (!string.IsNullOrWhiteSpace(imageUrl))
                 {

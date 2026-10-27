@@ -1,4 +1,4 @@
-﻿using CMS.Websites;
+using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG;
 using ETG.Core.Content;
@@ -82,7 +82,9 @@ public class CareerRoleDetailPageTemplateController(
             Address = role.CareerRoleAddress ?? "",
             State = role.CareerRoleState ?? "",
             PageAlias = pageAlias,
-            ApplyUrl = !string.IsNullOrEmpty(pageAlias) ? $"/careers/{pageAlias}/apply" : "/careers/apply"
+            ApplyUrl = !string.IsNullOrWhiteSpace(title)
+                ? $"/careers/apply?role={Uri.EscapeDataString(title)}"
+                : "/careers/apply"
         };
 
         if (role is IMetaDataSchema metaFields)

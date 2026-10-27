@@ -1,6 +1,13 @@
 ﻿@using ETG.Web.Components.PageBuilder.Widgets.FeaturedTiles
 @model FeaturedTilesWidgetViewModel
 
+@using System.Globalization
+@{
+    string Cap(string? text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? string.Empty
+            : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
+}
 @if (!string.IsNullOrWhiteSpace(Model.SectionId))
 {
     <div class="relative">
@@ -20,7 +27,7 @@
                         <div class="d-flex flex-row justify-content-between align-items-center gap-3">
                             @if (!string.IsNullOrWhiteSpace(Model.Heading))
                             {
-                                <h2 id="home-featured-title-@Model.SectionId" class="section-title mb-0">@Model.Heading</h2>
+                                <h2 id="home-featured-title-@Model.SectionId" class="section-title mb-0">@Cap(Model.Heading)</h2>
                             }
                         </div>
                         @if (!string.IsNullOrWhiteSpace(Model.Description))
@@ -37,10 +44,10 @@
                             @if (Model.TileType == TileTypeOptions.TilesAreLinks)
                             {
                                 <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="home-featured-card">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
                                     <div class="home-featured-overlay"></div>
 
-                                    @* @if (!string.IsNullOrWhiteSpace(tile.CardTag))
+                                     @if (!string.IsNullOrWhiteSpace(tile.CardTag))
                                     {
                                         if (string.Equals(tile.CardTag, "ON SALE", StringComparison.OrdinalIgnoreCase))
                                         {
@@ -58,20 +65,20 @@
                                         {
                                             <div class="home-featured-badge hf-badge-sale">@tile.CardTag</div>
                                         }
-                                    } *@
+                                    } 
 
                                     <div class="home-featured-content">
-                                        <h3>@tile.Caption</h3>
+                                        <h3>@Cap(tile.Caption)</h3>
                                     </div>
                                 </a>
                             }
                             else
                             {
                                 <div class="home-featured-card">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
                                     <div class="home-featured-overlay"></div>
 
-                                    @* @if (!string.IsNullOrWhiteSpace(tile.CardTag))
+                                     @if (!string.IsNullOrWhiteSpace(tile.CardTag))
                                     {
                                         if (string.Equals(tile.CardTag, "ON SALE", StringComparison.OrdinalIgnoreCase))
                                         {
@@ -89,10 +96,10 @@
                                         {
                                             <div class="home-featured-badge hf-badge-sale">@tile.CardTag</div>
                                         }
-                                    } *@
+                                    } 
 
                                     <div class="home-featured-content">
-                                        <h3>@tile.Caption</h3>
+                                        <h3>@Cap(tile.Caption)</h3>
                                     </div>
                                 </div>
                             }
@@ -111,7 +118,7 @@
                 {
                     <div class="title-div mb-4">
                         <div class="d-flex flex-row justify-content-between align-items-center gap-3">
-                            <h2 id="style-title-@Model.SectionId" class="section-title mb-0">@Model.Heading</h2>
+                            <h2 id="style-title-@Model.SectionId" class="section-title mb-0">@Cap(Model.Heading)</h2>
                         </div>
                     </div>
                 }
@@ -123,15 +130,15 @@
                             @if (Model.TileType == TileTypeOptions.TilesAreLinks)
                             {
                                 <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="style-tile">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
-                                    <p>@tile.Caption</p>
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <p>@Cap(tile.Caption)</p>
                                 </a>
                             }
                             else
                             {
                                 <div class="style-tile">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
-                                    <p>@tile.Caption</p>
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <p>@Cap(tile.Caption)</p>
                                 </div>
                             }
                         </div>
@@ -149,7 +156,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.Heading))
                 {
                     <div class="title-div">
-                        <h2 id="featured-title-@Model.SectionId" class="section-title">@Model.Heading</h2>
+                        <h2 id="featured-title-@Model.SectionId" class="section-title">@Cap(Model.Heading)</h2>
                     </div>
                 }
 
@@ -160,10 +167,10 @@
                             @if (Model.TileType == TileTypeOptions.TilesAreLinks)
                             {
                                 <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="text-decoration-none">
-                                    <article class="card-tile">
-                                        <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <article class="card-tile"> 
+                                        <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
                                         <div class="card-tile-overlay">
-                                            <h3>@tile.Caption</h3>
+                                            <h3>@Cap(tile.Caption)</h3>
                                         </div>
                                     </article>
                                 </a>
@@ -171,9 +178,9 @@
                             else
                             {
                                 <article class="card-tile">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
                                     <div class="card-tile-overlay">
-                                        <h3>@tile.Caption</h3>
+                                        <h3>@Cap(tile.Caption)</h3>
                                     </div>
                                 </article>
                             }

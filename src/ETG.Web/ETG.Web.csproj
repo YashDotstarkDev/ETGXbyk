@@ -15,6 +15,7 @@
 	  <Content Remove="Features\Brochures\_BrochureCard.cshtml" />
 	</ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="ABCpdf" Version="12.1.1" />
 		<PackageReference Include="kentico.xperience.admin" Version="31.7.2" />
 		<PackageReference Include="Kentico.Xperience.Algolia" Version="7.0.1" />
 		<PackageReference Include="kentico.xperience.azurestorage" Version="31.7.2" />

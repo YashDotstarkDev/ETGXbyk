@@ -1,6 +1,7 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
+using ETG.Core.Content;
 using ETG.Core.Operations;
 using MediatR;
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ETG.Web.Features.Article;
 
-public record ArticlePostPageToursQuery(List<string> Destinations) : IRequest<ArticlePostPageToursResult>;
+public record ArticlePostPageToursQuery(List<string> Destinations, string ChannelName = "") : IRequest<ArticlePostPageToursResult>;
 public record ArticlePostPageToursResult(IReadOnlyList<ETG.Core.Content.Tour> Items);
 
 public class ArticlePostPageToursQueryHandler(WebPageQueryTools tools)
@@ -26,61 +27,76 @@ public class ArticlePostPageToursQueryHandler(WebPageQueryTools tools)
             return new ArticlePostPageToursResult([]);
         }
 
-        
-        var destBuilder = new ContentItemQueryBuilder()
-            .ForContentType(ETG.Core.Content.Destination.CONTENT_TYPE_NAME, q =>
-            {
-                // We know it's a GUID, so we search the GUID column!
-                q.Where(w => w.WhereIn("ContentItemGUID", request.Destinations));
-            });
+        // 1. Get valid destination GUIDs from the article
+        var validDestinationGuids = request.Destinations
+            .Where(d => !string.IsNullOrWhiteSpace(d))
+            .Select(d => Guid.TryParse(d, out var g) ? g : Guid.Empty)
+            .Where(g => g != Guid.Empty)
+            .ToList();
 
-        var destinations = await tools.Executor.GetMappedWebPageResult<ETG.Core.Content.Destination>(
-            destBuilder,
-            cancellationToken: cancellationToken);
-
-      
-        var featureTourIdentifiers = new List<string>();
-
-        foreach (var dest in destinations)
-        {
-            if (dest.DestinationFeatureTours != null && dest.DestinationFeatureTours.Any())
-            {
-                var tours = dest.DestinationFeatureTours.Select(t => t.WebPageGuid.ToString());
-                featureTourIdentifiers.AddRange(tours);
-            }
-
-        }
-
-
-        if (!featureTourIdentifiers.Any())
+        if (!validDestinationGuids.Any())
         {
             return new ArticlePostPageToursResult([]);
         }
 
-      
+        var firstDestinationGuid = validDestinationGuids.First();
+
+        // 2. Fetch tours with linked items matching the article destination
+        // Exactly like ExperiencePageTemplates: query.ForWebsite(channelName) with IncludeWebPageData()
         var tourBuilder = new ContentItemQueryBuilder()
             .ForContentType(ETG.Core.Content.Tour.CONTENT_TYPE_NAME, q =>
             {
-                
-                q.WithLinkedItems(3);
-
-               
-                if (Guid.TryParse(featureTourIdentifiers.First(), out _))
-                {
-                    q.Where(w => w.WhereIn("ContentItemGUID", featureTourIdentifiers));
-                }
-                else
-                {
-                    q.Where(w => w.WhereIn("TourCode", featureTourIdentifiers));
-                }
-
-             
+                q.ForWebsite(request.ChannelName);
+                q.WithLinkedItems(4, options => options.IncludeWebPageData());
+                q.Where(w =>
+                    w.WhereLike(nameof(ETG.Core.Content.Tour.TourPrimaryCountry), $"%{firstDestinationGuid}%")
+                );
             });
 
-        var results = await tools.Executor.GetMappedWebPageResult<ETG.Core.Content.Tour>(
+        var allTours = await tools.Executor.GetMappedWebPageResult<ETG.Core.Content.Tour>(
             tourBuilder,
             cancellationToken: cancellationToken);
 
-        return new ArticlePostPageToursResult(results.ToList());
+        // 3. Filter out hidden upgrade tours (TourIsUpgrade == "2")
+        var matchedTours = allTours
+            .Where(tour =>
+                (string.IsNullOrEmpty(tour.TourIsUpgrade) || tour.TourIsUpgrade != "2")
+            )
+            .ToList();
+
+        // If fewer than 8 tours and there are other destinations, also fetch for remaining destinations
+        if (matchedTours.Count < 8 && validDestinationGuids.Count > 1)
+        {
+            var existingGuids = matchedTours.Select(t => t.SystemFields.WebPageItemGUID).ToHashSet();
+            foreach (var extraGuid in validDestinationGuids.Skip(1))
+            {
+                var extraBuilder = new ContentItemQueryBuilder()
+                    .ForContentType(ETG.Core.Content.Tour.CONTENT_TYPE_NAME, q =>
+                    {
+                        q.ForWebsite(request.ChannelName);
+                        q.WithLinkedItems(4, options => options.IncludeWebPageData());
+                        q.Where(w =>
+                            w.WhereLike(nameof(ETG.Core.Content.Tour.TourPrimaryCountry), $"%{extraGuid}%")
+                        );
+                    });
+
+                var extraTours = await tools.Executor.GetMappedWebPageResult<ETG.Core.Content.Tour>(
+                    extraBuilder,
+                    cancellationToken: cancellationToken);
+
+                foreach (var et in extraTours)
+                {
+                    if ((string.IsNullOrEmpty(et.TourIsUpgrade) || et.TourIsUpgrade != "2")
+                        && existingGuids.Add(et.SystemFields.WebPageItemGUID))
+                    {
+                        matchedTours.Add(et);
+                    }
+                }
+
+                if (matchedTours.Count >= 8) break;
+            }
+        }
+
+        return new ArticlePostPageToursResult(matchedTours);
     }
 }

@@ -14,11 +14,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="~/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/css/style.css" rel="stylesheet" />
-    <link href=https://assets.calendly.com/assets/external/widget.css rel="stylesheet">
-    <link href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu" rel="stylesheet">
+    <link href=https://assets.calendly.com/assets/external/widget.css rel="stylesheet">    
     <link rel="preload" href="https://fonts.googleapis.com/css?family=Lato:400,700,900|Raleway:400,900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu">
-    <link rel="stylesheet" href="@Url.Content("~/css/style.css")?v=2" />
+
     @if (DataContextRetriever.TryRetrieve(out _))
     {
     <page-builder-styles />
@@ -44,11 +42,7 @@
     </main>
 
     <vc:subscribe-now />
-
     <vc:footer />
-
-    <vc:sticky-bar />
-
      <vc:tracking-consent />
 
     @if (DataContextRetriever.TryRetrieve(out _))
@@ -63,5 +57,6 @@
     <script src="https://kit.fontawesome.com/d67a31d7e1.js" crossorigin="anonymous"></script>
   <script src=https://assets.calendly.com/assets/external/widget.js type="text/javascript" async></script>
   <script src="~/js/script.js"></script>  
+  <script src="~/js/utmscripts.js"></script>  
 </body>
 </html>

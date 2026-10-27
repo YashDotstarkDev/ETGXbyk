@@ -1,5 +1,6 @@
 ﻿using CMS.Websites;
 using ETG.Core.Content;
+using ETG.Core.Models;
 using ETG.Web.Infrastructure;
 using Kentico.Content.Web.Mvc;
 using Kentico.Content.Web.Mvc.Routing;
@@ -35,7 +36,7 @@ public sealed class GenericPageTemplateController(
     IWebPageDataContextRetriever contextRetriever,
     IWebPageUrlRetriever urlRetriever,
     WebPageMetaService metaService
-    ) : Controller
+) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -71,17 +72,26 @@ public sealed class GenericPageTemplateController(
             }
         }
 
+        // Retrieve once for both metadata and the hero partial.
+        var heroImage = page.ContainerHeroImage?
+            .OfType<ETG.Core.Content.MediaFile>()
+            .FirstOrDefault();
+
         if (page is IMetaDataSchema metaFields)
         {
-            var heroImage = page.ContainerHeroImage?
-                .OfType<ETG.Core.Content.MediaFile>()
-                .FirstOrDefault();
-
             metaService.SetMeta(
                 metaFields,
                 heroImage?.LegacyMediaFileAsset?.Url);
         }
 
-        return View("~/Features/GenericPage/GenericPage_Default.cshtml");
+        var heroModel = new HeroViewModel
+        {
+            HeroImageUrl =
+                heroImage?.LegacyMediaFileAsset?.Url ?? string.Empty
+        };
+
+        return View(
+            "~/Features/GenericPage/GenericPage_Default.cshtml",
+            heroModel);
     }
 }

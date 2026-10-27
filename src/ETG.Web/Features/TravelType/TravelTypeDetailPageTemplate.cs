@@ -2,9 +2,11 @@ using CMS.Websites.Routing;
 using ETG;
 using ETG.Core.Content;
 using ETG.Core.Models;
+using ETG.Web.Components.PageBuilder.Widgets.GoogleReviews;
 using ETG.Web.Features.TravelType.Operations;
 using ETG.Web.Infrastructure;
 using ETG.Web.Rendering;
+using ETG.Web.Services.GoogleReviews;
 using Kentico.Content.Web.Mvc;
 using Kentico.Content.Web.Mvc.Routing;
 using Kentico.PageBuilder.Web.Mvc.PageTemplates;
@@ -40,7 +42,8 @@ public class TravelTypeDetailPageTemplateController(
 	IMediator mediator,
 	IWebsiteChannelContext channelContext,
 	IWebPageDataContextRetriever contextRetriever,
-    WebPageMetaService metaService
+    WebPageMetaService metaService,
+    IGoogleReviewsService reviewsService
 ) : Controller
 {
 	public async Task<ActionResult> Index()
@@ -68,6 +71,26 @@ public class TravelTypeDetailPageTemplateController(
 			?? page.TravelTypeDetailName
 			?? "";
 
+		var heroIcon = !string.IsNullOrWhiteSpace(page.TravelTypeDetailHeroSVGIcon)
+			? page.TravelTypeDetailHeroSVGIcon
+			: page.TravelTypeDetailHeroIcon ?? "";
+
+		GoogleReviewsWidgetViewModel? googleReviewsVm = null;
+		if (!page.HideGoogleReviews)
+		{
+			var reviewsData = await reviewsService.GetReviewsAsync();
+			if (reviewsData != null)
+			{
+				var props = new GoogleReviewsWidgetProperties
+				{
+					Heading = "What our customers say"
+				};
+				googleReviewsVm = new GoogleReviewsWidgetViewModel(props, reviewsData);
+			}
+		}
+
+		var galleryImages = HeroImageHelper.ExtractGalleryImages(page.SelectedImageFolders);
+
 		var viewModel = new TravelTypeDetailPageViewModel
 		{
 			Name = page.TravelTypeDetailName ?? "",
@@ -77,16 +100,19 @@ public class TravelTypeDetailPageTemplateController(
 
 			Hero = new HeroViewModel
 			{
-				HeroImageUrl = heroImage?.LegacyMediaFileAsset?.Url ?? "",
-				HeroImageAltText = page.TravelTypeDetailHeroImageAltTag ?? "",
+				HeroImageUrl = heroImage?.LegacyMediaFileAsset?.Url ?? galleryImages.FirstOrDefault()?.ImageUrl ?? "",
+				HeroImageAltText = page.TravelTypeDetailHeroImageAltTag ?? galleryImages.FirstOrDefault()?.AltText ?? "",
 				Heading = heading,
-				HeroIconSvg = page.TravelTypeDetailHeroSVGIcon ?? "",
-				DisableOverlay = true
+				HeroIconSvg = heroIcon,
+				DisableOverlay = true,
+				GalleryImages = galleryImages
 			},
 
 			ThemedPackagesHeading = result.ThemedPackagesHeading,
 			ThemedPackagesUrl = result.ThemedPackagesUrl,
-			HideGoogleReviews = page.HideGoogleReviews
+			HideGoogleReviews = page.HideGoogleReviews,
+			GoogleReviews = googleReviewsVm,
+			SelectedImageFolders = page.SelectedImageFolders ?? []
 		};
 
         if (result.Page is IMetaDataSchema metaFields)
@@ -96,8 +122,11 @@ public class TravelTypeDetailPageTemplateController(
                 heroImage?.LegacyMediaFileAsset?.Url);
         }
 
-        return new TemplateResult(viewModel);
-	}
+        return View(
+                  "~/Features/TravelType/TravelTypeDetailPage_Default.cshtml",
+                   viewModel
+              );
+    }
 }
 
 public class TravelTypeDetailPageViewModel
@@ -112,5 +141,7 @@ public class TravelTypeDetailPageViewModel
 	public string ThemedPackagesHeading { get; init; } = "";
 	public string ThemedPackagesUrl { get; init; } = "";
 	public bool HideGoogleReviews { get; init; }
+	public GoogleReviewsWidgetViewModel? GoogleReviews { get; init; }
+	public IEnumerable<ImageFolder> SelectedImageFolders { get; init; } = [];
 	public IEnumerable<ArticleViewModel> RelatedArticles { get; init; } = [];
 }

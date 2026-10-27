@@ -11,15 +11,15 @@ public static class ServiceCollectionCurrencyExtensions
     {
         services.Configure<CurrencyOptions>(config.GetSection("Currency"));
         services.AddHttpContextAccessor();
+        services.AddMemoryCache();
 
         services.AddHttpClient("FixerClient", client =>
         {
-            client.BaseAddress = new Uri("http://data.fixer.io/api/");
+            client.BaseAddress = new Uri("http://data.fixer.io/api/"); // http only on free/basic Fixer plans
         });
 
         services.AddSingleton<ConstantExchangeRateProvider>();
         services.AddSingleton<IExchangeRateProvider>(sp => sp.GetRequiredService<ConstantExchangeRateProvider>());
-        services.AddHostedService<CurrencyRateRefreshService>();
 
         services.AddScoped<ICurrencyService, CurrencyService>();
         services.AddScoped(sp =>
@@ -30,31 +30,5 @@ public static class ServiceCollectionCurrencyExtensions
         });
 
         return services;
-    }
-
-    private class CurrencyRateRefreshService(
-        IServiceScopeFactory scopeFactory,
-        ILogger<CurrencyRateRefreshService> logger) : BackgroundService
-    {
-        private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(6);
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                using var scope = scopeFactory.CreateScope();
-                var provider = scope.ServiceProvider.GetRequiredService<ConstantExchangeRateProvider>();
-                await provider.RefreshAsync(stoppingToken);
-
-                try
-                {
-                    await Task.Delay(RefreshInterval, stoppingToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    // app is shutting down
-                }
-            }
-        }
     }
 }

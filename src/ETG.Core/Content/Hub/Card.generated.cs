@@ -25,7 +25,7 @@ namespace ETG.Core.Content
 		/// <summary>
 		/// Code name of the content type.
 		/// </summary>
-		public const string CONTENT_TYPE_NAME = "Website.Card";
+		public const string CONTENT_TYPE_NAME = "ETG.Card";
 
 
 		/// <summary>

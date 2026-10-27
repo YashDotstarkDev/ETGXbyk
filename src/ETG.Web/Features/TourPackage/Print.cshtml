@@ -1,0 +1,763 @@
+﻿@using System
+@using System.Collections.Generic
+@using System.Linq
+@using CMS.ContentEngine
+@using CMS.Websites
+@using ETG.Core.Content
+@using ETG.Web.Features.TourPackage
+@using static ETG.Web.Features.TourPackage.TourPageTemplateController
+
+@model TourPageTemplateViewModel
+
+@{
+    Layout = "~/Views/Shared/_MasterPrint.cshtml";
+
+    var pageData = Model;
+
+    if (pageData == null)
+    {
+        return;
+    }
+
+    var tour = pageData.Tour;
+
+    if (tour == null)
+    {
+        return;
+    }
+
+    var destinations = Model.Destinations
+         ?? Enumerable.Empty<dynamic>();
+    var destination = destinations.FirstOrDefault();
+
+    var itineraryItems = tour.SelectedItineraryFolders?
+        .Where(x => x != null)
+        .SelectMany(x => x.SelectedTourItineraries ?? Enumerable.Empty<ETG.TourItinerary>())
+        .Where(x => x != null)
+        .ToList()
+        ?? new List<ETG.TourItinerary>();
+
+    var heroImageMediaFile = tour.TourHeroImage?
+    .OfType<MediaFile>()
+    .FirstOrDefault();
+    var heroImageUrl = heroImageMediaFile?.LegacyMediaFileAsset?.Url;
+
+    if (string.IsNullOrWhiteSpace(heroImageUrl))
+    {
+        var heroimages = tour.SelectedImageFolders?
+            .Where(folder => folder?.SelectedImages != null)
+            .SelectMany(folder => folder.SelectedImages)
+            .OfType<ETG.Image>()
+            .Where(image => image != null)
+            .ToList()
+            ?? new List<ETG.Image>();
+
+        heroImageUrl = heroimages
+            .FirstOrDefault()?
+            .ImageFilePath?
+            .OfType<MediaFile>()
+            .FirstOrDefault()?
+            .LegacyMediaFileAsset?
+            .Url;
+    }
+
+    var partnershipFolders = pageData.PartnershipFolders
+      ?? Enumerable.Empty<Folder>();
+
+    var baseOrigin = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var tourRelativePath = tour.SystemFields.WebPageUrlPath?.TrimStart('/') ?? string.Empty;
+    var tourAbsoluteUrl = string.IsNullOrWhiteSpace(tourRelativePath)
+        ? baseOrigin
+        : $"{baseOrigin}/{tourRelativePath}";
+}
+
+<div class="print-logo">
+    <div class="wrapper">
+        <div class="logo-container d-flex align-items-center justify-content-between w-100">
+
+            <a href="https://www.entiretravel.com.au"
+               style="display: inline-block;"
+               target="_blank">
+                <img src="/images/Entire Travel Group_Horizontal_Positive.png"
+                     style="position: relative; width: auto; max-height: 60px;"
+                     alt="Entire Travel Group" />
+            </a>
+
+            <div class="d-flex align-items-center">
+                <a href="@tourAbsoluteUrl"
+                   class="btn-enquire"
+                   target="_blank">
+                    View Package
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<section class="pkgd-hero">
+    <div class="pkgd-hero__track" id="pkgdTrack">
+        @if (!string.IsNullOrWhiteSpace(heroImageUrl))
+            {
+                <div class="pkgd-hero__slide">
+                 <img src="@heroImageUrl" alt="hero-tour-image" />
+                </div>
+            }
+    </div>
+    <div class="pkgd-hero__titlebar">
+        <h1 class="about-hero-title text-white fw-bold display-4">@tour.TourName</h1>
+    </div>
+</section>
+
+<!-- Header Row -->
+@if (destination != null
+    && !string.IsNullOrWhiteSpace(destination.DestinationName)
+    && !string.IsNullOrWhiteSpace(tour.TourCode))
+{
+
+    <div class="pkg-header-wrapper border-top border-info border-2" style="background-color: #fff9fb;">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-3 pkg-header-row">
+                <h2 class="pkg-title m-0">@(destination?.DestinationName ?? "") | Tour Code: <span class="text-pink">@(tour?.TourCode ?? "")</span></h2>
+            </div>
+        </div>
+    </div>
+}
+
+
+<!-- ============ PACKAGE DETAILS SECTION ============ -->
+<section class="section-pad package-details-section pt-4 pkg-details-bg">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Left Column -->
+            <div class="col-lg-12">
+
+                <div class="bg-white border rounded-3 p-3 p-md-4 mb-5 shadow-sm">
+
+                    <!-- Info Bar -->
+                    <div class="pkg-info-bar d-flex flex-wrap mb-4 pkgd-info-bar-top" id="pkg-package">
+                        @if (!string.IsNullOrWhiteSpace(tour.TourDepartsFromInAustralia))
+                        {
+                            <div class="pkg-info-item">
+                                <div class="pkg-info-label">STARTS AND ENDS</div>
+                                @if (!string.IsNullOrWhiteSpace(tour.TourDepartsFromInAustralia) && !string.IsNullOrWhiteSpace(tour.TourTravelEnds) && tour.TourDepartsFromInAustralia == tour.TourTravelEnds)
+                                {
+                                    <div class="pkg-info-value text-muted">in @tour.TourDepartsFromInAustralia</div>
+                                }
+                                else
+                                {
+                                    <div class="pkg-info-value text-muted value--start-end">
+                                        @tour.TourDepartsFromInAustralia To
+                                        <br />
+                                        @tour.TourTravelEnds
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(tour.TourTravelDates))
+                        {
+                            <div class="pkg-info-item">
+                                <div class="pkg-info-label">TRAVEL PERIODS</div>
+                                <div class="pkg-info-value text-muted">@tour.TourTravelDates</div>
+                            </div>
+                        }
+
+                        @if (tour.TourExperiences != null && tour.TourExperiences.Any())
+                        {
+                            <div class="pkg-info-item">
+                                <div class="pkg-info-label">EXPERIENCE</div>
+
+                                <div class="pkg-info-value text-muted">
+                                    @foreach (var experience in pageData.Experiences)
+                                    {
+                                        <div>
+                                            <a href="@experience.GetUrl().RelativePath"
+                                               class="text-pink text-decoration-none">
+                                                @if (!string.IsNullOrWhiteSpace(experience.ExperienceName))
+                                                {
+                                                    <span class="text-pink">@experience.ExperienceName</span>
+                                                }
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (tour.TourTypes != null && tour.TourTypes.Any())
+                        {
+                            var tourType = tour.TourTypes.FirstOrDefault();
+                            if (tourType != null)
+                            {
+                                <div class="pkg-info-item">
+                                    <div class="pkg-info-label">TRAVEL STYLE</div>
+                                    <div class="pkg-info-value text-muted">
+                                        @pageData.TourTypeNames.FirstOrDefault()
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(tour.TourSummary))
+                    {
+                        <p class="pkg-intro-text mb-4">@tour.TourSummary</p>
+                    }
+
+                    @if (tour.SelectedTourHighlightFolders != null && tour.SelectedTourHighlightFolders.Any())
+                    {
+                        @if (tour?.SelectedTourHighlightFolders != null &&
+                             tour.SelectedTourHighlightFolders.Any(folder =>
+                                 folder?.SelectedTourHighlilghts != null &&
+                                 folder.SelectedTourHighlilghts.Any()))
+                        {
+                            <h4 class="pkg-subheading mb-3 text-dark" id="pkg-highlights">Highlights</h4>
+                            <ul class="pkg-inclusions-list list-unstyled">
+                                @foreach (var highlightitems in tour.SelectedTourHighlightFolders)
+                                {
+                                    if (highlightitems.SelectedTourHighlilghts != null &&
+                                        highlightitems.SelectedTourHighlilghts.Any())
+                                    {
+                                        foreach (var items in highlightitems.SelectedTourHighlilghts)
+                                        {
+                                            <li class="inclusion-item">
+
+                                                <span class="inclusion-icon-wrapper">
+                                                    @if (!string.IsNullOrWhiteSpace(items.TourHighlightIcon))
+                                                    {
+                                                        <span class="icon @items.TourHighlightIcon"></span>
+                                                    }
+                                                </span>
+                                                <span class="inclusion-text">@Html.Raw(@items.TourHighlightLabel)</span>
+                                            </li>
+                                        }
+                                    }
+                                }
+                            </ul>
+                        }
+                    }
+                    <!-- Entire Bonus -->
+                    @if (tour.SelectedTourHighlightFolders != null &&
+                         tour.SelectedTourHighlightFolders.Any(folder =>
+                             folder?.SelectedTourBonuses != null &&
+                             folder.SelectedTourBonuses.Any()))
+                    {
+                        <hr class="pkgd-section-divider">
+                        <div id="pkg-entire-bonus" class="pkg-section mb-5">
+                            <h3 class="pkg-section-title">Entire Bonus</h3>
+                            <ul class="pkg-inclusions-list list-unstyled">
+                                @foreach (var bonusFolder in tour.SelectedTourHighlightFolders)
+                                {
+                                    if (bonusFolder?.SelectedTourBonuses != null &&
+                                        bonusFolder.SelectedTourBonuses.Any())
+                                    {
+                                        foreach (var bonus in bonusFolder.SelectedTourBonuses)
+                                        {
+                                            <li class="inclusion-item">
+                                                <span class="inclusion-icon-wrapper">
+                                                    @if (!string.IsNullOrWhiteSpace(bonus.TourHighlightIcon))
+                                                    {
+                                                        <span class="icon @bonus.TourHighlightIcon"></span>
+                                                    }
+                                                </span>
+                                                <span class="inclusion-text">@Html.Raw(bonus.TourHighlightLabel)</span>
+                                            </li>
+                                        }
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <hr class="pkgd-section-divider">
+
+                    <!-- Overview -->
+                    @if (!string.IsNullOrWhiteSpace(tour.TourDetails))
+                    {
+                        <div id="pkg-overview" class="pkg-section mb-5">
+                            <h3 class="pkg-section-title">Overview</h3>
+                            <div class="pkg-body-text pkg-body-text-styled">@Html.Raw(tour.TourDetails)</div>
+                            @{
+                                var tourMapImage = tour.TourMapImage?.OfType<MediaFile>().FirstOrDefault();
+                            }
+                            @if (tourMapImage?.LegacyMediaFileAsset?.Url != null)
+                            {
+                                <img src="@tourMapImage.LegacyMediaFileAsset.Url"
+                                     alt="Tour Map"
+                                     class="pkg-overview-image">
+                            }
+                        </div>
+                    }
+
+                    <!-- Inclusions -->
+                    @if (tour.SelectedInclusionFolders != null &&
+                         tour.SelectedInclusionFolders.Any(f => f?.SelectedTourInclusions != null &&
+                                        f.SelectedTourInclusions.Any()))
+                    {
+                        <div id="pkg-inclusions" class="pkg-section mb-5">
+                            <h3 class="pkg-section-title">Inclusions</h3>
+                            <ul class="pkg-inclusions-list list-unstyled">
+                                @foreach (var inclusionFolder in tour.SelectedInclusionFolders)
+                                {
+                                    if (inclusionFolder?.SelectedTourInclusions != null &&
+                                        inclusionFolder.SelectedTourInclusions.Any())
+                                    {
+                                        foreach (var inclusion in inclusionFolder.SelectedTourInclusions)
+                                        {
+                                            <li class="inclusion-item">
+                                                <span class="inclusion-icon-wrapper">
+                                                    @if (!string.IsNullOrWhiteSpace(inclusion.TourInclusionIcon))
+                                                    {
+                                                        <span class="icon @inclusion.TourInclusionIcon"></span>
+                                                    }
+                                                </span>
+                                                <span class="inclusion-text">@inclusion.TourInclusionLabel</span>
+                                            </li>
+                                        }
+                                    }
+                                }
+                            </ul>
+                            @if (tour.TourHasFreedomOfChoice)
+                            {
+                                <div class="item">
+                                    <span class="icon fas fa-tag"></span>
+                                    Freedom of Choice Days
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Itinerary -->
+                    @if (itineraryItems.Any())
+                    {
+                        <div id="pkg-itinerary" class="pkg-section mb-5">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3 class="pkg-section-title m-0">Itinerary</h3>
+                            </div>
+
+                            <div class="accordion pkg-accordion" id="itineraryAccordion">
+                                @for (var i = 0; i < itineraryItems.Count; i++)
+                                {
+                                    var itinerary = itineraryItems[i];
+                                    var collapseId = $"itineraryDay{i + 1}";
+                                    var headingId = $"itineraryHeading{i + 1}";
+
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="@headingId">
+                                            <button class="accordion-button"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#@collapseId"
+                                                    aria-expanded="true"
+                                                    aria-controls="@collapseId">
+
+                                                @if (!string.IsNullOrWhiteSpace(itinerary.TourItineraryDayCaption))
+                                                {
+                                                    <span class="text-dark fw-bold me-2">@itinerary.TourItineraryDayCaption</span>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(itinerary.TourItineraryTitle))
+                                                {
+                                                    <span>@itinerary.TourItineraryTitle</span>
+                                                }
+                                            </button>
+                                        </h2>
+
+                                        <div id="@collapseId"
+                                             class="accordion-collapse collapse show"
+                                             aria-labelledby="@headingId">
+                                            <div class="accordion-body">
+
+                                                @if (!string.IsNullOrWhiteSpace(itinerary.TourItineraryDetail))
+                                                {
+                                                    <div class="itinerary-detail">
+                                                        @Html.Raw(itinerary.TourItineraryDetail)
+                                                    </div>
+                                                }
+
+                                                @if (!string.IsNullOrWhiteSpace(itinerary.TourItineraryInclusion))
+                                                {
+                                                    <div class="inclusions mt-3">
+                                                        <div class="item d-flex align-items-center gap-2">
+                                                            <span class="icon fal fa-utensils"></span>
+                                                            <span>@itinerary.TourItineraryInclusion</span>
+                                                        </div>
+                                                    </div>
+                                                }
+
+                                                @if (itinerary.SelectedFreedomOfChoiceOptions != null &&
+                                                     itinerary.SelectedFreedomOfChoiceOptions.Any())
+                                                {
+                                                    <div class="freedom-of-choice mt-4">
+                                                        <p><strong>Freedom of Choice Options</strong></p>
+                                                        <ul>
+                                                            @foreach (var foc in itinerary.SelectedFreedomOfChoiceOptions)
+                                                            {
+                                                                <li>@foc</li>
+                                                            }
+                                                        </ul>
+                                                    </div>
+                                                }
+
+                                                @if (itinerary.TourItineraryImage != null && itinerary.TourItineraryImage.Any())
+                                                {
+                                                    var itineraryImage = itinerary.TourItineraryImage.OfType<MediaFile>().FirstOrDefault();
+                                                    var imageUrl = itineraryImage?.LegacyMediaFileAsset?.Url;
+                                                    if (itineraryImage != null && !string.IsNullOrWhiteSpace(imageUrl))
+                                                    {
+                                                        <div class="inner-content">
+                                                            <div class="image mt-4">
+
+                                                                <img src="@imageUrl"
+                                                                     alt="@itinerary.TourItineraryTitle" />
+
+                                                                <div class="grad"></div>
+
+                                                                @if (!string.IsNullOrWhiteSpace(
+                                                                    itinerary.TourItineraryImageCaption))
+                                                                {
+                                                                    <div class="caption">
+                                                                        <span class="icon icon-pin"></span>
+                                                                        @itinerary.TourItineraryImageCaption
+                                                                    </div>
+                                                                }
+
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+
+                    <!-- Accommodation -->
+                    @if (tour?.Selecteddocumentlinkfolders != null &&
+                         tour.Selecteddocumentlinkfolders.Any(folder =>
+                             folder?.SelectedDocumentLinks != null &&
+                             folder.SelectedDocumentLinks.Any(link =>
+                                             link?.LinkDocumentGuid != null &&
+                                             link.LinkDocumentGuid.Any(hotel => hotel != null))))
+                    {
+                        <div id="pkg-accommodation" class="pkg-section mb-5">
+                            <div class="scroll-section">
+                                <div class="widget package-hotels" data-widget="package-hotels" style="opacity: 1;">
+                                    <h2 class="pkg-section-title">Accommodation</h2>
+
+                                    <div class="ui styled fluid accordion hotels">
+                                        @foreach (var documentLinkFolder in tour.Selecteddocumentlinkfolders)
+                                        {
+                                            if (documentLinkFolder?.SelectedDocumentLinks == null)
+                                            {
+                                                continue;
+                                            }
+
+                                            foreach (var documentLink in documentLinkFolder.SelectedDocumentLinks)
+                                            {
+                                                if (documentLink?.LinkDocumentGuid == null)
+                                                {
+                                                    continue;
+                                                }
+
+                                                foreach (var hotel in documentLink.LinkDocumentGuid)
+                                                {
+                                                    if (hotel == null)
+                                                    {
+                                                        continue;
+                                                    }
+
+                                                    decimal review = 0;
+                                                    decimal.TryParse(
+                                                        hotel.HotelReview,
+                                                        System.Globalization.NumberStyles.Any,
+                                                        System.Globalization.CultureInfo.InvariantCulture,
+                                                        out review
+                                                    );
+
+                                                    <div class="accordion-panel">
+                                                        <div class="title active">
+                                                            <div class="w-heading">
+                                                                <h3 class="heading">
+                                                                    @if (review > 0)
+                                                                    {
+                                                                        <span class="stars" data-rating="@review">
+                                                                            <span class="mb-1 fs-5 mt-2"
+                                                                                  style="color: #CA568E;">
+                                                                                @for (int i = 1; i <= 5; i++)
+                                                                                {
+                                                                                    if (review >= i)
+                                                                                    {
+                                                                                        <text>★</text>
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <text>☆</text>
+                                                                                    }
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    }
+                                                                    @hotel.HotelName
+                                                                </h3>
+                                                            </div>
+                                                            <i class="dropdown icon bi bi-chevron-down"></i>
+                                                        </div>
+                                                        <div class="content active">
+                                                            <div class="inner-content transition visible" style="display: block !important;">
+                                                                @if (!string.IsNullOrWhiteSpace(hotel.HotelCaption))
+                                                                {
+                                                                    <p>
+                                                                        <strong>
+                                                                            @hotel.HotelCaption
+                                                                        </strong>
+
+                                                                        @if (!string.IsNullOrWhiteSpace(hotel.HotelDetail))
+                                                                        {
+                                                                            @Html.Raw(hotel.HotelDetail)
+                                                                        }
+                                                                    </p>
+                                                                }
+                                                                else if (!string.IsNullOrWhiteSpace(hotel.HotelDetail))
+                                                                {
+                                                                    @Html.Raw(hotel.HotelDetail)
+                                                                }
+                                                                @if (hotel.HotelImage != null && hotel.HotelImage.Any())
+                                                                {
+                                                                    var image = hotel.HotelImage.FirstOrDefault() as ETG.Core.Content.MediaFile;
+                                                                    if (image != null)
+                                                                    {
+                                                                        <div class="image">
+                                                                            <img class="ls-is-cached lazyloaded" src="@image.LegacyMediaFileAsset?.Url" alt="@hotel.HotelName">
+                                                                        </div>
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="hotel-image-placeholder">
+                                                                        @hotel.HotelName
+                                                                    </div>
+                                                                }
+                                                            </div>
+
+                                                            @foreach (var roomUpgradeFolder in tour.SelectedRoomUpgradeFolders)
+                                                            {
+                                                                foreach (var roomUpgrade in roomUpgradeFolder.SelectedRoomUpgrades)
+                                                                {
+                                                                    <div class="inner-content transition hidden" style="display: block !important;">
+                                                                        <h5 class="pkg-section-title">Tour Room Upgrades</h5>
+                                                                        @if (!string.IsNullOrWhiteSpace(roomUpgrade.RoomUpgradeTitle))
+                                                                        {
+                                                                            <p>
+                                                                                <strong>
+                                                                                    @roomUpgrade.RoomUpgradeTitle
+                                                                                </strong>
+
+                                                                                @if (!string.IsNullOrWhiteSpace(roomUpgrade.RoomUpgradeDescription))
+                                                                                {
+                                                                                    @Html.Raw(roomUpgrade.RoomUpgradeDescription)
+                                                                                }
+                                                                            </p>
+                                                                        }
+                                                                        else if (!string.IsNullOrWhiteSpace(roomUpgrade.RoomUpgradeDescription))
+                                                                        {
+                                                                            @Html.Raw(roomUpgrade.RoomUpgradeDescription)
+                                                                        }
+                                                                        @if (roomUpgrade.RoomUpgradeImage != null && roomUpgrade.RoomUpgradeImage.Any())
+                                                                        {
+                                                                            var image = roomUpgrade.RoomUpgradeImage.FirstOrDefault() as ETG.Core.Content.MediaFile;
+                                                                            if (image != null)
+                                                                            {
+                                                                                <div class="image">
+                                                                                    <img class="ls-is-cached lazyloaded" src="@image.LegacyMediaFileAsset?.Url" alt="@roomUpgrade.RoomUpgradeTitle">
+                                                                                </div>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <div class="hotel-image-placeholder">
+                                                                                @roomUpgrade.RoomUpgradeTitle
+                                                                            </div>
+                                                                        }
+                                                                        <div class="icons-listing">
+                                                                            @if (!string.IsNullOrWhiteSpace(roomUpgrade.RoomUpgradePriceStatement))
+                                                                            {
+                                                                                <div class="item">
+                                                                                    <svg class="svg-inline--fa fa-circle-dollar icon" aria-hidden="true" focusable="false" data-prefix="fal" data-icon="circle-dollar" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M480 256A224 224 0 1 0 32 256a224 224 0 1 0 448 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zM272 120l0 23c13.5 1 26.6 4.6 39.6 8.3c1.5 .4 3.1 .9 4.6 1.3c8.5 2.4 13.5 11.2 11.2 19.7s-11.2 13.5-19.7 11.2c-2.4-.7-4.8-1.4-7.2-2.1c-7.5-2.2-15.2-4.4-22.9-5.5c-19.1-2.8-36.6-.4-49.3 5.1c-12.9 5.6-18.6 13.1-19.8 19.5c-1.8 9.8 2.1 16.5 10.2 21.7c10.6 6.8 26.5 11.3 45.8 16.8l.3 .1c17.7 5 38.9 11.1 54.3 21.7c19 13 27.8 33.8 23.6 56.5c-4 21.6-18.9 36-37.8 43.6c-9.9 4-21.1 6.3-33.1 6.9l0 24.2c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-25.9c-8.1-1.3-21.8-5.2-32.4-8.4c-6.9-2.1-13.8-4.3-20.7-6.5c-8.4-2.8-12.9-11.8-10.2-20.2s11.8-12.9 20.2-10.2c6.6 2.2 13.2 4.3 19.9 6.3c11.2 3.4 22.7 6.6 28.1 7.4c19.8 2.9 36.5 1.3 48-3.4c11.2-4.5 16.8-11.3 18.3-19.7c1.9-10.5-1.5-18.4-10.2-24.4c-12-8.2-26.8-12.3-40.9-16.2c-2.3-.6-4.7-1.3-6.9-1.9c-17.1-4.8-37-10.5-51.7-19.9c-8.1-5.2-15.7-12.1-20.5-21.7c-4.9-9.8-6.2-20.8-4-32.8c3.8-20.7 20-35.1 38.6-43.1c7.4-3.2 15.6-5.6 24.3-7.1l0-24.5c0-8.8 7.2-16 16-16s16 7.2 16 16z"></path></svg>
+                                                                                    @Html.Raw(roomUpgrade.RoomUpgradePriceStatement)
+                                                                                </div>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="item">
+                                                                                    <svg class="svg-inline--fa fa-circle-dollar icon" aria-hidden="true" focusable="false" data-prefix="fal" data-icon="circle-dollar" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M480 256A224 224 0 1 0 32 256a224 224 0 1 0 448 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zM272 120l0 23c13.5 1 26.6 4.6 39.6 8.3c1.5 .4 3.1 .9 4.6 1.3c8.5 2.4 13.5 11.2 11.2 19.7s-11.2 13.5-19.7 11.2c-2.4-.7-4.8-1.4-7.2-2.1c-7.5-2.2-15.2-4.4-22.9-5.5c-19.1-2.8-36.6-.4-49.3 5.1c-12.9 5.6-18.6 13.1-19.8 19.5c-1.8 9.8 2.1 16.5 10.2 21.7c10.6 6.8 26.5 11.3 45.8 16.8l.3 .1c17.7 5 38.9 11.1 54.3 21.7c19 13 27.8 33.8 23.6 56.5c-4 21.6-18.9 36-37.8 43.6c-9.9 4-21.1 6.3-33.1 6.9l0 24.2c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-25.9c-8.1-1.3-21.8-5.2-32.4-8.4c-6.9-2.1-13.8-4.3-20.7-6.5c-8.4-2.8-12.9-11.8-10.2-20.2s11.8-12.9 20.2-10.2c6.6 2.2 13.2 4.3 19.9 6.3c11.2 3.4 22.7 6.6 28.1 7.4c19.8 2.9 36.5 1.3 48-3.4c11.2-4.5 16.8-11.3 18.3-19.7c1.9-10.5-1.5-18.4-10.2-24.4c-12-8.2-26.8-12.3-40.9-16.2c-2.3-.6-4.7-1.3-6.9-1.9c-17.1-4.8-37-10.5-51.7-19.9c-8.1-5.2-15.7-12.1-20.5-21.7c-4.9-9.8-6.2-20.8-4-32.8c3.8-20.7 20-35.1 38.6-43.1c7.4-3.2 15.6-5.6 24.3-7.1l0-24.5c0-8.8 7.2-16 16-16s16 7.2 16 16z"></path></svg>
+                                                                                    <p>Prices are dynamic based on travel dates. Please proceed to <a href="#" class="js-scrollto-book-now">Book Now</a> or <a href="https://www.entiretravel.com.au/enquire/@tour.TourCode" target="_blank">Contact Us</a> for details.</p>
+                                                                                </div>
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+
+                                                                }
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Optional Extras -->
+                    @if (tour.SelectedOptionalExtrasFolders != null &&
+                         tour.SelectedOptionalExtrasFolders.Any(f => f?.SelectedOptionalExtrases != null &&
+                                         f.SelectedOptionalExtrases.Any()))
+                    {
+                        <div id="pkg-optional-extras" class="pkg-section mb-5">
+                            <div class="widget package-accordion" data-widget="package-accordion">
+                                <div class="top">
+                                    <h2 class="pkg-section-title">Optional Extras</h2>
+                                </div>
+                                <div class="ui styled fluid accordion">
+                                    @foreach (var optionalExtrasFolder in tour.SelectedOptionalExtrasFolders)
+                                    {
+                                        <div class="accordion-panel">
+                                            @foreach (var optionalExtras in optionalExtrasFolder.SelectedOptionalExtrases)
+                                            {
+                                                @if (!string.IsNullOrWhiteSpace(optionalExtras.OptionalExtrasTitle))
+                                                {
+                                                    <div class="title active">
+                                                        <h3 class="heading">@optionalExtras.OptionalExtrasTitle</h3>
+                                                    </div>
+                                                }
+
+                                                <div class="content active">
+                                                    <div class="inner-content transition visible">
+                                                        @if (!string.IsNullOrWhiteSpace(optionalExtras.OptionalExtrasDescription))
+                                                        {
+                                                            @Html.Raw(optionalExtras.OptionalExtrasDescription)
+                                                        }
+
+                                                        @if (optionalExtras.OptionalExtrasImage != null && optionalExtras.OptionalExtrasImage.Any())
+                                                        {
+                                                            var image = optionalExtras.OptionalExtrasImage.FirstOrDefault() as ETG.Core.Content.MediaFile;
+                                                            if (image != null)
+                                                            {
+                                                                <div class="image">
+                                                                    <img src="@image.LegacyMediaFileAsset?.Url" alt="@optionalExtras.OptionalExtrasImageCaption">
+                                                                </div>
+                                                            }
+                                                        }
+
+                                                        <div class="icons-listing">
+                                                            @if (!string.IsNullOrWhiteSpace(optionalExtras.OptionalExtrasDuration))
+                                                            {
+                                                                <div class="item">
+                                                                    <span class="icon fa-light fa-clock"></span>
+                                                                    <p>@optionalExtras.OptionalExtrasDuration</p>
+                                                                </div>
+                                                            }
+                                                            @if (!string.IsNullOrWhiteSpace(optionalExtras.OptionalExtrasDaysOfWeek))
+                                                            {
+                                                                <div class="item">
+                                                                    <span class="icon fa-light fa-clock"></span>
+                                                                    <p>Operates on @optionalExtras.OptionalExtrasDaysOfWeek</p>
+                                                                </div>
+                                                            }
+                                                            @if (!string.IsNullOrWhiteSpace(optionalExtras.OptionalExtrasPriceStatement))
+                                                            {
+                                                                <div class="item">
+                                                                    <i class="bi bi-currency-dollar"></i>
+                                                                    @Html.Raw(optionalExtras.OptionalExtrasPriceStatement)
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(tour.TourImportantNote))
+                    {
+                        <!-- Section: Additional Information -->
+                        <div id="pkg-additional" class="pkg-section mb-5">
+                            <h3 class="pkg-section-title mb-3">Additional Information</h3>
+                            @if (destination != null)
+                            {
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="additional-info-box">
+                                            <div class="info-label text-uppercase small text-white opacity-75">OFFICIAL LANGUAGE</div>
+                                            <div class="info-val text-white fw-medium">@destination.DestinationOfficialLanguages</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="additional-info-box">
+                                            <div class="info-label text-uppercase small text-white opacity-75">LOCAL CURRENCY</div>
+                                            <div class="info-val text-white fw-medium">@destination.DestinationCurrency</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br />
+                            }
+                            @Html.Raw(tour.TourImportantNote)
+                            @Html.Raw(tour.TourSmallprint)
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(tour.TourExclusions))
+                    {
+                        <!-- Section: Excluded -->
+                        <div class="pkg-section mb-5">
+                            <h3 class="pkg-section-title mb-3">Excluded</h3>
+                            @Html.Raw(tour.TourExclusions)
+                        </div>
+                    }
+
+                    
+                        @if (partnershipFolders.Any())
+                        {
+                        <div class="partnership-widget">
+                            <h5 class="partnership-title">IN PARTNERSHIP WITH</h5>
+                            <div class="partnership-logos">
+                                @foreach (var folder in partnershipFolders)
+                                {
+                                    if (folder?.SelectedCTAImages == null)
+                                    {
+                                        continue;
+                                    }
+                                    foreach (var partner in folder.SelectedCTAImages)
+                                    {
+                                        if (partner == null)
+                                        {
+                                            continue;
+                                        }
+                                        var image = partner.CTAImageImagePath?.OfType<MediaFile>().FirstOrDefault();
+
+                                        @if (image?.LegacyMediaFileAsset?.Url != null)
+                                        {
+                                            <div class="partnership-logo-wrapper">
+                                                <img src="@image.LegacyMediaFileAsset.Url" alt="@partner.CTAImageImageAltText" class="partnership-logo">
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                         </div>
+                        }                    
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,10 +1,12 @@
 ﻿using CMS.ContentEngine;
+using CMS.Websites;
 using CSharpFunctionalExtensions;
 using ETG.Core.Components;
 using ETG.Core.Content;
 using ETG.Web.Components.PageBuilder.Widgets.FeaturedTiles;
 using ETG.Web.Rendering;
 using Kentico.Content.Web.Mvc;
+using Kentico.Content.Web.Mvc.Routing;
 using Kentico.PageBuilder.Web.Mvc;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Websites.FormAnnotations;
@@ -22,24 +24,25 @@ using XperienceCommunity.KenticoComponentIcons;
 
 namespace ETG.Web.Components.PageBuilder.Widgets.FeaturedTiles;
 
-public class FeaturedTilesWidget(IContentRetriever contentRetriever) : ViewComponent
+public class FeaturedTilesWidget(
+    IContentRetriever contentRetriever,
+    IWebPageUrlRetriever webPageUrlRetriever,
+    IPreferredLanguageRetriever preferredLanguageRetriever) : ViewComponent
 {
     public const string IDENTIFIER = "ETG.Web.Widget.FeaturedTiles";
     public const string NAME = "Featured Tiles";
-
-    private readonly IContentRetriever contentRetriever = contentRetriever;
 
     public async Task<IViewComponentResult> InvokeAsync(
         ComponentViewModel<FeaturedTilesWidgetProperties> cvm)
     {
         var props = cvm.Properties;
 
-        var tileGuids = props.Path?
-            .Where(tile => tile.Identifier != Guid.Empty)
-            .Select(tile => tile.Identifier)
+        var folderGuids = props.Path?
+            .Where(item => item.Identifier != Guid.Empty)
+            .Select(item => item.Identifier)
             .ToArray() ?? [];
 
-        if (tileGuids.Length == 0)
+        if (folderGuids.Length == 0)
         {
             return View(
                 "~/Components/ComponentError.cshtml",
@@ -49,32 +52,56 @@ public class FeaturedTilesWidget(IContentRetriever contentRetriever) : ViewCompo
                     "No tiles have been selected."));
         }
 
-        var retrievedTiles = await contentRetriever
-            .RetrieveContentByGuids<ImageTileCta>(tileGuids);
+        var folders = await contentRetriever
+            .RetrieveContentByGuids<ImageTileCtaFolder>(
+                folderGuids,
+                new RetrieveContentParameters
+                {
+                    LinkedItemsMaxLevel = 2
+                });
 
-        return Validate(props, retrievedTiles)
-            .Match(
-                vm => View(
-                    "~/Components/PageBuilder/Widgets/FeaturedTilesWidget/FeaturedTiles.cshtml",
-                    vm),
-                error => View(
-                    "~/Components/ComponentError.cshtml",
-                    error));
+        var retrievedTiles = folders
+            .SelectMany(folder => folder.SelectedImageTileCtas ?? [])
+            .OfType<ImageTileCta>()
+            .ToList();
+
+        var result = await BuildViewModel(props, retrievedTiles);
+
+        return result.Match(
+            vm => View(
+                "~/Components/PageBuilder/Widgets/FeaturedTilesWidget/FeaturedTiles.cshtml",
+                vm),
+            error => View(
+                "~/Components/ComponentError.cshtml",
+                error));
     }
 
-    private static Result<FeaturedTilesWidgetViewModel, ComponentErrorViewModel> Validate(
+    private async Task<Result<FeaturedTilesWidgetViewModel, ComponentErrorViewModel>> BuildViewModel(
         FeaturedTilesWidgetProperties props,
         IEnumerable<ImageTileCta> retrievedTiles)
     {
-        var tiles = retrievedTiles?
-            .Where(tile => tile.Image?.Any() == true)
-            .Select(tile => new ImageTileViewModel(
+        var languageName = preferredLanguageRetriever.Get();
+        var tiles = new List<ImageTileViewModel>();
+
+        foreach (var tile in retrievedTiles)
+        {
+            var imageUrl = GetImageUrl(tile);
+
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                continue;
+            }
+
+            var ctaUrl = await GetCtaUrl(tile, languageName);
+
+            tiles.Add(new ImageTileViewModel(
                 tile.Caption ?? string.Empty,
                 tile.SubCaption ?? string.Empty,
-                string.Empty,
-                tile.CtaUrl ?? string.Empty,
-                tile.CtaLabel ?? string.Empty))
-            .ToList() ?? [];
+                imageUrl,
+                ctaUrl,
+                tile.CtaLabel ?? string.Empty,
+                tile.CardTag ?? string.Empty));
+        }
 
         if (tiles.Count == 0)
         {
@@ -87,6 +114,43 @@ public class FeaturedTilesWidget(IContentRetriever contentRetriever) : ViewCompo
 
         return new FeaturedTilesWidgetViewModel(props, tiles);
     }
+
+    private static string GetImageUrl(ImageTileCta tile) =>
+        tile.Image?
+            .OfType<MediaFile>()
+            .FirstOrDefault()?
+            .LegacyMediaFileAsset?.Url ?? string.Empty;
+    private async Task<string> GetCtaUrl(ImageTileCta tile, string languageName)
+    {
+        var pageGuid = tile.CtaUrl?
+            .Cast<object>()
+            .Select(GetPageGuid)
+            .FirstOrDefault(guid => guid.HasValue);
+
+        if (pageGuid is null)
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            var pageUrl = await webPageUrlRetriever
+                .Retrieve(pageGuid.Value, languageName);
+
+            return Url.Content(pageUrl.RelativePath);
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static Guid? GetPageGuid(object? item) => item switch
+    {
+        IWebPageFieldsSource page => page.SystemFields.WebPageItemGUID,
+        WebPageRelatedItem related => related.WebPageGuid,
+        _ => null
+    };
 }
 
 [FormCategory(Label = "Content", Order = 1)]
@@ -102,13 +166,11 @@ public class FeaturedTilesWidgetProperties : BaseWidgetProperties
     public string Description { get; set; } = string.Empty;
 
     [ContentItemSelectorComponent(
-        ImageTileCta.CONTENT_TYPE_NAME,
+        ImageTileCtaFolder.CONTENT_TYPE_NAME,
         Label = "Path",
         ExplanationText = "Select Image Tiles",
         MinimumItems = 1,
         MaximumItems = 50,
-        DefaultViewMode =
-            Kentico.Xperience.Admin.Base.Forms.ContentItemSelectorViewMode.Grid,
         AllowContentItemCreation = true,
         Order = 3)]
     public IEnumerable<ContentItemReference> Path { get; set; } = [];
@@ -154,18 +216,25 @@ public class ImageTileViewModel
     public string CtaUrl { get; }
     public string CtaLabel { get; }
 
+    public string CardTag { get; }
+
+
+    public bool HasLink => !string.IsNullOrWhiteSpace(CtaUrl);
+
     public ImageTileViewModel(
         string caption,
         string subCaption,
         string imageUrl,
         string ctaUrl,
-        string ctaLabel)
+        string ctaLabel,
+        string cardTag)
     {
         Caption = caption;
         SubCaption = subCaption;
         ImageUrl = imageUrl;
         CtaUrl = ctaUrl;
         CtaLabel = ctaLabel;
+        CardTag = cardTag;
     }
 }
 
@@ -180,6 +249,9 @@ public class FeaturedTilesWidgetViewModel : BaseWidgetViewModel
     public DisplayLayoutOptions DisplayLayout { get; }
     public TileTypeOptions TileType { get; }
     public IReadOnlyList<ImageTileViewModel> Tiles { get; }
+
+    // Tiles become links only when the editor chose "Tiles are links"
+    public bool TilesAreLinks => TileType == TileTypeOptions.TilesAreLinks;
 
     public FeaturedTilesWidgetViewModel(
         FeaturedTilesWidgetProperties props,

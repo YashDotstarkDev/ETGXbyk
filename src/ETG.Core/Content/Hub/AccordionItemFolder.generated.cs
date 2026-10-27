@@ -41,8 +41,8 @@ namespace ETG.Core.Content
 
 
 		/// <summary>
-		/// SelectAccordionItem.
+		/// SelectedAccordionItems.
 		/// </summary>
-		//public IEnumerable<AccordionItem> SelectAccordionItem { get; set; }
+		public IEnumerable<AccordionItem> SelectedAccordionItems { get; set; }
 	}
 }

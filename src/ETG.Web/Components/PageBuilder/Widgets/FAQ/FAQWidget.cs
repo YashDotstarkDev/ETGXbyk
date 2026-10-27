@@ -191,7 +191,7 @@ public class FAQWidgetProperties : BaseWidgetProperties
 
     [TextInputComponent(Label = "FAQ CTA Link", Order = 5)]
     [VisibleIfEqualTo(nameof(HideViewAll), false)]
-    public string FaqCtaLink { get; set; } = "/faq";
+    public string FaqCtaLink { get; set; } = "/faqs";
 
     [ContentItemSelectorComponent(
            contentTypeName: Folder.CONTENT_TYPE_NAME,
@@ -227,7 +227,8 @@ public class FAQWidgetViewModel
         FAQItems = items ?? [];
         HideViewAll = props.HideViewAll;
         FaqCtaText = props.FaqCtaText ?? "";
-        FaqCtaLink = props.FaqCtaLink ?? "";
+        FaqCtaLink = string.IsNullOrWhiteSpace(props.FaqCtaLink) ? new FAQWidgetProperties().FaqCtaLink : props.FaqCtaLink;
+        ;
         WidgetInstanceID = props.ID;
 
         GroupTitle = faqPage.TryGetValue(out var page)

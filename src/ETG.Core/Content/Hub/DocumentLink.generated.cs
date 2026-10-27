@@ -38,7 +38,7 @@ namespace Etg
 		/// <summary>
 		/// LinkDocumentGuid.
 		/// </summary>
-		public IEnumerable<HotelFolder> LinkDocumentGuid { get; set; }
+		public IEnumerable<Hotel> LinkDocumentGuid { get; set; }
 
 
 		/// <summary>

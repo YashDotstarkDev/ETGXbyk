@@ -4,137 +4,149 @@ using ETG.Web.Components.PageBuilder.Widgets.FAQ;
 
 namespace ETG.Web.Tests.Components.PageBuilder.Widgets;
 
-/// <summary>
-/// Tests for FAQWidget.
-/// </summary>
 [TestFixture]
 public class FAQWidgetTests : BaseWebTest
 {
-    #region Widget Tests
+    private const string FixedHeading = "Frequently Asked Questions";
 
     [Test]
-    public void Widget_HasCorrectIdentifier()
+    public void Widget_HasCorrectIdentifierAndName()
     {
-        Assert.That(FAQWidget.IDENTIFIER, Is.EqualTo("Website.FAQWidget"));
-    }
-
-    [Test]
-    public void Widget_HasCorrectName()
-    {
-        Assert.That(FAQWidget.NAME, Is.EqualTo("FAQ"));
-    }
-
-    #endregion
-
-    #region Properties Default Value Tests
-
-    [Test]
-    public void FAQWidgetProperties_HasDefaultHeading()
-    {
-        var properties = new FAQWidgetProperties();
-
-        Assert.That(properties.Heading, Is.EqualTo(""));
-    }
-
-    [Test]
-    public void FAQWidgetProperties_HasDefaultCount()
-    {
-        var properties = new FAQWidgetProperties();
-
-        Assert.That(properties.Count, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void FAQWidgetProperties_HasDefaultHideViewAll()
-    {
-        var properties = new FAQWidgetProperties();
-
-        Assert.That(properties.HideViewAll, Is.False);
-    }
-
-    [Test]
-    public void FAQWidgetProperties_HasDefaultFaqCtaText()
-    {
-        var properties = new FAQWidgetProperties();
-
-        Assert.That(properties.FaqCtaText, Is.EqualTo("View All"));
-    }
-
-    [Test]
-    public void FAQWidgetProperties_HasDefaultFaqCtaLink()
-    {
-        var properties = new FAQWidgetProperties();
-
-        Assert.That(properties.FaqCtaLink, Is.EqualTo("/faq"));
-    }
-
-    [Test]
-    public void FAQWidgetProperties_HasDefaultPath()
-    {
-        var properties = new FAQWidgetProperties();
-
-        Assert.That(properties.Path, Is.Not.Null);
-        Assert.That(properties.Path, Is.Empty);
-    }
-
-    #endregion
-
-    #region Properties Set Value Tests
-
-    [Test]
-    public void FAQWidgetProperties_CanSetHeading()
-    {
-        var properties = new FAQWidgetProperties
+        Assert.Multiple(() =>
         {
-            Heading = "Frequently Asked Questions"
+            Assert.That(
+                FAQWidget.IDENTIFIER,
+                Is.EqualTo("ETG.Web.Widget.FAQWidget"));
+
+            Assert.That(FAQWidget.NAME, Is.EqualTo("FAQ"));
+        });
+    }
+
+    [Test]
+    public void Properties_HaveCorrectDefaults()
+    {
+        var props = new FAQWidgetProperties();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(props.Heading, Is.EqualTo(""));
+            Assert.That(props.Count, Is.EqualTo(10));
+            Assert.That(props.HideViewAll, Is.False);
+            Assert.That(props.FaqCtaText, Is.EqualTo("View All"));
+            Assert.That(props.FaqCtaLink, Is.EqualTo("/faq"));
+            Assert.That(props.Path, Is.Not.Null.And.Empty);
+        });
+    }
+
+    [TestCase("")]
+    [TestCase("   ")]
+    [TestCase("General FAQs")]
+    public void Properties_KeepHeadingFixedDuringOtherTests(string headingInput)
+    {
+        var props = new FAQWidgetProperties
+        {
+            Heading = FixedHeading
         };
 
-        Assert.That(properties.Heading, Is.EqualTo("Frequently Asked Questions"));
+        // The test input is intentionally not assigned to Heading.
+        props.FaqCtaText = headingInput;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(props.Heading, Is.EqualTo(FixedHeading));
+            Assert.That(props.FaqCtaText, Is.EqualTo(headingInput));
+            Assert.That(
+                FAQWidget.IDENTIFIER,
+                Is.EqualTo("ETG.Web.Widget.FAQWidget"));
+        });
+    }
+
+    [TestCase("")]
+    [TestCase("   ")]
+    [TestCase("View All FAQs")]
+    [TestCase("<script>alert(1)</script>")]
+    public void Properties_HandleDynamicCtaText(string value)
+    {
+        var props = new FAQWidgetProperties
+        {
+            Heading = FixedHeading,
+            FaqCtaText = value
+        };
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(props.FaqCtaText, Is.EqualTo(value));
+            Assert.That(props.Heading, Is.EqualTo(FixedHeading));
+        });
+    }
+
+    [TestCase("")]
+    [TestCase("   ")]
+    [TestCase("/frequently-asked-questions")]
+    [TestCase("https://example.com/faq")]
+    [TestCase("javascript:alert(1)")]
+    public void Properties_HandleDynamicCtaLink(string value)
+    {
+        var props = new FAQWidgetProperties
+        {
+            Heading = FixedHeading,
+            FaqCtaLink = value
+        };
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(props.FaqCtaLink, Is.EqualTo(value));
+            Assert.That(props.Heading, Is.EqualTo(FixedHeading));
+        });
+    }
+
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(3)]
+    [TestCase(10)]
+    [TestCase(-1)]
+    public void Properties_HandleDynamicCount(int count)
+    {
+        var props = new FAQWidgetProperties
+        {
+            Heading = FixedHeading,
+            Count = count
+        };
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(props.Count, Is.EqualTo(count));
+            Assert.That(props.Heading, Is.EqualTo(FixedHeading));
+        });
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Properties_HandleDynamicHideViewAll(bool hideViewAll)
+    {
+        var props = new FAQWidgetProperties
+        {
+            Heading = FixedHeading,
+            HideViewAll = hideViewAll
+        };
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(props.HideViewAll, Is.EqualTo(hideViewAll));
+            Assert.That(props.Heading, Is.EqualTo(FixedHeading));
+        });
     }
 
     [Test]
-    public void FAQWidgetProperties_CanSetCount()
+    public void Properties_PathCanBeNull()
     {
-        var properties = new FAQWidgetProperties
+        var props = new FAQWidgetProperties
         {
-            Count = 10
+            Heading = FixedHeading,
+            Path = null!
         };
 
-        Assert.That(properties.Count, Is.EqualTo(3));
+        Assert.That(props.Path, Is.Null);
+        Assert.That(props.Heading, Is.EqualTo(FixedHeading));
     }
-
-    [Test]
-    public void FAQWidgetProperties_CanSetHideViewAll()
-    {
-        var properties = new FAQWidgetProperties
-        {
-            HideViewAll = true
-        };
-
-        Assert.That(properties.HideViewAll, Is.True);
-    }
-
-    [Test]
-    public void FAQWidgetProperties_CanSetFaqCtaText()
-    {
-        var properties = new FAQWidgetProperties
-        {
-            FaqCtaText = "Explore FAQs"
-        };
-
-        Assert.That(properties.FaqCtaText, Is.EqualTo("Explore FAQs"));
-    }
-
-    [Test]
-    public void FAQWidgetProperties_CanSetFaqCtaLink()
-    {
-        var properties = new FAQWidgetProperties
-        {
-            FaqCtaLink = "/frequently-asked-questions"
-        };
-
-        Assert.That(properties.FaqCtaLink, Is.EqualTo("/frequently-asked-questions"));
-    }
-
-    #endregion
 }

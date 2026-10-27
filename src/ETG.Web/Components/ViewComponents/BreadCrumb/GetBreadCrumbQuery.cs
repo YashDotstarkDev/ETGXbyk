@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace ETG.Web.Components.ViewComponents.BreadCrumb;
 
 public static class GetBreadCrumbQuery
 {
-    public static BreadCrumbViewModel Get(string currentPath, string currentPageTitle = null, bool isArticleLanding = false, bool isArticlePost = false)
+    public static BreadCrumbViewModel Get(string currentPath, string currentPageTitle = null, bool isArticleLanding = false, bool isArticlePost = false, string articleLandingTitle = null)
     {
         var viewModel = new BreadCrumbViewModel();
 
@@ -31,9 +31,10 @@ public static class GetBreadCrumbQuery
 
         if (isArticlePost)
         {
+            var landingLabel = !string.IsNullOrEmpty(articleLandingTitle) ? articleLandingTitle : "The Explorer's Log";
             viewModel.Items.Add(new BreadCrumbViewModel.BreadCrumbItem
             {
-                Label = "The Explorer's Log",
+                Label = landingLabel,
                 Url = "/articles",
                 IsCurrentPage = false
             });

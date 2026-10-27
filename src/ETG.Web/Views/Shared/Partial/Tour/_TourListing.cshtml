@@ -19,8 +19,12 @@
             @if (!string.IsNullOrWhiteSpace(Model.Heading))
             {
                 <h2 id="packages-title-@Model.SectionId"
-                    class="section-title">
-                    @Model.Heading
+                    class="section-title"
+                    style="text-transform: none;">
+                    @(System.Globalization.CultureInfo
+                        .GetCultureInfo("en-AU")
+                        .TextInfo
+                        .ToTitleCase(Model.Heading.ToLowerInvariant()))
                 </h2>
             }
             @if (!Model.HideViewAllButton && !string.IsNullOrWhiteSpace(Model.ViewAllUrl))
@@ -58,7 +62,7 @@
                             <h3 class="card-title">@Html.Raw(tour.Name)</h3>
                             @if (!string.IsNullOrWhiteSpace(tour.Description))
                             {
-                                <p class="card-desc">@tour.Description</p>
+                                <p class="card-desc text-truncate-3">@tour.Description</p>
                             }
 
                             <!-- Price Block -->
@@ -91,7 +95,7 @@
 
                                 <div class="price-note mb-3">
 
-                                    @if (!string.IsNullOrWhiteSpace(tour.PriceTypeLabel))
+                                    @if (!string.IsNullOrWhiteSpace(tour.PriceTypeLabel) && !string.IsNullOrWhiteSpace(tour.CurrentPrice))
                                     {
                                         @Html.Raw(tour.PriceTypeLabel.Replace(","," <span class=\"pink-v-line\"></span> "))
                                     }
@@ -108,7 +112,7 @@
                                             var icon = tour.InclusionIcons[i];
 
                                             <div class="icon-wrapper">
-                                                <i class="@icon.FaClass" aria-hidden="true"></i>
+                                                @Html.Raw(icon.FaClass)
                                                 <span class="tooltip-text">@icon.Label</span>
                                             </div>
 

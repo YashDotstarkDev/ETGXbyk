@@ -35,10 +35,14 @@ namespace ETG.Core.Content
 		public WebPageFields SystemFields { get; set; }
 
 
-		/// <summary>
-		/// BrandLogoAltText.
-		/// </summary>
-		public string BrandLogoAltText { get; set; }
+        /// <summary>
+        /// BrandLogoAltText.
+        /// </summary>
+        /// 
+
+        public string BrandLogo { get; set; }
+
+        public string BrandLogoAltText { get; set; }
 
 
 		/// <summary>
@@ -77,10 +81,13 @@ namespace ETG.Core.Content
 		public string SustainableDescription { get; set; }
 
 
-		/// <summary>
-		/// FooterLogoAltText.
-		/// </summary>
-		public string FooterLogoAltText { get; set; }
+        /// <summary>
+        /// FooterLogoAltText.
+        /// </summary>
+        /// 
+        public IEnumerable<MediaFile> FooterLogo { get; set; }
+
+        public string FooterLogoAltText { get; set; }
 
 
 		/// <summary>

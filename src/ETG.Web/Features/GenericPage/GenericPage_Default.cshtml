@@ -1,6 +1,11 @@
-﻿@using Kentico.Content.Web.Mvc.PageBuilder
+﻿@model ETG.Core.Models.HeroViewModel
+
+@using Kentico.Content.Web.Mvc.PageBuilder
 @using Kentico.PageBuilder.Web.Mvc
 
 <vc:bread-crumb />
+
+<partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
+         model="Model" />
 
 <editable-area area-identifier="Content" />

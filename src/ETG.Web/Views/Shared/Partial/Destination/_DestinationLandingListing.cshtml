@@ -1,39 +1,73 @@
-﻿@using ETG.Web.Features.Destinations
-@model IReadOnlyList<DestinationLandingItemViewModel>
+﻿@using System.Collections.Generic
+@using System.Linq
+@using ETG.Web.Features.Destinations
+@model IReadOnlyList<DestinationLandingCategoryViewModel>
 
 @if (Model?.Any() != true)
 {
     return;
 }
 
+<style>
+    .hd-dest-listing .hd-dest-card__desc {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 5;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        line-height: 1.6;
+        max-height: 8em;
+        flex-grow: 0 !important;
+    }
+</style>
+
 <section class="hd-dest-listing section-pad">
     <div class="container">
-        <div class="row g-4 mb-5">
-            @foreach (var item in Model)
-            {
-                <div class="col-12 col-sm-6 col-lg-3">
-                    <a href="@item.Path"
-                       class="hd-dest-card d-flex flex-column h-100">
+        @for (var index = 0; index < Model.Count; index++)
+        {
+            var category = Model[index];
 
-                        <div class="hd-dest-card__img-wrap">
-                            @if (item.Image?.LegacyMediaFileAsset is not null)
-                            {
-                                <img src="@item.Image.LegacyMediaFileAsset.Url"
-                                     alt="@item.Heading"
-                                     loading="lazy" />
-                            }
-                        </div>
+            <h2 class="category-heading @(index == 0 ? "mt-0" : "")">
+                @category.Heading
+            </h2>
 
-                        <div class="hd-dest-card__body d-flex flex-column flex-grow-1">
-                            <p class="hd-dest-card__label">@item.Heading</p>
+            <div class="row g-4 mb-5">
+                @foreach (var item in category.Items)
+                {
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <a href="@item.Path"
+                           class="hd-dest-card d-flex flex-column h-100">
 
-                            <p class="hd-dest-card__desc flex-grow-1">
-                                @item.Summary
-                            </p>
-                        </div>
-                    </a>
-                </div>
-            }
-        </div>
+                            <div class="hd-dest-card__img-wrap">
+                                @if (item.Image?.LegacyMediaFileAsset is not null)
+                                {
+                                    <img src="@item.Image.LegacyMediaFileAsset.Url"
+                                         alt="@item.Heading"
+                                         loading="lazy" />
+                                }
+                            </div>
+
+                            <div class="hd-dest-card__body d-flex flex-column flex-grow-1">
+                                <p class="hd-dest-card__label">
+                                    @item.Heading
+                                </p>
+
+                                <p class="hd-dest-card__desc flex-grow-1">
+                                    @item.Summary
+                                </p>
+
+                                <p class="text-pink fw-bold mt-4 mb-0"
+                                   style="font-size: 13px;">
+                                    Explore @item.Heading Holidays
+                                    <i class="bi bi-arrow-right"
+                                       aria-hidden="true"
+                                       style="font-weight: 800; -webkit-text-stroke: 0.5px;"></i>
+                                </p>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </section>

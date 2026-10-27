@@ -1,9 +1,8 @@
 ﻿using CMS.ContentEngine;
 using CMS.Websites;
+using ETG.Core.Content;
 using ETG.Core.Operations;
 using Kentico.Content.Web.Mvc;
-
-using ETG.Core.Content;
 
 namespace ETG.Web.Features.GenericPage;
 
@@ -17,15 +16,45 @@ public sealed class GenericPageQueryHandler(WebPageQueryTools tools)
         GenericPageQuery request,
         CancellationToken cancellationToken = default)
     {
-        var query = new ContentItemQueryBuilder()
+        // Load the page without the failing recursive linked-item query.
+        var pageQuery = new ContentItemQueryBuilder()
             .ForWebPage(request.Page);
 
-        var pages = await Executor
-            .GetMappedWebPageResult<Container>(
-                query,
+        var pages = await Executor.GetMappedWebPageResult<Container>(
+            pageQuery,
+            DefaultQueryOptions,
+            cancellationToken);
+
+        var page = pages.FirstOrDefault();
+
+        if (page is null)
+        {
+            return null!;
+        }
+
+        // Retrieve only MediaFile items selected in ContainerHeroImage.
+        var heroQuery = new ContentItemQueryBuilder()
+            .ForContentType(
+                ETG.Core.Content.MediaFile.CONTENT_TYPE_NAME,
+                parameters => parameters.LinkedFrom(
+                    Container.CONTENT_TYPE_NAME,
+                    nameof(Container.ContainerHeroImage),
+                    new IContentItemIdentifier[]
+                    {
+                        page.SystemFields
+                    }))
+            .InLanguage(request.Page.LanguageName);
+
+        var heroImages = await Executor
+            .GetMappedResult<ETG.Core.Content.MediaFile>(
+                heroQuery,
                 DefaultQueryOptions,
                 cancellationToken);
 
-        return pages.FirstOrDefault();
+        page.ContainerHeroImage = heroImages
+            .Cast<IContentItemFieldsSource>()
+            .ToArray();
+
+        return page;
     }
 }

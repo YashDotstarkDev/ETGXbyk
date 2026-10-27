@@ -4,16 +4,18 @@ using CMS.DataEngine;
 using CMS.Websites;
 using ETG.Core.Content;
 using ETG.Core.Models;
+using ETG.Core.Models.GoogleReviews;
 using ETG.Core.Models.Tour;
 using ETG.Core.Modules;
 using ETG.Web.Features.TourPackage;
 using ETG.Web.Infrastructure;
+using ETG.Web.Services.GoogleReviews;
 using ETG.Web.Services.Tour;
+using ETGBooking;
 using Kentico.Content.Web.Mvc;
 using Kentico.Content.Web.Mvc.Routing;
 using Kentico.PageBuilder.Web.Mvc.PageTemplates;
 using MediatR;
-using ETGBooking;
 using Microsoft.AspNetCore.Mvc;
 
 [assembly: RegisterPageTemplate(
@@ -49,7 +51,8 @@ IMediator mediator,
     IHttpContextAccessor httpContextAccessor,
     IContentRetriever contentRetriever,
     IInfoProvider<PromotionInfo> promotionProvider,
-    IWebPageDataContextRetriever contextRetriever, 
+    IWebPageDataContextRetriever contextRetriever,
+    IGoogleReviewsService reviewsService,
     IInfoProvider<TourTypeInfo> tourTypeProvider) : Controller
 {
     private readonly IMediator mediator = mediator;
@@ -62,7 +65,66 @@ IMediator mediator,
     private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor;
     private readonly IInfoProvider<TourTypeInfo> tourTypeProvider = tourTypeProvider;
     private readonly IContentRetriever contentRetriever = contentRetriever;
+    private readonly IGoogleReviewsService reviewsService = reviewsService;
     private readonly IInfoProvider<PromotionInfo> promotionProvider = promotionProvider;
+
+    [HttpGet("~/enquires/{tourCode}")]
+    public async Task<IActionResult> Enquire(string tourCode, string? date = null, string? flightclass = "Economy", string? city = null)
+    {
+        if (string.IsNullOrWhiteSpace(tourCode))
+        {
+            return NotFound();
+        }
+
+        var query = new ContentItemQueryBuilder()
+            .ForContentType(
+                Tour.CONTENT_TYPE_NAME,
+                config => config
+                    .ForWebsite("ETG")
+                    .WithLinkedItems(4)
+                    .Where(where =>
+                        where.WhereEquals(nameof(Tour.TourCode), tourCode)));
+
+        var tours = await executor.GetMappedWebPageResult<Tour>(query);
+        var tour = tours.FirstOrDefault();
+
+        if (tour == null)
+        {
+            return NotFound();
+        }
+        var offerData = await GetTourOfferData(tour);
+        var discountText = offerData.Discount != null
+            ? $"{offerData.Discount.DiscountHeading} - Expires {offerData.Discount.DiscountExpiry:dd/MM/yyyy}"
+            : string.Empty;
+        var priceInfo = await pricingService.GetPriceAsync(tour);
+        var tourQuotedPrice = priceInfo.CurrentPrice > 0 ? priceInfo.CurrentPrice.ToString() : string.Empty;
+        var priceCurrency = priceInfo.CurrencyCode;
+        var shareLinks = shareLinksService.GetShareLinks();
+        var destinations = await GetDestinations(tour.TourPrimaryCountry);
+        var tourdestination = destinations.FirstOrDefault(d => d.SystemFields.WebPageItemGUID == tour.TourPrimaryCountry?.FirstOrDefault()?.WebPageGuid);
+        var viewModel = new TourEnquireViewModel
+        {
+            Tour = tour,
+            ShareLinks = shareLinks,
+            Form = new TourEnquireFormViewModel
+            {
+                TourCode = tour.TourCode,
+                TourName = tour.TourName,
+                TourLink = tour.SystemFields.WebPageUrlPath ?? string.Empty,
+                TourDepartureCity = !string.IsNullOrWhiteSpace(city) ? city : tour.TourDepartureCity,
+                TourClass = flightclass ?? string.Empty,
+                TourQuotedPrice = tourQuotedPrice,
+                TourDate = tour.TourTravelDates ?? string.Empty,
+                DepartureDate = date ?? string.Empty,
+                TourDiscountText = discountText,
+                PriceCurrency = priceCurrency ?? string.Empty,
+                PreferredDestination = tourdestination?.DestinationName ?? string.Empty
+
+            }
+        };
+
+        return View("~/Features/TourPackage/TourEnquire.cshtml", viewModel);
+    }
 
     public async Task<IActionResult> Index()
     {
@@ -82,9 +144,18 @@ IMediator mediator,
         //{
         //    metaService.SetMeta(metaFields);
         //}
+        if (tour.TourFAQFolder == null || !tour.TourFAQFolder.Any())
+        {
+            var faqFolder = await GetDefaultFaqFolder();
+
+            tour.TourFAQFolder = faqFolder?.SelectedFAQs
+                ?? Enumerable.Empty<FAQ>();
+        }
 
         var destinations = await GetDestinations(tour.TourPrimaryCountry);
         var promotion = await GetTourPromotions(tour.TourCode);
+
+        var offerData = await GetTourOfferData(tour);
 
         var priceInfo = await pricingService.GetPriceAsync(tour);
 
@@ -148,27 +219,28 @@ IMediator mediator,
         }
 
 
-        // Related Tour Packages for ETG.Tour Tour Code
-        var relatedTours = await mediator.Send(
-            new Operations.GetRelatedToursQuery(tour),
-            HttpContext.RequestAborted);
+        //Related Tour Packages for ETG.Tour Tour Code
+
+       var relatedTours = await mediator.Send(
+           new Operations.GetRelatedToursQuery(tour),
+           HttpContext.RequestAborted);
 
         var mappedTours = new List<TourSummaryViewModel>();
 
         if (relatedTours != null && relatedTours.Count > 0)
-        {
-            foreach (var relatedTour in relatedTours)
             {
-                if (relatedTour == null)
+                foreach (var relatedTour in relatedTours)
                 {
-                    continue;
-                }
+                    if (relatedTour == null)
+                    {
+                        continue;
+                    }
 
-                var url = await urlRetriever.Retrieve(relatedTour);
-                var tourViewModel = await tourSummaryService.MapToViewModelAsync(relatedTour, url?.RelativePath ?? string.Empty, null);
-                mappedTours.Add(tourViewModel);
+                    var url = await urlRetriever.Retrieve(relatedTour);
+                    var tourViewModel = await tourSummaryService.MapToViewModelAsync(relatedTour, url?.RelativePath ?? string.Empty, null);
+                    mappedTours.Add(tourViewModel);
+                }
             }
-        }
 
         var featureTours = new TourListingViewModel
         {
@@ -180,7 +252,7 @@ IMediator mediator,
         };
 
         var shareLinks = shareLinksService.GetShareLinks();
-
+        var reviews = await reviewsService.GetReviewsAsync();
         var request = httpContextAccessor.HttpContext?.Request;
 
         var currentUrl =
@@ -190,10 +262,18 @@ IMediator mediator,
             $"{request.QueryString}";
         var encodedUrl =
            Uri.EscapeDataString(currentUrl);
+        var ctaimage = tour?.TourHeroImage?
+            .OfType<ETG.Core.Content.MediaFile>()
+            .FirstOrDefault();
 
         var ctaurl = new ContactUsViewModel
         {
-            CTAUrl = $"/enquire/{tour.TourCode}"
+            CTAUrl = !string.IsNullOrWhiteSpace(tour?.TourCode)
+                ? $"/enquires/{tour.TourCode}"
+                : string.Empty,
+
+            CTABackgroundImage = ctaimage?.LegacyMediaFileAsset?.Url
+                                 ?? "/images/travel_destination.png"
         };
 
         //var tourViewModel = await tourSummaryService.MapToViewModelAsync(relatedTour, url?.RelativePath ?? string.Empty, null);
@@ -210,7 +290,9 @@ IMediator mediator,
             ShareLinks = shareLinks,
             CurrentUrl = encodedUrl,
             TourTypeNames = tourTypeNames,
-            Promotion = promotion
+            Reviews = reviews,
+            Promotion = offerData.Promotion,
+            Discount = offerData.Discount
         };
 
         if (tour is IMetaDataSchema metaFields)
@@ -280,6 +362,109 @@ IMediator mediator,
         return destinations.ToList();
     }
 
+    private async Task<TourOfferData> GetTourOfferData(Tour tour)
+    {
+        if (tour == null)
+        {
+            return new TourOfferData();
+        }
+
+        var promotion = await GetActiveTourPromotion(tour.TourCode);
+
+        if (promotion != null)
+        {
+            return new TourOfferData
+            {
+                Promotion = promotion,
+                Discount = null
+            };
+        }
+
+        var discount = GetActiveTourDiscount(tour.TourDiscountAndOffer);
+
+        return new TourOfferData
+        {
+            Promotion = null,
+            Discount = discount
+        };
+    }
+
+    private async Task<PromotionInfo?> GetActiveTourPromotion(string tourCode)
+    {
+        if (string.IsNullOrWhiteSpace(tourCode))
+        {
+            return null;
+        }
+
+        var now = DateTime.UtcNow;
+
+        var promotions = await promotionProvider
+            .Get()
+            .GetEnumerableTypedResultAsync();
+
+        return promotions
+            .Where(promotion =>
+                !string.IsNullOrWhiteSpace(promotion.PromotionPackageCodes))
+            .Where(promotion =>
+                promotion.PromotionPackageCodes
+                    .Split(
+                        new[] { "\r\n", "\n", "\r" },
+                        StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .Any(x =>
+                        string.Equals(
+                            x,
+                            tourCode,
+                            StringComparison.OrdinalIgnoreCase)))
+            .Where(promotion =>
+                promotion.PromotionFromDate != default &&
+                promotion.PromotionToDate != default &&
+                now >= promotion.PromotionFromDate &&
+                now <= promotion.PromotionToDate)
+            .OrderByDescending(promotion => promotion.PromotionFromDate)
+            .FirstOrDefault();
+    }
+
+    private static ETG.DiscountAndOffer? GetActiveTourDiscount(
+    IEnumerable<ETG.DiscountAndOfferFolder>? folders)
+    {
+        if (folders == null)
+        {
+            return null;
+        }
+
+        var today = DateTime.UtcNow.Date;
+
+        foreach (var folder in folders)
+        {
+            if (folder == null)
+            {
+                continue;
+            }
+
+            var discount = folder.SelectedDiscountAndOffers?
+                .FirstOrDefault(item =>
+                    item != null &&
+                    item.DiscountIsOnSaleNow &&
+                    item.DiscountExpiry.Date >= today);
+
+            if (discount != null)
+            {
+                return discount;
+            }
+
+            var nestedDiscount = GetActiveTourDiscount(
+                folder.SelectedDiscountAndOfferFolders);
+
+            if (nestedDiscount != null)
+            {
+                return nestedDiscount;
+            }
+        }
+
+        return null;
+    }
+
     private async Task<PromotionInfo?> GetTourPromotions(string tourCode)
     {
         if (string.IsNullOrWhiteSpace(tourCode))
@@ -305,14 +490,32 @@ IMediator mediator,
                 .Select(x => x.Trim());
             foreach (var packageCode in packageCodes)
             {
-                if (packageCodes.Any(x =>  string.Equals(x, tourCode, StringComparison.OrdinalIgnoreCase)))
+                if (packageCodes.Any(x => string.Equals(x, tourCode, StringComparison.OrdinalIgnoreCase)))
                 {
                     return promotion;
                 }
             }
         }
 
-            return null;
+        return null;
+    }
+
+    private async Task<Folder?> GetDefaultFaqFolder()
+    {
+        var query = new ContentItemQueryBuilder()
+            .ForContentType(
+                Folder.CONTENT_TYPE_NAME,
+                config => config
+                    .WithLinkedItems(1)
+                    .ForWebsite(
+                        "ETG",
+                        pathMatch: PathMatch.Single("/Shared/FAQs")));
+
+        var folders = await executor.GetMappedWebPageResult<Folder>(
+            query,
+            cancellationToken: HttpContext.RequestAborted);
+
+        return folders.FirstOrDefault();
     }
     public sealed class TourPageTemplateViewModel
     {
@@ -328,6 +531,13 @@ IMediator mediator,
         public IEnumerable<string> TourTypeNames { get; set; } = Enumerable.Empty<string>();
         public IEnumerable<Destination> Destinations { get; set; } = Enumerable.Empty<Destination>();
         public PromotionInfo? Promotion { get; set; }
+        public ETG.DiscountAndOffer? Discount { get; set; }
+        public ReviewListingResponse? Reviews { get; set; }
+    }
+    public sealed class TourOfferData
+    {
+        public PromotionInfo? Promotion { get; set; }
+        public ETG.DiscountAndOffer? Discount { get; set; }
     }
 }
 

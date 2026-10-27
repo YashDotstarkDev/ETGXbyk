@@ -87,6 +87,24 @@ public sealed class DestinationPostPageTemplateController : Controller
             return NotFound();
         }
 
+        // Added: inspect the selected folders and their linked items.
+        var accordionFolders = destination.SelectedAccordionItemFolders?
+            .ToList() ?? new List<AccordionItemFolder>();
+
+        foreach (var folder in accordionFolders)
+        {
+            var folderName = folder.DocumentName;
+
+            var accordionItems = folder.SelectedAccordionItems?
+                .ToList() ?? new List<AccordionItem>();
+
+            var itemCount = accordionItems.Count;
+
+            // Set a breakpoint on the line above and step over it.
+            // Inspect folderName, itemCount, and accordionItems.
+        }
+
+        // Existing: articles for current destination and its parent.
         var destinationGuids = new HashSet<Guid>
         {
             destination.SystemFields.WebPageItemGUID
@@ -133,14 +151,15 @@ public sealed class DestinationPostPageTemplateController : Controller
                     query.WithLinkedItems(4);
                 });
 
-        var articleCandidates = await contentQueryExecutor
+         var articleCandidates = await contentQueryExecutor
             .GetMappedWebPageResult<ArticleContent>(articlesQuery);
 
         var relatedArticles = articleCandidates
             .Where(article =>
-                article.ArticleDestinations?.Any(reference =>
-                    destinationGuids.Contains(reference.WebPageGuid))
-                == true)
+            article.ArticleDestinations?.Any(reference =>
+            destinationGuids.Contains(reference.WebPageGuid))
+            == true)
+            .OrderByDescending(article => article.ArticleDate)
             .ToArray();
 
         var relatedArticleViewModels = await Task.WhenAll(
@@ -172,13 +191,18 @@ public sealed class DestinationPostPageTemplateController : Controller
         {
             CTAUrl = string.IsNullOrWhiteSpace(destinationAlias)
                 ? string.Empty
-                : $"{Request.PathBase}/destinations/enquire/{destinationAlias}"
+                : $"{Request.PathBase}/destinations/enquire/{destinationAlias}",
+            CTABackgroundImage = destination.DestinationHeroImage?.OfType<MediaFile>()
+                .FirstOrDefault()?.LegacyMediaFileAsset?.Url ?? string.Empty
         };
 
         var reviews = await reviewsService.GetReviewsAsync();
 
         var viewModel = new DestinationPostPageViewModel
         {
+            CtaButtonText = destination.CtaButtonText,
+            CtaButtonUrl = destination.CtaButtonUrl,
+
             DestinationName =
                 destination.DestinationName ?? string.Empty,
 
@@ -230,16 +254,10 @@ public sealed class DestinationPostPageTemplateController : Controller
                 ?? Enumerable.Empty<ImageTileCtaFolder>(),
 
             RelatedArticles = relatedArticleViewModels,
-            CTA = contactUs,
-            Reviews = reviews
+            DestinationRelatedArticlesHeader = destination.DestinationRelatedArticlesHeader ?? string.Empty,
+            // Added: contact/enquiry model.
+            CTA = contactUs
         };
-
-        if (destination is IMetaDataSchema metaFields)
-        {
-            metaService.SetMeta(
-                metaFields,
-                heroImage?.LegacyMediaFileAsset?.Url);
-        }
 
         return View(
             "~/Features/Destinations/DestinationPostPage_Default.cshtml",
@@ -269,6 +287,9 @@ public sealed class DestinationPostPageTemplateController : Controller
 
 public sealed class DestinationPostPageViewModel
 {
+    public string? CtaButtonText { get; init; }
+    public string? CtaButtonUrl { get; init; }
+
     public string DestinationName { get; init; } = string.Empty;
     public ImageAssetViewModel? DestinationHeroImage { get; init; }
     public ImageAssetViewModel? HeroForegroundImage { get; init; }
@@ -283,19 +304,12 @@ public sealed class DestinationPostPageViewModel
     public string DestinationSummary { get; init; } = string.Empty;
     public string DestinationDetail { get; init; } = string.Empty;
     public string DestinationWhenToVisit { get; init; } = string.Empty;
-
-    public DestinationStickyModel DestinationStickyModel { get; init; }
-        = new();
-
-    public IEnumerable<AccordionItemFolder> SelectedAccordionItemFolders
-    { get; init; } = [];
-
-    public IEnumerable<ImageFolder> SelectedImageFolders
-    { get; init; } = [];
-
-    public IEnumerable<ImageTileCtaFolder> SelectedImageTileCtaFolders
-    { get; init; } = [];
-
+    public DestinationStickyModel DestinationStickyModel { get; init; } = new();
+    public IEnumerable<AccordionItemFolder> SelectedAccordionItemFolders { get; init; } = [];
+    public IEnumerable<ImageFolder> SelectedImageFolders { get; init; } = [];
+    public IEnumerable<ImageTileCtaFolder> SelectedImageTileCtaFolders { get; init; } = [];
+    public string DestinationRelatedArticlesHeader { get; init; } = string.Empty;
+    // Reuse your existing ContactUsViewModel.
     public ContactUsViewModel CTA { get; init; } = new();
 
     public ReviewListingResponse? Reviews { get; init; }

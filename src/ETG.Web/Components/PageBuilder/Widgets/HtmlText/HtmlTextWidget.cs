@@ -50,15 +50,9 @@ public class HtmlTextWidgetProperties : BaseWidgetProperties
         Label = "Text",
         Order = 1)]
     public string Text { get; set; } = "";
-
-    [CheckBoxComponent(
-        Label = "Add side padding",
-        Order = 2)]
-    public bool HasSidePadding { get; set; } = false;
 }
 
 public class HtmlTextWidgetViewModel(HtmlTextWidgetProperties props)
 {
     public string Text { get; set; } = props.Text;
-    public bool HasSidePadding { get; set; } = props.HasSidePadding;
 }

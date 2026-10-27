@@ -37,7 +37,7 @@
             {
                 <div class="google-rating">
                     <div class="google-top">
-                        <a href="https://share.google/u4apm8PYX8bv7lH9r"
+                        <a href="/google-reviews"
                            target="_blank"
                            rel="noopener noreferrer">
                             <img src="/images/google-review-logo.png"
@@ -49,15 +49,15 @@
                                  aria-label="@averageRating out of 5 stars">
                                 @for (int i = 0; i < fullStars; i++)
                                 {
-                                    <span aria-hidden="true">&#9733;</span>
+                                    <span aria-hidden="true"><i class="bi bi-star-fill"></i></span>
                                 }
                                 @if (halfStar)
                                 {
-                                    <span aria-hidden="true">&#9734;</span>
+                                    <span aria-hidden="true"><i class="bi bi-star-half"></i></span>
                                 }
                                 @for (int i = 0; i < emptyStars; i++)
                                 {
-                                    <span aria-hidden="true">&#9734;</span>
+                                    <span aria-hidden="true"><i class="bi bi-star"></i></span>
                                 }
                             </div>
                             <div class="reviews">

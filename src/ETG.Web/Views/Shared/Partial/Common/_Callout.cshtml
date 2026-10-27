@@ -1,13 +1,15 @@
+@using System.Linq
 @using ETG.Web.Features.TravelType
+
 @model IReadOnlyList<TravelTypeDetailSummaryModel>
 
-    @if (Model is null || !Model.Any())
+@if (Model is null || !Model.Any())
 {
     return;
 }
 
-    <div class="container">
-        @for (var index = 0; index < Model.Count; index++)
+<div class="container">
+    @for (var index = 0; index < Model.Count; index++)
     {
         var detail = Model[index];
         var isEvenItem = index % 2 == 0;
@@ -25,62 +27,79 @@
             <div class="col-md-6 @contentOrder mb-1 mb-md-0 text-center text-md-start">
                 @if (!string.IsNullOrWhiteSpace(detail.Heading))
                 {
-                <h3 class="dest-zigzag-title">@detail.Heading</h3>
+                    <h3 class="dest-zigzag-title">@detail.Heading</h3>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(detail.Summary))
                 {
-                <p class="dest-zigzag-text"
-                   style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
-                    @detail.Summary
-                </p>
+                    var desc = detail.Summary.Trim();
+                    var limit = 90; // characters that roughly fill 2 lines; tweak to taste
+                    var isLong = desc.Length > limit;
+                    var shortText = desc;
+                    if (isLong)
+                    {
+                        shortText = desc.Substring(0, limit);
+                        var lastSpace = shortText.LastIndexOf(' ');
+                        if (lastSpace > 0) { shortText = shortText.Substring(0, lastSpace); }
+                        shortText = shortText.TrimEnd(' ', ',', '.', ';', ':');
+                    }
+                    var descId = $"detail-description-{index}";
+
+                    <div class="desc-block">
+                        <p class="dest-zigzag-text description-collapse mb-3" id="@descId">
+                            @if (isLong)
+                            {
+                                <span class="desc-short">@shortText&hellip;</span>
+                                <span class="desc-full">@desc</span>
+                                <a href="javascript:void(0)"
+                                   class="link-pink read-more-link"
+                                   data-target="@descId">READ MORE</a>
+                            }
+                            else
+                            {
+                                @desc
+                            }
+                        </p>
+                    </div>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(detail.Path))
                 {
-                <a href="@detail.Path"
-                   class="link-pink d-none d-md-inline-block">
-                    READ MORE
-                </a>
+                    <div class="view-all-btn text-center text-md-center">
+                        <a href="@detail.Path"
+                           class="link-pink d-none d-md-inline-block">
+                            @detail.Heading
+                        </a>
+                    </div>
                 }
             </div>
+
             <div class="col-md-6 @imageOrder mb-4 mb-md-0">
                 @if (!string.IsNullOrWhiteSpace(detail.HeroImageUrl))
                 {
-                <img src="@detail.HeroImageUrl"
-                     alt="@detail.HeroImageAltText"
-                     class="dest-zigzag-img img-fluid"
-                     loading="lazy" />
+                    <img src="@detail.HeroImageUrl"
+                         alt="@detail.HeroImageAltText"
+                         class="dest-zigzag-img img-fluid"
+                         loading="lazy" />
                 }
                 else
                 {
-                <div class="dest-zigzag-img"
-                     style="min-height: 300px; background: #f2f2f2;">
-                </div>
+                    <div class="dest-zigzag-img"
+                         style="min-height: 300px; background: #f2f2f2;">
+                    </div>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(detail.Path))
                 {
-                <div class="text-center d-md-none">
-                    <a href="@detail.Path"
-                       class="link-pink d-inline-block mt-3">
-                        READ MORE
-                    </a>
-                </div>
+                    <div class="text-center d-md-none">
+                        <a href="@detail.Path"
+                           class="link-pink d-inline-block mt-3">
+                            READ MORE
+                        </a>
+                    </div>
                 }
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(detail.Path))
-                    {
-            <div class="text-center d-md-none">
-                <a href="@detail.Path"
-                   class="link-pink d-inline-block mt-3">
-                    READ MORE
-                </a>
-            </div>
-                    }
         </div>
-            }
-    </div>
     }
-    </div>
+</div>

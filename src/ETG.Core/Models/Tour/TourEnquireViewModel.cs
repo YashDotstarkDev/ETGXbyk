@@ -8,6 +8,8 @@ public sealed class TourEnquireViewModel
     public TourContent Tour { get; set; } = default!;
 
     public TourEnquireFormViewModel Form { get; set; } = new();
+
+    public ShareLinksViewModel? ShareLinks { get; set; }
 }
 
 public sealed class TourEnquireFormViewModel
@@ -26,6 +28,7 @@ public sealed class TourEnquireFormViewModel
     public string Message { get; set; } = string.Empty;
     public bool SubscribeToNewsletter { get; set; }
     public string TourCode { get; set; } = string.Empty;
+    public string TourLink { get; set; } = string.Empty;
     public string TourName { get; set; } = string.Empty;
     public string TourClass { get; set; } = string.Empty;
     public string TourDepartureCity { get; set; } = string.Empty;
@@ -36,4 +39,5 @@ public sealed class TourEnquireFormViewModel
     public string DepartureDate { get; set; } = string.Empty;
     public string ReturnDate { get; set; } = string.Empty;
     public string ErrorMessage { get; set; } = string.Empty;
+    public string PreferredDestination { get; set; } = string.Empty;
 }

@@ -14,13 +14,15 @@ using Microsoft.Extensions.Options;
 using Sidio.Sitemap.AspNetCore;
 using Sidio.Sitemap.Core.Services;
 using Slugify;
+using ETG.Web.Services.Storage;
+using ETG.Web.Services.Utm;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionAppExtensions
 {
-    public static IServiceCollection AddApp(this IServiceCollection services, IConfiguration config) =>
-        services
+    public static IServiceCollection AddApp(this IServiceCollection services, IConfiguration config, IWebHostEnvironment env) =>
+    services
             .AddSEO()
             .AddRendering()
             .AddOperations(config)
@@ -31,7 +33,10 @@ public static class ServiceCollectionAppExtensions
             .AddCurrency(config)
             .AddScoped<IShareLinksService, ShareLinksService>()
             .AddScoped<ITourSummaryService, TourSummaryService>()
-            .AddScoped<ITourPricingService, TourPricingService>();
+            .AddScoped<ITourPricingService, TourPricingService>()
+            .AddScoped<IUtmService, UtmService>()
+            .AddScoped<IBlobStorageService, AzureBlobStorageService>()
+            .AddAzureBlobStorage(config, env);
 
     private static IServiceCollection AddOperations(this IServiceCollection services, IConfiguration config) =>
     services

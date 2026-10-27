@@ -94,6 +94,8 @@ public class TravelTypeLandingPageTemplateController(
      ?? result.Page.TravelTypeName
      ?? "";
 
+        var galleryImages = HeroImageHelper.ExtractGalleryImages(result.Page.SelectedImageFolders);
+
         var viewModel = new TravelTypeLandingPageViewModel
         {
             Name = result.Page.TravelTypeName ?? "",
@@ -103,10 +105,11 @@ public class TravelTypeLandingPageTemplateController(
 
             Hero = new HeroViewModel
             {
-                HeroImageUrl = heroImage?.LegacyMediaFileAsset?.Url ?? "",
-                HeroImageAltText = result.Page.TravelTypeHeroAltText ?? "",
+                HeroImageUrl = heroImage?.LegacyMediaFileAsset?.Url ?? galleryImages.FirstOrDefault()?.ImageUrl ?? "",
+                HeroImageAltText = result.Page.TravelTypeHeroAltText ?? galleryImages.FirstOrDefault()?.AltText ?? "",
                 Heading = heading,
                 HeroIconSvg = result.Page.TravelTypeSVGIcon,
+                GalleryImages = galleryImages
             },
 
             HeroIcon = result.Page.TravelTypeHeroIcon,

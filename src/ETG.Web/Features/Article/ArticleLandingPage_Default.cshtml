@@ -12,7 +12,10 @@
     // Fetch Algolia settings directly in the view
     var algoliaAppId = Configuration["CMSAlgoliaSearch:ApplicationId"] ?? "";
     var algoliaSearchKey = Configuration["CMSAlgoliaSearch:SearchKey"] ?? "";
-    var algoliaIndex = Configuration["CMSAlgoliaSearch:IndexArticle"] ?? "etg_articles";
+    var algoliaIndex = Configuration["CMSAlgoliaSearch:IndexArticle"] ?? "Article";
+
+    // Collect featured article URLs so JS can exclude them from Algolia grid
+    var featuredUrls = string.Join(",", landing.Articles.Select(a => a.LinkPath?.Trim('/') ?? "").Where(u => !string.IsNullOrEmpty(u)));
 }
 
 <!-- Algolia InstantSearch CSS -->
@@ -24,8 +27,8 @@
       data-algolia-app-id="@algoliaAppId"
       data-algolia-search-key="@algoliaSearchKey"
       data-algolia-index="@algoliaIndex"
-      data-total-articles="@landing.TotalArticles"
-      data-page-size="@landing.PageSize">
+      data-featured-urls="@featuredUrls"
+      data-excluded-ids="@string.Join(",", landing.ExcludedObjectIds)">
 
     <vc:bread-crumb />
 
@@ -179,22 +182,14 @@
     </div>
 
 
-    <!-- SENIOR'S RESULTS BAR -->
+    <!-- RESULTS BAR -->
     <div class="container blogs-results-bar">
-        <p class="mb-0" id="resultsCount">Showing <span id="algolia-stats-count" style="color: #CA568E; font-weight: 600;">@(landing.TotalArticles)</span> results</p>
+        <p class="mb-0" id="resultsCount">Showing <span id="algolia-stats-count" style="color: #CA568E; font-weight: 600;">0</span> results</p>
         <div>
             <label>View:</label>
-            <select id="viewFilter" class="view-select text-pink" onchange="window.location.href = '?page=1&pageSize=' + this.value;">
-                @if (landing.PageSize == 60)
-                {
-                    <option value="30">30</option>
-                    <option value="60" selected>60</option>
-                }
-                else
-                {
-                    <option value="30" selected>30</option>
-                    <option value="60">60</option>
-                }
+            <select id="viewFilter" class="view-select text-pink">
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
             </select>
         </div>
     </div>
@@ -204,24 +199,14 @@
 <div style="padding: 40px 0; background-color: #fafafa;">
     <div class="container">
 
-        <!-- SERVER-SIDE GRID (shown when no Algolia filter is active) -->
-        <div id="server-grid">
-            <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml" model="landing.Articles.Skip(3)" />
-        </div>
-
-        <!-- SERVER-SIDE PAGINATION -->
-        <div id="server-pagination" class="etg-pagination mt-5">
-            <vc:pagination model="landing" />
-        </div>
-
-        <!-- ALGOLIA HITS GRID (shown only when search/filter is active) -->
-        <div id="algolia-results" style="display: none;">
+        <!-- ALGOLIA HITS GRID (always visible, sole data source for grid) -->
+        <div id="algolia-results">
             <div id="algolia-hits"></div>
 
-            <!-- PERFECT PAGINATION STYLING CONTAINER -->
-            <div class="mt-5 d-flex justify-content-center">
-                <div id="algolia-pagination"></div>
-            </div>
+            <!-- PAGINATION (Tour Landing style) -->
+            <nav id="pagination-nav" aria-label="Article results pages" class="mt-5 mb-4">
+                <div id="algolia-pagination" class="d-flex justify-content-center"></div>
+            </nav>
         </div>
 
         <!-- POPULAR DESTINATIONS -->

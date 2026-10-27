@@ -3,11 +3,10 @@
 
 @if (Model.Currencies.Any())
 {
-    var returnUrl = Uri.EscapeDataString($"{Context.Request.Path}{Context.Request.QueryString}");
 
    <select class="currency-select"
         name="currency"
-        onchange="window.location.href='/currency/set/' + this.value + '?returnUrl=@returnUrl'">
+        onchange="window.location.href='/currency/set/' + this.value + '?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search)">
 
     @foreach (var currency in Model.Currencies)
     {

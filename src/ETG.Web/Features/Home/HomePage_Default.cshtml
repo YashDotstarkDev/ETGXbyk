@@ -70,14 +70,14 @@
 <!-- HERO -->
 <section class="hero hero-sec-pad" aria-label="Hero">
 
-    @if (Model.HeroImage?.LegacyMediaFileAsset is not null)
-    {
-        <picture>
-            <img src="@Model.HeroImage.LegacyMediaFileAsset.Url"
-                 alt=""
-                 class="hero-bg" />
-        </picture>
-    }
+  @if (Model.HeroImage?.LegacyMediaFileAsset is not null)
+{
+    <picture>
+        <img src="@Url.Content(Model.HeroImage.LegacyMediaFileAsset.Url)"
+             alt=""
+             class="hero-bg" />
+    </picture>
+}
 
     <div class="hero-overlay"></div>
 
@@ -124,7 +124,7 @@
                     <select class="form-select tom-select"
                             aria-label="Destination"
                             id="heroDestination">
-                        <option value="all">Select destination</option>
+                        <option value="all">Select</option>
                     </select>
                 </div>
 
@@ -135,7 +135,7 @@
                     <select class="form-select tom-select"
                             aria-label="Experience"
                             id="heroExperience">
-                        <option value="all">Select experience</option>
+                        <option value="all">Select</option>
                     </select>
                 </div>
 
@@ -175,43 +175,12 @@
                     @Model.ProofPointsTitle
                 </h2>
             </div>
-
-            <div class="container">
-                <editable-area area-identifier="editableAreaTop" />
-            </div>
         </div>
     </section>
 }
-<div class="container">
+
 <editable-area area-identifier="editableAreaTop" />
-</div>
 
-<!-- TOP DESTINATIONS -->
-@if (!string.IsNullOrWhiteSpace(Model.DestinationsTitle))
-{
-    <section class="section-pad pt-4"
-             aria-labelledby="destinations-title">
-
-        <div class="container">
-
-            @if (!string.IsNullOrWhiteSpace(Model.DestinationsTitle))
-            {
-                <div class="title-div mb-4">
-                    <h2 id="destinations-title"
-                        class="section-title mb-0">
-                        @Model.DestinationsTitle
-                    </h2>
-                </div>
-            }
-
-            <editable-area area-identifier="homeDestinations" />
-
-        </div>
-    </section>
-}
-        <div class="container">
-<editable-area area-identifier="editableAreaTop" />
-</div>
 
 <!-- EXPLORE EXPERIENCES -->
 @if (Model.Experiences.Count > 0)
@@ -220,82 +189,14 @@
              model="Model.Experiences" />
 }
 
-<section class="section-pad bg-lightgray" aria-labelledby="expertise-title">
-    <div class="container">
-        <div class="title-div">
-            <h2 id="expertise-title" class="section-title">Destination expertise you can trust</h2>
-        </div>
-        <p class="text-muted mb-4" style="max-width:640px">
-            Backed by decades of expertise, industry partnerships and award
-            winning service.
-        </p>
 
-        <div class="row g-4 text-center">
-            <!-- Card 1 -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
-                    <div class="expertise-icon-wrap mb-3 mx-auto">
-                        <img src="@Url.Content("~/images/w-50-experience.png")" width="20px" alt="" srcset="">
-                    </div>
-                    <h3 class="expertise-number text-pink fw-bold mb-2">50+</h3>
-                    <h6 class="fw-bold text-dark mb-2">Years of experience</h6>
-                    <p class="small text-muted mb-0">Founded in 1971 — five decades of crafting travel experiences.</p>
-                </div>
-            </div>
 
-            <!-- Card 2 -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
-                    <div class="expertise-icon-wrap mb-3 mx-auto">
-                        <img src="@Url.Content("~/images/w-handpicked-suppliars.svg")" width="30px" alt="" srcset="">
-                    </div>
-                    <h3 class="expertise-number text-pink fw-bold mb-2">20+</h3>
-                    <h6 class="fw-bold text-dark mb-2">Tourism board partnerships</h6>
-                    <p class="small text-muted mb-0">Official partnerships across our key destinations.</p>
-                </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
-                    <div class="expertise-icon-wrap mb-3 mx-auto">
-                        <i class="bi bi-people text-pink"></i>
-                    </div>
-                    <h3 class="expertise-number text-pink fw-bold mb-2">100+</h3>
-                    <h6 class="fw-bold text-dark mb-2">Years of team knowledge</h6>
-                    <p class="small text-muted mb-0">A team of specialists with first-hand destination knowledge.</p>
-                </div>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="expertise-card h-100 p-4 bg-white rounded-4 shadow-sm border border-light">
-                    <div class="expertise-icon-wrap mb-3 mx-auto">
-                        <img src="@Url.Content("~/images/award winning.svg")" width="120px" srcset="">
-                    </div>
-                    <h3 class="expertise-number text-pink fw-bold mb-2">Awards</h3>
-                    <h6 class="fw-bold text-dark mb-2">Winning service</h6>
-                    <p class="small text-muted mb-0">Multiple awards from peak industry bodies.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-center mt-5 text-muted" style="font-size: 0.85rem;">
-            Official partners with <span class="fw-bold text-dark">Destination Canada</span>,
-            <span class="fw-bold text-dark">Switzerland Tourism</span>,
-            <span class="fw-bold text-dark">Tahiti Tourisme</span>
-            and more.
-        </div>
-    </div>
-</section>
-
-<div class="container">
     <editable-area area-identifier="middle" />
-    </div>
+ 
     
-    <div class="container">
+   
         <editable-area area-identifier="bottom" />
-        </div>
+    
 
 <!-- BLOGS -->
 @{
@@ -352,10 +253,7 @@
 }
 
 
-
-      <div class="container">
-          <editable-area area-identifier="bottom2" />          
-      </div>
+    <editable-area area-identifier="bottom2" />          
 
 <!-- ============================================== -->
 <!-- ALGOLIA EXTERNAL SCRIPTS                      -->

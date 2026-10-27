@@ -92,6 +92,6 @@ namespace ETG.Core.Content
 		/// <summary>
 		/// SelectCTAImage.
 		/// </summary>
-		public IEnumerable<CTAImage> SelectCTAImage { get; set; }
+		public IEnumerable<CTAImage> SelectedCTAImages { get; set; }
 	}
 }

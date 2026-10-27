@@ -1,6 +1,45 @@
 ﻿@using ETG.Web.Components.PageBuilder.Widgets.SmallTiles
 @model SmallTilesWidgetViewModel
 
+@using System.Globalization
+@{
+    string Cap(string? text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? string.Empty
+            : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
+}
+@{
+    var tiles = Model.Tiles.Take(6).ToList();   // max 6
+    int count = tiles.Count;
+
+    string GetColClass(int index, int total) => total switch
+    {
+        1 => "col-12",
+        2 => "col-12 col-md-6",
+        3 => "col-12 col-md-4",
+        4 => "col-6 col-md-3",
+        5 => index < 3 ? "col-6 col-md-4" : "col-6 col-md-6",
+        _ => "col-md-4 col-sm-6"
+    };
+    const int InitialCount = 8;
+
+    // TODO: replace with Model.ViewAllUrl once the widget field exists.
+    // Set to "" to test the expand/collapse behaviour instead.
+    var viewAllUrl = Model.CtaButtonUrl;
+
+    var sectionKey = string.IsNullOrWhiteSpace(Model.SectionId)
+        ? Guid.NewGuid().ToString("N")[..8]
+        : Model.SectionId;
+
+    var hasViewAllLink = !string.IsNullOrWhiteSpace(viewAllUrl);
+
+    var tilesToRender = hasViewAllLink
+        ? Model.Tiles.Take(InitialCount).ToList()
+        : Model.Tiles.ToList();
+
+    var hasExtraTiles = !hasViewAllLink && tilesToRender.Count > InitialCount;
+}
+
 @if (!string.IsNullOrWhiteSpace(Model.SectionId))
 {
     <div class="relative">
@@ -16,29 +55,47 @@
             {
                 <div class="title-div mb-4">
                     <div class="d-flex flex-row justify-content-between align-items-center gap-3">
-                        <h2 id="destinations-title-@Model.SectionId" class="section-title mb-0">@Model.Heading</h2>
+                        <h2 id="destinations-title-@Model.SectionId" class="section-title mb-0">@Cap(Model.Heading)</h2>
+                        @if (hasViewAllLink)
+                        {
+                            <a href="@viewAllUrl" class="view-all-btn" target="_blank" rel="noopener noreferrer">@Model.CtaButtonText</a>
+                        }
+                        else if (hasExtraTiles)
+                        {
+                            <button type="button" class="view-all-btn"
+                                    data-toggle-tiles="@sectionKey"
+                                    data-label="@Model.CtaButtonText"
+                                    aria-expanded="false"
+                                    aria-controls="regions-tiles-@sectionKey">
+                                @Model.CtaButtonText
+                            </button>
+                        }
                     </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
+                    {
+                        <p class="section-description mb-0">@Model.ShortDescription</p>
+                    }
                 </div>
             }
 
             <div class="row g-3">
-                @if (Model.Images.Count >= 6)
+                @if (count == 6)
                 {
                     <div class="col-md-3">
-                        <a href="#" class="dest-tile dest-tall">
-                            <img loading="lazy" src="@Model.Images[0].LegacyMediaFileAsset?.Url" alt="@Model.Images[0].LegacyMediaFileTitle" />
-                            <span class="dest-label">@Model.Images[0].LegacyMediaFileTitle</span>
+                        <a href="@(string.IsNullOrWhiteSpace(tiles[0].CtaUrl) ? "#" : tiles[0].CtaUrl)" class="dest-tile dest-tall">
+                            <img loading="lazy" src="@tiles[0].ImageUrl" alt="@tiles[0].Caption" />
+                            <span class="dest-label">@Cap(tiles[0].Caption)</span>
                         </a>
                     </div>
 
                     <div class="col-md-6">
                         <div class="row g-3">
-                            @foreach (var tile in Model.Images.Skip(1).Take(4))
+                            @foreach (var tile in tiles.Skip(1).Take(4))
                             {
                                 <div class="col-6">
-                                    <a href="#" class="dest-tile">
-                                        <img loading="lazy" src="@tile.LegacyMediaFileAsset?.Url" alt="@tile.LegacyMediaFileTitle" />
-                                        <span class="dest-label">@tile.LegacyMediaFileTitle</span>
+                                    <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="dest-tile">
+                                        <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                        <span class="dest-label">@Cap(tile.Caption)</span>
                                     </a>
                                 </div>
                             }
@@ -46,20 +103,21 @@
                     </div>
 
                     <div class="col-md-3">
-                        <a href="#" class="dest-tile dest-tall">
-                            <img loading="lazy" src="@Model.Images[5].LegacyMediaFileAsset?.Url" alt="@Model.Images[5].LegacyMediaFileTitle" />
-                            <span class="dest-label">@Model.Images[5].LegacyMediaFileTitle</span>
+                        <a href="@(string.IsNullOrWhiteSpace(tiles[5].CtaUrl) ? "#" : tiles[5].CtaUrl)" class="dest-tile dest-tall">
+                            <img loading="lazy" src="@tiles[5].ImageUrl" alt="@tiles[5].Caption" />
+                            <span class="dest-label">@Cap(tiles[5].Caption)</span>
                         </a>
                     </div>
                 }
                 else
                 {
-                    @foreach (var tile in Model.Images)
+                    @for (int i = 0; i < count; i++)
                     {
-                        <div class="col-md-4 col-sm-6">
-                            <a href="#" class="dest-tile">
-                                <img loading="lazy" src="@tile.LegacyMediaFileAsset?.Url" alt="@tile.LegacyMediaFileTitle" />
-                                <span class="dest-label">@tile.LegacyMediaFileTitle</span>
+                        var tile = tiles[i];
+                        <div class="@GetColClass(i, count)">
+                            <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="dest-tile">
+                                <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                <span class="dest-label">@Cap(tile.Caption)</span>
                             </a>
                         </div>
                     }
@@ -70,26 +128,72 @@
 }
 else
 {
-    <section class="section-pad" aria-labelledby="regions-title-@Model.SectionId" xpc-preview-outline="@Model.ComponentName">
+    
+      
+    
+    <section class="section-pad" aria-labelledby="regions-title-@sectionKey" xpc-preview-outline="@Model.ComponentName">
         <div class="container">
             @if (!string.IsNullOrWhiteSpace(Model.Heading))
             {
                 <div class="d-flex justify-content-between align-items-end mb-4 title-div">
-                    <h2 id="regions-title-@Model.SectionId" class="section-title">@Model.Heading</h2>
+                    <h2 id="regions-title-@sectionKey" class="section-title">@Cap(Model.Heading)</h2>
+
+                    @if (hasViewAllLink)
+                    {
+                        <a href="@viewAllUrl" class="view-all-btn" target="_blank" rel="noopener noreferrer">@Model.CtaButtonText</a>
+                    }
+                    else if (hasExtraTiles)
+                    {
+                        <button type="button" class="view-all-btn"
+                                data-toggle-tiles="@sectionKey"
+                                data-label="@Model.CtaButtonText"
+                                aria-expanded="false"
+                                aria-controls="regions-tiles-@sectionKey">
+                            @Model.CtaButtonText
+                        </button>
+                    }
+                @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
+                {
+                    <p class="section-description mb-0">@Model.ShortDescription</p>
+                }
                 </div>
             }
 
-            <div class="row g-3 justify-content-center">
-                @foreach (var tile in Model.Images)
+            <div id="regions-tiles-@sectionKey" class="row g-3 justify-content-center">
+                @for (var i = 0; i < tilesToRender.Count; i++)
                 {
-                    <div class="region-col">
-                        <a href="#" class="region-app-tile">
-                            <img loading="lazy" src="@tile.LegacyMediaFileAsset?.Url" alt="@tile.LegacyMediaFileTitle" />
-                            <span class="region-app-label">@tile.LegacyMediaFileTitle</span>
+                    var tile = tilesToRender[i];
+                    var isExtra = i >= InitialCount;
+
+                    <div class="region-col@(isExtra ? " region-extra d-none" : "")">
+                        <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="region-app-tile">
+                            <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                            <span class="region-app-label">@tile.Caption</span>
                         </a>
                     </div>
                 }
             </div>
         </div>
+
+        @if (hasExtraTiles)
+        {
+            <script>
+                    (function () {
+                        var btn = document.querySelector('[data-toggle-tiles="@sectionKey"]');
+                        var grid = document.getElementById('regions-tiles-@sectionKey');
+                        if (!btn || !grid) return;
+
+                        btn.addEventListener('click', function () {
+                            var expanded = btn.getAttribute('aria-expanded') === 'true';
+                            grid.querySelectorAll('.region-extra').forEach(function (el) {
+                                el.classList.toggle('d-none', expanded);
+                            });
+                            btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                            btn.textContent = expanded ? 'View All' : 'Show Less';
+                        });
+                    })();
+            </script>
+        }
     </section>
+
 }

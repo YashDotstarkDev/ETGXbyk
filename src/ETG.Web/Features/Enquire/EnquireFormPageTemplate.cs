@@ -108,7 +108,7 @@ public sealed class EnquireFormPageTemplateController : Controller
                 cancellationToken: HttpContext.RequestAborted);
 
         var destinationItems = destinations
-            .Where(x => !string.IsNullOrWhiteSpace(x.DestinationName))
+            .Where(x => !string.IsNullOrWhiteSpace(x.DestinationName) && GetTreeLevel(x.SystemFields.WebPageItemTreePath) == 2)
             .OrderBy(x => x.DestinationName)
             .Select(x => new SelectListItem
             {
@@ -192,5 +192,17 @@ public sealed class EnquireFormPageTemplateController : Controller
                 StringComparison.OrdinalIgnoreCase));
 
         return selected?.Value ?? string.Empty;
+    }
+    private static int GetTreeLevel(string treePath)
+    {
+        if (string.IsNullOrWhiteSpace(treePath))
+        {
+            return 0;
+        }
+
+        return treePath
+            .Trim('/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .Length;
     }
 }

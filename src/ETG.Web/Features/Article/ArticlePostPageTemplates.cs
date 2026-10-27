@@ -1,14 +1,16 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.DataEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
+using ContentPage = ETG.Core.Content.Page;
 using ETG.Core.Models;
 using ETG.Core.Models.Tour;
 using ETG.Web.Features.Article;
 using ETG.Web.Features.Shared;
 using ETG.Web.Infrastructure;
 using ETG.Web.Rendering;
+using ETG.Web.Services.Tour;
 using Kentico.Content.Web.Mvc;
 using Kentico.Content.Web.Mvc.Routing;
 using Kentico.PageBuilder.Web.Mvc.PageTemplates;
@@ -16,8 +18,11 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+
+using MediaFile = ETG.Core.Content.MediaFile;
 
 [assembly: RegisterPageTemplate(
     identifier: "ETG.ArticlePostPage_Default",
@@ -44,8 +49,9 @@ public class ArticlePostPageTemplateController(
     IWebPageUrlRetriever urlRetriever,
     ITaxonomyRetriever taxonomyRetriever,
     IContentQueryExecutor queryExecutor,
+    IWebsiteChannelContext channelContext,
+    ITourPricingService pricingService,
     WebPageMetaService metaService) : Controller
-
 {
     public async Task<ActionResult> Index()
     {
@@ -58,11 +64,11 @@ public class ArticlePostPageTemplateController(
         if (articlePage == null)
             return NotFound();
 
+        
         var authorQuery = new ContentItemQueryBuilder()
             .ForWebPage((RoutedWebPage)data.WebPage);
 
         var rawResult = await queryExecutor.GetWebPageResult(authorQuery, container => container, new ContentQueryExecutionOptions { ForPreview = true });
-
         var rawArticle = rawResult.FirstOrDefault();
 
         List<Guid> rawAuthorGuids = new List<Guid>();
@@ -80,6 +86,7 @@ public class ArticlePostPageTemplateController(
 
         string resolvedAuthorName = ResolveAuthorNames(rawAuthorGuids);
 
+     
         DateTime modifiedDate = GetLastModifiedDate(articlePage.SystemFields.WebPageItemID);
         string finalModifiedDateIso = modifiedDate != DateTime.MinValue
             ? modifiedDate.ToString("yyyy-MM-dd")
@@ -90,7 +97,7 @@ public class ArticlePostPageTemplateController(
             ? mediaFileHero.LegacyMediaFileAsset?.Url ?? string.Empty
             : string.Empty;
 
-        // Remember to uncomment this if your Article data is fully migrated in the database!
+        
         var relatedResult = await mediator.Send(
             new ArticlePostPagesLatestQuery(articlePage, "ETG"));
 
@@ -101,75 +108,167 @@ public class ArticlePostPageTemplateController(
             relatedArticles.Add(vmArticle);
         }
 
-
+    
         var articleDestinations = articlePage.ArticleDestinations?
             .Select(d => d.WebPageGuid.ToString())
             .ToList() ?? new List<string>();
 
-        var toursResult = await mediator.Send(new ArticlePostPageToursQuery(articleDestinations));
-        var tourViewModels = new List<TourSummaryViewModel>();
+        
+        TourListingViewModel? tourListing = null;
 
-        foreach (var tour in toursResult.Items)
+        if (articleDestinations.Any())
         {
-            var tourHero = tour.TourHeroImage?.FirstOrDefault() as MediaFile;
-            string finalInclusions = tour.TourPriceInclusions ?? string.Empty;
-            int dynamicLowestPrice = 0;
-            var allPrices = new List<int>();
+            var toursResult = await mediator.Send(new ArticlePostPageToursQuery(articleDestinations, channelContext.WebsiteChannelName));
+            var toursList = toursResult.Items.ToList();
 
-            // MIGRATION FIX: Property name changed from SelectTourPricingFolders to SelectedTourPricingFolders
-            if (tour.SelectedTourPricingFolders != null)
+            if (toursList.Any())
             {
-                foreach (var folder in tour.SelectedTourPricingFolders)
+                var bulkPrices = await pricingService.GetPricesBulkAsync(toursList);
+                var tempCards = new List<(TourSummaryViewModel ViewModel, decimal SortPrice)>();
+
+                foreach (var tour in toursList)
                 {
-                    if (folder != null && folder.SelectedTourPricings != null)
+                    // 1. Retrieve first image from SelectedImageFolders (Tour -> ImageFolder -> Image -> MediaFile)
+                    var firstImage = tour.SelectedImageFolders?
+                        .Where(f => f?.SelectedImages != null)
+                        .SelectMany(f => f.SelectedImages)
+                        .OfType<ETG.Image>()
+                        .FirstOrDefault(img => img != null);
+
+                    MediaFile? mediaFile = null;
+                    if (firstImage != null)
                     {
-                        foreach (var pricingObj in folder.SelectedTourPricings)
+                        mediaFile = firstImage.ImageFilePath?
+                            .OfType<MediaFile>()
+                            .FirstOrDefault()
+                            ?? firstImage.ImageFilePath?.FirstOrDefault() as MediaFile;
+                    }
+
+
+
+                    // 2. Fallback to TourHeroImage if no image found in SelectedImageFolders
+                    if (mediaFile == null && tour.TourHeroImage != null)
+                    {
+                        var heroItem = tour.TourHeroImage.FirstOrDefault();
+                        mediaFile = heroItem switch
                         {
-                            if (pricingObj is TourPricing pricing)
-                            {
-                                if (pricing.TourPricingOverridePrice > 0) allPrices.Add(pricing.TourPricingOverridePrice);
-                                if (pricing.TourPricingEconomyPrice1 > 0) allPrices.Add(pricing.TourPricingEconomyPrice1);
-                                if (pricing.TourPricingEconomyPrice2 > 0) allPrices.Add(pricing.TourPricingEconomyPrice2);
-                                if (pricing.TourPricingEconomyPrice3 > 0) allPrices.Add(pricing.TourPricingEconomyPrice3);
-                                if (pricing.TourPricingEconomyPrice4 > 0) allPrices.Add(pricing.TourPricingEconomyPrice4);
-                            }
+                            MediaFile mf => mf,
+                            ETG.Image img => img.ImageFilePath?.OfType<MediaFile>().FirstOrDefault()
+                                          ?? img.ImageFilePath?.FirstOrDefault() as MediaFile,
+                            _ => null
+                        };
+                    }
+
+                    string resolvedImageUrl = string.Empty;
+                    var asset = mediaFile?.LegacyMediaFileAsset;
+                    if (asset != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(asset.Url))
+                        {
+                            resolvedImageUrl = asset.Url.TrimStart('~');
+                        }
+                        else if (asset.Metadata != null)
+                        {
+                            resolvedImageUrl = $"/getContentAsset/{asset.Metadata.Identifier}/{asset.Metadata.Name}";
                         }
                     }
+
+                    string finalInclusions = tour.TourPriceInclusions ?? string.Empty;
+
+                    var priceInfo = (!string.IsNullOrWhiteSpace(tour.TourCode) && bulkPrices.TryGetValue(tour.TourCode, out var p))
+                        ? p
+                        : new TourPricingResult(0, 0);
+
+                    var originalPriceText = priceInfo.OriginalPrice > 0
+                        ? priceInfo.OriginalPrice.ToString("N0", CultureInfo.InvariantCulture)
+                        : string.Empty;
+
+                    var currentPriceText = priceInfo.CurrentPrice > 0
+                        ? priceInfo.CurrentPrice.ToString("N0", CultureInfo.InvariantCulture)
+                        : string.Empty;
+
+                    var displayOriginalPrice = string.Empty;
+                    if (priceInfo.CurrentPrice > 0 && priceInfo.OriginalPrice > 0 && priceInfo.CurrentPrice < priceInfo.OriginalPrice)
+                    {
+                        displayOriginalPrice = originalPriceText;
+                    }
+
+                    string imageAlt = !string.IsNullOrEmpty(tour.TourHeroImageCaption)
+                        ? tour.TourHeroImageCaption
+                        : (!string.IsNullOrEmpty(mediaFile?.LegacyMediaFileTitle)
+                            ? mediaFile.LegacyMediaFileTitle
+                            : (tour.TourName ?? string.Empty));
+
+                    string badge = !string.IsNullOrWhiteSpace(tour.TourDestinationCity)
+                        ? tour.TourDestinationCity.ToUpperInvariant()
+                        : (!string.IsNullOrWhiteSpace(tour.TourDepartureCity)
+                            ? tour.TourDepartureCity.ToUpperInvariant()
+                            : string.Empty);
+
+                    string tourPath = string.Empty;
+                    try
+                    {
+                        var tourUrl = await urlRetriever.Retrieve(tour);
+                        tourPath = tourUrl?.RelativePath ?? string.Empty;
+                    }
+                    catch { }
+
+                    if (string.IsNullOrWhiteSpace(tourPath))
+                    {
+                        tourPath = !string.IsNullOrWhiteSpace(tour.SystemFields?.WebPageUrlPath)
+                            ? "/" + tour.SystemFields.WebPageUrlPath.TrimStart('/')
+                            : "#";
+                    }
+
+                    var cardVm = new TourSummaryViewModel
+                    {
+                        Name = tour.TourName ?? string.Empty,
+                        TourCode = tour.TourCode ?? string.Empty,
+                        Path = tourPath,
+                        Description = tour.TourSummary ?? string.Empty,
+                        HeroImageUrl = resolvedImageUrl,
+                        HeroImageAlt = imageAlt,
+                        Badge = badge,
+                        DaysFromLabel = tour.TourNights > 0 ? $"{tour.TourNights + 1} DAYS FROM" : string.Empty,
+                        CurrentPrice = string.IsNullOrEmpty(currentPriceText)
+                            ? string.Empty
+                            : $"{priceInfo.CurrencySymbol}{currentPriceText}",
+                        OriginalPrice = displayOriginalPrice,
+                        Currency = priceInfo.CurrencyCode,
+                        PriceTypeLabel = !string.IsNullOrWhiteSpace(tour.TourPriceTypeLabel)
+                            ? tour.TourPriceTypeLabel
+                            : "Per person | twin share",
+                        InclusionIcons = TourSummaryViewModel.ParseInclusions(finalInclusions)
+                    };
+
+                    // For sorting: cheapest first (tours with prices appear first, then unpriced)
+                    decimal sortPrice = priceInfo.CurrentPrice > 0 ? priceInfo.CurrentPrice : decimal.MaxValue;
+                    tempCards.Add((cardVm, sortPrice));
+                }
+
+                // Exactly like Kentico 13: Sort by lowest price ascending, take top 8
+                var finalTourViewModels = tempCards
+                    .OrderBy(x => x.SortPrice)
+                    .Take(8)
+                    .Select(x => x.ViewModel)
+                    .ToList();
+
+                if (finalTourViewModels.Any())
+                {
+                    tourListing = new TourListingViewModel
+                    {
+                        Heading = "Related Packages",
+                        SectionId = "article-tours",
+                        Tours = finalTourViewModels,
+                        HideViewAllButton = false,
+                        ViewAllUrl = "/tours",
+                        ViewAllButtonLabel = "VIEW ALL"
+                    };
                 }
             }
-
-            if (allPrices.Any()) dynamicLowestPrice = allPrices.Min();
-
-            string finalCurrentPrice = dynamicLowestPrice > 0 ? $"${dynamicLowestPrice:#,##0}" : "No Price Found";
-
-            tourViewModels.Add(new TourSummaryViewModel
-            {
-                Name = tour.TourName ?? string.Empty,
-                TourCode = tour.TourCode ?? string.Empty,
-                Path = tour.SystemFields?.WebPageUrlPath ?? "#",
-                Description = tour.TourSummary ?? string.Empty,
-                HeroImageUrl = tourHero?.LegacyMediaFileAsset?.Url ?? string.Empty,
-                HeroImageAlt = !string.IsNullOrEmpty(tour.TourHeroImageCaption) ? tour.TourHeroImageCaption : (tour.TourName ?? string.Empty),
-                Badge = tour.TourDestinationCity?.ToUpper() ?? string.Empty,
-                DaysFromLabel = tour.TourNights > 0 ? $"{tour.TourNights + 1} DAYS FROM" : string.Empty,
-                OriginalPrice = string.Empty,
-                CurrentPrice = finalCurrentPrice,
-                Currency = !string.IsNullOrEmpty(tour.TourPriceCurrency) ? tour.TourPriceCurrency : "AUD",
-                PriceTypeLabel = tour.TourPriceTypeLabel ?? string.Empty,
-                InclusionIcons = TourSummaryViewModel.ParseInclusions(finalInclusions)
-            });
         }
 
-        var tourListing = new TourListingViewModel
-        {
-            Heading = "Related Packages",
-            SectionId = "article-tours",
-            Tours = tourViewModels,
-            HideViewAllButton = false,
-            ViewAllUrl = "/tours",
-            ViewAllButtonLabel = "VIEW ALL"
-        };
-
+        
         var vm = new ArticlePostPageViewModel
         {
             Title = articlePage.ArticleTitle ?? string.Empty,
@@ -195,7 +294,6 @@ public class ArticlePostPageTemplateController(
             ModifiedDateIso = finalModifiedDateIso,
 
             Categories = GetCategoryNames(articlePage.ArticleCategories),
-
             Destinations = articleDestinations,
             RelatedArticles = relatedArticles,
             TourListing = tourListing
@@ -203,10 +301,26 @@ public class ArticlePostPageTemplateController(
 
         if (articlePage is IMetaDataSchema metaFields)
         {
-            metaService.SetMeta(
-                metaFields,
-                finalHeroImageUrl);
+            metaService.SetMeta(metaFields, finalHeroImageUrl);
         }
+
+        // Fetch ArticleLandingPage's PageHeading for breadcrumb
+        try
+        {
+            var landingPageQuery = new ContentItemQueryBuilder()
+                .ForContentType(ContentPage.CONTENT_TYPE_NAME, config => config
+                    .ForWebsite(channelContext.WebsiteChannelName)
+                    .Where(w => w.WhereEquals("WebPageUrlPath", "articles")));
+
+            var landingPages = await queryExecutor.GetMappedWebPageResult<ContentPage>(landingPageQuery);
+            var landingPage = landingPages.FirstOrDefault();
+            if (landingPage != null && !string.IsNullOrEmpty(landingPage.PageHeading))
+            {
+                ViewData["ArticleLandingTitle"] = landingPage.PageHeading;
+            }
+        }
+        catch { }
+
         return View("~/Features/Article/ArticlePostPage_Default.cshtml", vm);
     }
 
@@ -249,7 +363,6 @@ public class ArticlePostPageTemplateController(
 
         return string.Join(" and ", names.Distinct());
     }
-
 
     private List<string> GetCategoryNames(IEnumerable<Guid>? categoryIds)
     {

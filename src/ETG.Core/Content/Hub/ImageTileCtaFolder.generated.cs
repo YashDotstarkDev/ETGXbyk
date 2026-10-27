@@ -41,8 +41,8 @@ namespace ETG.Core.Content
 
 
 		/// <summary>
-		/// SelectImageTileCta.
+		/// SelectedImageTileCtas.
 		/// </summary>
-		public IEnumerable<ImageTileCta> SelectImageTileCta { get; set; }
+		public IEnumerable<ImageTileCta> SelectedImageTileCtas { get; set; }
 	}
 }

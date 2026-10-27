@@ -1,16 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
+using ETG.Core.Models;
+using ETG.Core.Models.Tour;
+using ETG.Web.Components.PageBuilder.Widgets.GoogleReviews;
 using ETG.Web.Features;
 using ETG.Web.Features.Experience;
+using ETG.Web.Features.Search;
+using Microsoft.Extensions.Configuration;
 using ETG.Web.Features.Experience.Operations;
 using ETG.Web.Infrastructure;
 using ETG.Web.Rendering;
+using ETG.Web.Services.GoogleReviews;
+using ETG.Web.Services.Tour;
 using Kentico.Content.Web.Mvc;
 using Kentico.Content.Web.Mvc.Routing;
 using Kentico.PageBuilder.Web.Mvc.PageTemplates;
@@ -20,15 +28,7 @@ using Microsoft.AspNetCore.Mvc;
 using ArticleContent = ETG.Core.Content.Article;
 using ExperienceContent = ETG.Core.Content.Experience;
 using MediaFile = ETG.Core.Content.MediaFile;
-using ETG.Core.Models.Tour;
 using TourContent = ETG.Core.Content.Tour;
-
-
-using ETG.Web.Services.GoogleReviews;
-using ETG.Web.Components.PageBuilder.Widgets.GoogleReviews;
-
-using ETG.Core.Models;
-
 
 [assembly: RegisterWebPageRoute(
     contentTypeName: ExperienceContent.CONTENT_TYPE_NAME,
@@ -50,7 +50,10 @@ public class ExperiencePageTemplateController(
     IWebPageUrlRetriever urlRetriever,
     ITaxonomyRetriever taxonomyRetriever,
     IGoogleReviewsService reviewsService,
-    WebPageMetaService metaService) : Controller
+    ITourPricingService pricingService,
+    ITourSummaryService tourSummaryService,
+    WebPageMetaService metaService,
+    IConfiguration configuration) : Controller
 
 
 {
@@ -84,7 +87,7 @@ public class ExperiencePageTemplateController(
             query =>
             {
                 query.ForWebsite(channelContext.WebsiteChannelName);
-
+                query.WithLinkedItems(4);
                 query.Where(where =>
                     where.WhereLike(
                         nameof(ArticleContent.ArticleExperiences),
@@ -130,8 +133,6 @@ public class ExperiencePageTemplateController(
             }
         }
 
-
-
         var experienceAlias = (experience.ExperienceName ?? string.Empty).Trim().Replace(" ", "-").ToLowerInvariant();
 
         var viewModel = new ExperiencePageDetailViewModel
@@ -158,18 +159,16 @@ public class ExperiencePageTemplateController(
                 CTAPhoneDetail2 = "New Zealand: 0800 855 045",
                 CTAUrl = $"/experiences/enquire/{experienceAlias}",
                 CTAText = "ENQUIRE NOW",
-                CTABackgroundImage = "/content/images/travel_destination.png"
+                CTABackgroundImage = experience.ExperienceHeroImage?.OfType<MediaFile>()
+                .FirstOrDefault()?.LegacyMediaFileAsset?.Url ?? string.Empty
             },
 
             HideGoogleReviews = experience.HideGoogleReviews,
             GoogleReviews = googleReviewsVm,
 
+            RelatedArticles = relatedArticleViewModels,
 
-            RelatedArticles =
-                relatedArticleViewModels,
-
-            TourListing =
-                tourListing
+            TourListing = tourListing
         };
 
         if (experience is IMetaDataSchema metaFields)
@@ -183,10 +182,9 @@ public class ExperiencePageTemplateController(
     }
 
     private async Task<TourListingViewModel> CreateTourListingAsync(
-ExperienceContent experience,
-string selectedExperienceGuid)
+        ExperienceContent experience,
+        string selectedExperienceGuid)
     {
-        
         var selectedPageGuids = (experience.ExperienceFeatureTours ?? [])
             .Concat(experience.ExperienceFeatureCruises ?? [])
             .Where(item => item != null && item.WebPageGuid != Guid.Empty)
@@ -194,158 +192,93 @@ string selectedExperienceGuid)
             .Distinct()
             .ToList();
 
-        var toursQuery = new ContentItemQueryBuilder();
-
-        toursQuery.ForContentType(
-            TourContent.CONTENT_TYPE_NAME,
-            query =>
-            {
-                query.ForWebsite(channelContext.WebsiteChannelName);
-
-                if (selectedPageGuids.Any())
-                {
-                    query.Where(where => where.WhereIn(
-                        "WebPageItemGUID",
-                        selectedPageGuids));
-                }
-                else
-                {
-                    query.Where(where => where.WhereLike(
-                        nameof(TourContent.TourExperiences),
-                        $"%{selectedExperienceGuid}%"));
-
-                    query.TopN(3);
-                }
-
-                query.WithLinkedItems(
-                    2,
-                    options => options.IncludeWebPageData());
-            });
-
-        var allTours = (await contentQueryExecutor
-            .GetMappedWebPageResult<TourContent>(toursQuery))
-            .ToList();
-        IEnumerable<TourContent> featuredTours;
+        List<TourContent> toursToDisplay = [];
 
         if (selectedPageGuids.Any())
         {
-            featuredTours = selectedPageGuids
+            var toursQuery = new ContentItemQueryBuilder();
+
+            toursQuery.ForContentType(
+                TourContent.CONTENT_TYPE_NAME,
+                query =>
+                {
+                    query.ForWebsite(channelContext.WebsiteChannelName);
+
+                    query.Where(where => where.WhereIn(
+                        "WebPageItemGUID",
+                        selectedPageGuids));
+
+                    query.WithLinkedItems(
+                        4,
+                        options => options.IncludeWebPageData());
+                });
+
+            var allTours = (await contentQueryExecutor
+                .GetMappedWebPageResult<TourContent>(toursQuery))
+                .ToList();
+
+            toursToDisplay = selectedPageGuids
                 .Select(guid => allTours.FirstOrDefault(tour => tour.SystemFields.WebPageItemGUID == guid))
                 .Where(tour => tour is not null)
-                .Select(tour => tour!);
+                .Select(tour => tour!)
+                .ToList();
         }
         else
         {
-            featuredTours = allTours;
+            // K13 Fallback: When no feature tours/cruises are explicitly selected,
+            // auto-fetch top 3 tours tagged with this experience (TourExperiences)
+            var fallbackQuery = new ContentItemQueryBuilder();
+
+            fallbackQuery.ForContentType(
+                TourContent.CONTENT_TYPE_NAME,
+                query =>
+                {
+                    query.ForWebsite(channelContext.WebsiteChannelName);
+                    query.TopN(3);
+
+                    query.Where(where =>
+                        where.WhereLike(
+                            nameof(TourContent.TourExperiences),
+                            $"%{selectedExperienceGuid}%"));
+
+                    query.WithLinkedItems(
+                        4,
+                        options => options.IncludeWebPageData());
+                });
+
+            toursToDisplay = (await contentQueryExecutor
+                .GetMappedWebPageResult<TourContent>(fallbackQuery))
+                .ToList();
         }
 
-        var cards = await Task.WhenAll(featuredTours.Select(async tour =>
+        if (!toursToDisplay.Any())
+        {
+            return new TourListingViewModel();
+        }
+
+        var bulkPrices = await pricingService.GetPricesBulkAsync(toursToDisplay);
+
+        var cards = await Task.WhenAll(toursToDisplay.Select(async tour =>
         {
             var tourUrl = await urlRetriever.Retrieve(tour);
-            var selectedPricing = tour.SelectedTourPricingFolders?
-     .SelectMany(folder => folder.SelectedTourPricings ?? [])
-     .Select(pricing => new
-     {
-         Price = GetLowestConfiguredPrice(pricing)
-     })
-     .Where(item => item.Price > 0)
-     .OrderBy(item => item.Price)
-     .FirstOrDefault();
 
-            var price = selectedPricing?.Price ?? 0;
+            // Resolve price info for this tour
+            var priceInfo = (!string.IsNullOrWhiteSpace(tour.TourCode) && bulkPrices.TryGetValue(tour.TourCode, out var p))
+                ? p
+                : new TourPricingResult(0, 0);
 
-            var tourHeroImage = tour.TourHeroImage?
-                .OfType<MediaFile>()
-                .FirstOrDefault();
-
-            return new TourSummaryViewModel
-            {
-                Name = tour.TourName ?? "",
-                TourCode = tour.TourCode ?? "",
-                Description = tour.TourSummary ?? "",
-                Path = tourUrl.RelativePath,
-
-                HeroImageUrl = tourHeroImage is null
-    ? ""
-    : ImageAssetViewModel.Create(tourHeroImage)
-        .LegacyMediaFileAsset?.Url ?? "",
-
-                HeroImageAlt =
-                    tour.TourHeroImageAltTag ??
-                    tour.TourName ??
-                    "",
-
-                Badge =
-                    tour.TourDestinationCity?.ToUpperInvariant() ??
-                    "",
-
-                DaysFromLabel = tour.TourNights > 0
-                    ? $"{tour.TourNights + 1} DAYS FROM"
-                    : "",
-
-                CurrentPrice = price > 0
-                    ? $"${price:N0}"
-                    : "",
-
-                OriginalPrice = "",
-
-                Currency = tour.TourPriceCurrency ?? "AUD",
-
-                PriceTypeLabel = !string.IsNullOrWhiteSpace(
-                    tour.TourPriceTypeLabel)
-                        ? tour.TourPriceTypeLabel
-                        : "Per person | twin share",
-
-                InclusionIcons = TourSummaryViewModel.ParseInclusions(
-    tour.TourPriceInclusions)
-            };
+            return await tourSummaryService.MapToViewModelAsync(tour, tourUrl?.RelativePath ?? string.Empty, priceInfo);
         }));
 
         return new TourListingViewModel
         {
             Heading = $"Featured {experience.ExperienceHeading ?? experience.ExperienceName} Experiences",
             Tours = cards,
-            ViewAllUrl = $"/search?experience={Uri.EscapeDataString(experience.ExperienceName)}",
-
+            ViewAllUrl = SearchUrlHelper.GetExperienceFilterUrl(configuration["AlgoliaSettings:SearchIndexTour"] ?? "TourPricing-Live", experience.ExperienceName),
             ViewAllButtonLabel = "View All"
         };
-
-    }
-    private static int GetLowestConfiguredPrice(TourPricing pricing)
-    {
-        if (pricing.TourPricingOverridePrice > 0)
-        {
-            return pricing.TourPricingOverridePrice;
-        }
-
-        return new[]
-        {
-        pricing.TourPricingEconomyPrice1,
-        pricing.TourPricingPremiumPrice1,
-        pricing.TourPricingBusinessPrice1,
-        pricing.TourPricingFirstClassPrice1,
-
-        pricing.TourPricingEconomyPrice2,
-        pricing.TourPricingPremiumPrice2,
-        pricing.TourPricingBusinessPrice2,
-        pricing.TourPricingFirstClassPrice2,
-
-        pricing.TourPricingEconomyPrice3,
-        pricing.TourPricingPremiumPrice3,
-        pricing.TourPricingBusinessPrice3,
-        pricing.TourPricingFirstClassPrice3,
-
-        pricing.TourPricingEconomyPrice4,
-        pricing.TourPricingPremiumPrice4,
-        pricing.TourPricingBusinessPrice4,
-        pricing.TourPricingFirstClassPrice4
-    }
-        .Where(value => value > 0)
-        .DefaultIfEmpty(0)
-        .Min();
     }
 }
-
 
 public class ExperiencePageDetailViewModel
 {

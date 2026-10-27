@@ -2,24 +2,15 @@
 @using ETG.Web.Features.TravelType
 
 @model TravelTypeLandingPageViewModel
-@{
-    TravelTypeLandingPageViewModel? viewModel = null;
 
-    try
-    {
-        viewModel = Model;
-    }
-    catch (System.InvalidCastException)
-    {
-        viewModel = null;
-    }
+@{
+    var viewModel = Model;
 
     if (viewModel is null)
     {
         return;
     }
 }
-
     
 
     <vc:bread-crumb />
@@ -64,4 +55,4 @@
         <editable-area area-identifier="Bottom" />
     </div>
 
-    <script src="/scripts/primary-landing.js"></script>
+

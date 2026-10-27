@@ -45,8 +45,19 @@
             return string.Empty;
         }
 
+        var value = svg.Trim();
+
+        if (value.StartsWith("<![CDATA[", System.StringComparison.Ordinal)
+            && value.EndsWith("]]>", System.StringComparison.Ordinal))
+        {
+            value = value.Substring(
+                "<![CDATA[".Length,
+                value.Length - "<![CDATA[".Length - "]]>".Length)
+                .Trim();
+        }
+
         return Regex.Replace(
-            svg.Trim(),
+            value,
             @"^\s*<\?xml[^>]*\?>\s*",
             "",
             RegexOptions.IgnoreCase);
@@ -78,47 +89,37 @@
                 && !string.IsNullOrWhiteSpace(item.Svg))
     .ToList();
 
+    var index = 0;
+
     var pomItems = new[]
     {
         new
         {
-            Top = "CHANGE",
-            Bottom = "OF MIND",
             Svg = Model.SVGCode1,
             Label = Model.Label1
         },
         new
         {
-            Top = "ON GROUND",
-            Bottom = "SUPPORT",
             Svg = Model.SVGCode2,
             Label = Model.Label2
         },
         new
         {
-            Top = "FIXED",
-            Bottom = "PRICES",
             Svg = Model.SVGCode3,
             Label = Model.Label3
         },
         new
         {
-            Top = "PROUDLY",
-            Bottom = "AUSTRALIAN",
             Svg = Model.SVGCode4,
             Label = Model.Label4
         },
         new
         {
-            Top = "ATIA & CATO",
-            Bottom = "ACCREDITED",
             Svg = Model.SVGCode5,
             Label = Model.Label5
         },
         new
         {
-            Top = "SUSTAINABLE",
-            Bottom = "TRAVEL",
             Svg = Model.SVGCode6,
             Label = Model.Label6
         }
@@ -128,7 +129,7 @@
     .ToList();
 }
 
-<style>
+@* <style>
     .tahiti-v2-pom-container .tv2-pom-icon {
         width: 42px;
         height: 42px;
@@ -179,7 +180,8 @@
     text-align: center;
     line-height: 1.3;
 }
-</style>
+
+</style> *@
 
 @if (Model.DisplayType == "Feature Highlights" && pomItems.Any())
 {
@@ -193,34 +195,37 @@
                     Peace Of Mind Booking Plan
                 </h2>
 
-                <a href="#" class="view-all-btn">Learn More</a>
+                <a href="@Model.CTAUrl" class="view-all-btn">@Model.CTALabel</a>
             </div>
 
             <div class="pom-custom-body">
                 <div class="tahiti-v2-pom-container pt-3">
-                    <div class="tv2-pom-grid text-center"
-                         style="grid-template-columns: repeat(@pomItems.Count, minmax(0, 1fr));">
+                    <div class="tv2-pom-grid text-center">
 
                         @foreach (var item in pomItems)
                         {
                             <div class="tv2-pom-item">
                                 <div class="tv2-pom-top-box">
-                                    <span class="tv2-pom-text-bold">
-                                        @item.Top
-                                    </span>
+                                    @if (index == 2)
+                                    {
+                                        <span class="tv2-pom-text-bold custom-vertical-border">
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tv2-pom-text-bold">
+
+                                        </span>
+                                    }
 
                                     <div class="tv2-pom-icon-wrapper">
-                                        <span class="tv2-pom-dot">&#183;</span>
-
                                         <div class="tv2-pom-icon">
                                             @Html.Raw(FormatSvg(item.Svg))
                                         </div>
-
-                                        <span class="tv2-pom-dot">&#183;</span>
                                     </div>
 
                                     <span class="tv2-pom-text-bold">
-                                        @item.Bottom
                                     </span>
                                 </div>
 
@@ -228,6 +233,7 @@
                                     @Html.Raw(FormatLabel(item.Label))
                                 </div>
                             </div>
+                            index++;
                         }
                     </div>
                 </div>
@@ -238,17 +244,23 @@
 
 @if (Model.DisplayType == "Brand Highlights" && brandItems.Any())
 {
-    <section id="@Model.SectionId" class="tahiti-v2-brand-bar">
+    var logo = Model.BrandHighlightLogo;
+    var logoUrl = logo?.LegacyMediaFileAsset?.Url;
+
+    <section id="@Model.SectionId"
+             class="tahiti-v2-brand-bar brand-bar--inline"
+             aria-labelledby="experience-title">
         <div class="container">
             <div class="tahiti-v2-brand-logo-area">
-                <img src="@Url.Content("~/images/group-journey.png")"
-                     alt="Tahiti Travel Logo"
-                     class="tahiti-v2-brand-icon">
+                @if (!string.IsNullOrWhiteSpace(logoUrl))
+                {
+                    <img src="@Url.Content(logoUrl)"
+                         alt="@(logo?.LegacyMediaFileTitle ?? "Tahiti Travel Logo")"
+                         class="tahiti-v2-brand-icon">
+                }
             </div>
 
-            <div class="tahiti-v2-features"
-                 style="grid-template-columns: repeat(@brandItems.Count, minmax(0, 1fr));">
-
+            <div class="tahiti-v2-features">
                 @foreach (var item in brandItems)
                 {
                     <div class="tahiti-v2-feature-item">

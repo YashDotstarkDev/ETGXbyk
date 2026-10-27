@@ -1,11 +1,11 @@
 @using System.Linq
 @using ETG.Web.Features.TravelType
 @using Kentico.PageBuilder.Web.Mvc.PageTemplates
-@model TemplateViewModel<TravelTypeDetailPageTemplateProperties>
+@model TravelTypeDetailPageViewModel
 
-    @{
-    var viewModel = Model.GetTemplateModel<TravelTypeDetailPageViewModel>();
-    }
+@{
+    var viewModel = Model;
+}
 
     <vc:bread-crumb />
     @await Html.PartialAsync(
@@ -14,10 +14,7 @@
     )
     <div class="container">
         <div class="row">
-          <div class="col-lg-10" style="
-    margin-top: 30px;
-">
-      
+        <div class="col-lg-10" style="margin-top: 30px;">
                 <div class="title-div">
                     <h2 id="tahiti-info-title" class="section-title">
 

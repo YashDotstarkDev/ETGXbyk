@@ -38,18 +38,42 @@
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout1Description))
                         {
-                            <p class="dest-zigzag-text description-collapse" id="callout1-description">
-                                @Model.Callout1Description
-                            </p>
+                            <div class="description-wrap mb-3">
+                                @if (!string.IsNullOrWhiteSpace(Model.Callout1Description))
+                                {
+                                    var desc = Model.Callout1Description.Trim();
+                                    var limit = 90; // characters that roughly fill 2 lines; tweak to taste
+                                    var isLong = desc.Length > limit;
+                                    var shortText = desc;
+                                    if (isLong)
+                                    {
+                                        shortText = desc.Substring(0, limit);
+                                        var lastSpace = shortText.LastIndexOf(' ');
+                                        if (lastSpace > 0) { shortText = shortText.Substring(0, lastSpace); }
+                                        shortText = shortText.TrimEnd(' ', ',', '.', ';', ':');
+                                    }
+
+                                    <div class="desc-block">
+                                        <p class="dest-zigzag-text description-collapse mb-3" id="callout1-description">
+                                            <span class="desc-short">@shortText&hellip;</span>
+                                            <span class="desc-full">@desc</span>
+                                            <a href="javascript:void(0)"
+                                               class="link-pink read-more-link"
+                                               data-target="callout1-description">@Model.Callout1CtaButtonText</a>
+                                        </p>
+                                    </div>
+                                }
+                            </div>
                         }
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout1Url) &&
                              !string.IsNullOrWhiteSpace(Model.Callout1CtaButtonText))
                         {
-                            <a href="@Model.Callout1Url"
-                               class="link-pink d-none d-md-inline-block read-more-link" data-target="callout1-description">
-                                @Model.Callout1CtaButtonText
-                            </a>
+                            <div class="view-all-btn text-center text-md-center d-none d-md-inline-block">
+                                <a href="@Model.Callout1Url">
+                                    @Model.Callout1Heading
+                                </a>
+                            </div>
                         }
                     </div>
 
@@ -72,10 +96,9 @@
                         @if (!string.IsNullOrWhiteSpace(Model.Callout1Url) &&
                              !string.IsNullOrWhiteSpace(Model.Callout1CtaButtonText))
                         {
-                            <div class="text-center d-md-none">
-                                <a href="@Model.Callout1Url"
-                                   class="link-pink d-inline-block mt-3">
-                                    @Model.Callout1CtaButtonText
+                            <div class="view-all-btn text-center d-md-none mt-3 d-inline-block ">
+                                <a href="@Model.Callout1Url">
+                                    @Model.Callout1Heading
                                 </a>
                             </div>
                         }
@@ -90,8 +113,8 @@
                 <div class="row dest-zigzag-item mb-4 mb-md-5">
                     <div class="col-md-6 mb-1 mb-md-0 text-center text-md-start
                         @(Model.StartFromRight
-                            ? "order-md-2 ps-md-5"
-                            : "order-md-1 pe-md-5 pe-3")">
+                            ? "order-md-1 ps-md-5"
+                            : "order-md-2 pe-md-5 pe-3")">
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout2Heading))
                         {
@@ -102,20 +125,42 @@
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout2Description))
                         {
-                            <p class="dest-zigzag-text description-collapse" id="callout2-description">
-                                @Model.Callout2Description
-                            </p>
+                            <div class="description-wrap mb-3">
+                                @if (!string.IsNullOrWhiteSpace(Model.Callout2Description))
+                                {
+                                    var desc = Model.Callout2Description.Trim();
+                                    var limit = 90; // characters that roughly fill 2 lines; tweak to taste
+                                    var isLong = desc.Length > limit;
+                                    var shortText = desc;
+                                    if (isLong)
+                                    {
+                                        shortText = desc.Substring(0, limit);
+                                        var lastSpace = shortText.LastIndexOf(' ');
+                                        if (lastSpace > 0) { shortText = shortText.Substring(0, lastSpace); }
+                                        shortText = shortText.TrimEnd(' ', ',', '.', ';', ':');
+                                    }
+                                                <div class="desc-block">
+                                                    <p class="dest-zigzag-text description-collapse mb-3" id="callout2-description">
+                                                        <span class="desc-short">@shortText&hellip;</span>
+                                                        <span class="desc-full">@desc</span>
+                                                        <a href="javascript:void(0)"
+                                                           class="link-pink read-more-link"
+                                                           data-target="callout2-description">@Model.Callout2CtaButtonText</a>
+                                                    </p>
+                                                </div>
+                                }
+                            </div>
                         }
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout2Url) &&
                              !string.IsNullOrWhiteSpace(Model.Callout2CtaButtonText))
                         {
-                            <a href="@Model.Callout2Url"
-                               class="link-pink d-none d-md-inline-block read-more-link" data-target="callout2-description">
-                                @Model.Callout2CtaButtonText
-                            </a>
+                            <div class="view-all-btn text-center text-md-center d-none d-md-inline-block">
+                                <a href="@Model.Callout2Url">
+                                    @Model.Callout2Heading
+                                </a>
+                            </div>
                         }
-
                     </div>
 
                     <div class="col-md-6
@@ -137,10 +182,9 @@
                         @if (!string.IsNullOrWhiteSpace(Model.Callout2Url) &&
                              !string.IsNullOrWhiteSpace(Model.Callout2CtaButtonText))
                         {
-                            <div class="text-center d-md-none">
-                                <a href="@Model.Callout2Url"
-                                   class="link-pink d-inline-block mt-3">
-                                    @Model.Callout2CtaButtonText
+                            <div class="view-all-btn text-center d-md-none mt-3 d-inline-block ">
+                                <a href="@Model.Callout2Url">
+                                    @Model.Callout2Heading
                                 </a>
                             </div>
                         }
@@ -168,20 +212,44 @@
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout3Description))
                         {
-                            <p class="dest-zigzag-text description-collapse" id="callout3-description">
-                                @Model.Callout3Description
-                            </p>
+                            <div class="description-wrap mb-3">
+                                @if (!string.IsNullOrWhiteSpace(Model.Callout3Description))
+                                {
+                                    var desc = Model.Callout3Description.Trim();
+                                    var limit = 90; // characters that roughly fill 2 lines; tweak to taste
+                                    var isLong = desc.Length > limit;
+                                    var shortText = desc;
+                                    if (isLong)
+                                    {
+                                        shortText = desc.Substring(0, limit);
+                                        var lastSpace = shortText.LastIndexOf(' ');
+                                        if (lastSpace > 0) { shortText = shortText.Substring(0, lastSpace); }
+                                        shortText = shortText.TrimEnd(' ', ',', '.', ';', ':');
+                                    }
+
+
+                                                <div class="desc-block">
+                                                    <p class="dest-zigzag-text description-collapse mb-3" id="callout3-description">
+                                                        <span class="desc-short">@shortText&hellip;</span>
+                                                        <span class="desc-full">@desc</span>
+                                                        <a href="javascript:void(0)"
+                                                           class="link-pink read-more-link"
+                                                           data-target="callout3-description">@Model.Callout3CtaButtonText</a>
+                                                    </p>
+                                                </div>
+                                }
+                            </div>
                         }
 
                         @if (!string.IsNullOrWhiteSpace(Model.Callout3Url) &&
                              !string.IsNullOrWhiteSpace(Model.Callout3CtaButtonText))
                         {
-                            <a href="@Model.Callout3Url"
-                               class="link-pink d-none d-md-inline-block read-more-link" data-target="callout3-description">
-                                @Model.Callout3CtaButtonText
-                            </a>
+                            <div class="view-all-btn text-center text-md-center d-none d-md-inline-block">
+                                <a href="@Model.Callout3Url">
+                                    @Model.Callout3Heading
+                                </a>
+                            </div>
                         }
-
                     </div>
 
                     <div class="col-md-6
@@ -203,10 +271,9 @@
                         @if (!string.IsNullOrWhiteSpace(Model.Callout3Url) &&
                              !string.IsNullOrWhiteSpace(Model.Callout3CtaButtonText))
                         {
-                            <div class="text-center d-md-none">
-                                <a href="@Model.Callout3Url"
-                                   class="link-pink d-inline-block mt-3">
-                                    @Model.Callout3CtaButtonText
+                            <div class="view-all-btn text-center d-md-none mt-3 d-inline-block ">
+                                <a href="@Model.Callout3Url">
+                                    @Model.Callout3Heading
                                 </a>
                             </div>
                         }

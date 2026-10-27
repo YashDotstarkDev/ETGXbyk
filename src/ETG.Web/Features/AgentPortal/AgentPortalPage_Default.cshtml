@@ -22,72 +22,87 @@
     var lastSpace = heading.LastIndexOf(' ');
 }
 
+<style>
+    .agent-welcome img,
+    .agent-pane img{
+        border-radius: 16px;
+    }
+</style>
+
 <vc:bread-crumb />
 
 <nav aria-label="Travel agent sections">
-    <div class="agent-tabs nav nav-tabs" role="tablist">
+    <div class="nav nav-tabs justify-content-center flex-wrap mx-auto align-items-end border-0"
+         role="tablist"
+         style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 700;">
+
         <button type="button"
-                class="agent-tab @(active == "welcome" ? "active" : "")"
+                class="text-muted text-decoration-none py-3 px-4 travel-agent-nav-link hover-text-dark bg-transparent border-0 @(active == "welcome" ? "active" : "")"
                 id="welcome-tab"
                 data-bs-toggle="tab"
                 data-bs-target="#tab-welcome"
                 role="tab"
-                aria-controls="tab-welcome">
+                aria-controls="tab-welcome"
+                aria-selected="@(active == "welcome" ? "true" : "false")">
             WELCOME
         </button>
 
         <button type="button"
-                class="agent-tab @(active == "more-info" ? "active" : "")"
+                class="text-muted text-decoration-none py-3 px-4 travel-agent-nav-link hover-text-dark bg-transparent border-0 @(active == "more-info" ? "active" : "")"
                 id="more-info-tab"
                 data-bs-toggle="tab"
                 data-bs-target="#tab-more-info"
                 role="tab"
-                aria-controls="tab-more-info">
+                aria-controls="tab-more-info"
+                aria-selected="@(active == "more-info" ? "true" : "false")">
             MORE INFO
         </button>
 
         <button type="button"
-                class="agent-tab @(active == "payment-options" ? "active" : "")"
+                class="text-muted text-decoration-none py-3 px-4 travel-agent-nav-link hover-text-dark bg-transparent border-0 @(active == "payment-options" ? "active" : "")"
                 id="payment-options-tab"
                 data-bs-toggle="tab"
                 data-bs-target="#tab-payment-options"
                 role="tab"
-                aria-controls="tab-payment-options">
+                aria-controls="tab-payment-options"
+                aria-selected="@(active == "payment-options" ? "true" : "false")">
             PAYMENT OPTIONS
         </button>
 
         <button type="button"
-                class="agent-tab @(active == "marketing" ? "active" : "")"
+                class="text-muted text-decoration-none py-3 px-4 travel-agent-nav-link hover-text-dark bg-transparent border-0 @(active == "marketing" ? "active" : "")"
                 id="marketing-tab"
                 data-bs-toggle="tab"
                 data-bs-target="#tab-marketing"
                 role="tab"
-                aria-controls="tab-marketing">
+                aria-controls="tab-marketing"
+                aria-selected="@(active == "marketing" ? "true" : "false")">
             MARKETING CAMPAIGNS
         </button>
 
         <button type="button"
-                class="agent-tab @(active == "incentives" ? "active" : "")"
+                class="text-muted text-decoration-none py-3 px-4 travel-agent-nav-link hover-text-dark bg-transparent border-0 @(active == "incentives" ? "active" : "")"
                 id="incentives-tab"
                 data-bs-toggle="tab"
                 data-bs-target="#tab-incentives"
                 role="tab"
-                aria-controls="tab-incentives">
+                aria-controls="tab-incentives"
+                aria-selected="@(active == "incentives" ? "true" : "false")">
             AGENT INCENTIVES
         </button>
 
         <button type="button"
-                class="agent-tab @(active == "training" ? "active" : "")"
+                class="text-muted text-decoration-none py-3 px-4 travel-agent-nav-link hover-text-dark bg-transparent border-0 @(active == "training" ? "active" : "")"
                 id="training-tab"
                 data-bs-toggle="tab"
                 data-bs-target="#tab-training"
                 role="tab"
-                aria-controls="tab-training">
+                aria-controls="tab-training"
+                aria-selected="@(active == "training" ? "true" : "false")">
             TRAINING &amp; UPDATES
         </button>
     </div>
 </nav>
-
 <div class="tab-content" id="agentTabsContent">
 
     <section class="tab-pane fade @(active == "welcome" ? "show active" : "")"
@@ -114,11 +129,8 @@
             </div>
         </div>
 
-        <section class="destination-content-section py-5">
-            <div class="container">
-                <editable-area area-identifier="WelcomeZone" />
-            </div>
-        </section>
+                           <editable-area area-identifier="WelcomeZone" />
+           
     </section>
 
     <section class="tab-pane fade @(active == "more-info" ? "show active" : "")"

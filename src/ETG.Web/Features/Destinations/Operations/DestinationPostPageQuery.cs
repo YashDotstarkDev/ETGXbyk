@@ -17,7 +17,7 @@ public class DestinationPostPageQueryHandler(WebPageQueryTools tools)
         CancellationToken cancellationToken = default)
     {
         var destinationQuery = new ContentItemQueryBuilder()
-            .ForWebPage(request.Page, c => c.WithLinkedItems(4));
+            .ForWebPage(request.Page, c => c.WithLinkedItems(3));
 
         var result = await Executor.GetMappedWebPageResult<Destination>(
             destinationQuery,

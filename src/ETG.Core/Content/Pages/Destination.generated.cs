@@ -36,6 +36,18 @@ namespace ETG.Core.Content
 
 
 		/// <summary>
+		/// CtaButtonText.
+		/// </summary>
+		public string CtaButtonText { get; set; }
+
+
+		/// <summary>
+		/// CtaButtonUrl.
+		/// </summary>
+		public string CtaButtonUrl { get; set; }
+
+
+		/// <summary>
 		/// DestinationName.
 		/// </summary>
 		public string DestinationName { get; set; }
@@ -87,6 +99,12 @@ namespace ETG.Core.Content
 		/// DestinationDetail.
 		/// </summary>
 		public string DestinationDetail { get; set; }
+
+
+		/// <summary>
+		/// DestinationCategory.
+		/// </summary>
+		public IEnumerable<TagReference> DestinationCategory { get; set; }
 
 
 		/// <summary>
@@ -198,6 +216,12 @@ namespace ETG.Core.Content
 
 
 		/// <summary>
+		/// DocumentName.
+		/// </summary>
+		public string DocumentName { get; set; }
+
+
+		/// <summary>
 		/// CampaignDetail1.
 		/// </summary>
 		public string CampaignDetail1 { get; set; }
@@ -225,12 +249,6 @@ namespace ETG.Core.Content
 		/// EndOfCampaign.
 		/// </summary>
 		public DateTime EndOfCampaign { get; set; }
-
-
-		/// <summary>
-		/// DocumentName.
-		/// </summary>
-		public string DocumentName { get; set; }
 
 
 		/// <summary>
@@ -269,9 +287,9 @@ namespace ETG.Core.Content
 		public string MetaDataSchema__PageKeywords { get; set; }
 
 
-        /// <summary>
-        /// MetaDataSchema__ExcludeFromSitemap.
-        /// </summary>
-        public bool MetaDataSchema__ExcludeFromSitemap { get; set; }
-    }
+		/// <summary>
+		/// MetaDataSchema__ExcludeFromSitemap.
+		/// </summary>
+		public bool MetaDataSchema__ExcludeFromSitemap { get; set; }
+	}
 }

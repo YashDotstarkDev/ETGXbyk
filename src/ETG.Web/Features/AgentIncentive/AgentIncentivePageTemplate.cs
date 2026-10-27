@@ -57,7 +57,8 @@ public class AgentIncentivePageTemplateController(
                 model.HeroImageUrl);
         }
 
-        return new TemplateResult(model);
+        //return new TemplateResult(model);
+        return View("~/Features/AgentIncentive/AgentIncentivePage_Default.cshtml", model);
     }
 
     public static async Task<AgentIncentivePageViewModel?> LoadViewModelAsync(

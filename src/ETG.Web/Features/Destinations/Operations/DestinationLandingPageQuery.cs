@@ -1,7 +1,7 @@
-﻿using CMS.ContentEngine;
+﻿using System.Linq;
+using CMS.ContentEngine;
 using CMS.Websites;
 using ETG.Core.Content;
-using ETG.Core.Content.Pages;
 using ETG.Core.Operations;
 using Kentico.Content.Web.Mvc;
 
@@ -17,6 +17,7 @@ public class DestinationLandingPageQueryHandler(WebPageQueryTools tools)
         DestinationLandingPageQuery request,
         CancellationToken cancellationToken = default)
     {
+        // Load the container without general linked-item loading.
         var query = new ContentItemQueryBuilder()
             .ForWebPage(request.Page);
 
@@ -25,6 +26,36 @@ public class DestinationLandingPageQueryHandler(WebPageQueryTools tools)
             DefaultQueryOptions,
             cancellationToken);
 
-        return result.First();
+        var container = result.FirstOrDefault();
+
+        if (container is null)
+        {
+            return null!;
+        }
+
+        // Query only MediaFile items referenced by the hero field.
+        var imageQuery = new ContentItemQueryBuilder()
+            .ForContentType(
+                ETG.Core.Content.MediaFile.CONTENT_TYPE_NAME,
+                parameters => parameters.LinkedFrom(
+                    Container.CONTENT_TYPE_NAME,
+                    nameof(Container.ContainerHeroImage),
+                    new IContentItemIdentifier[]
+                    {
+                        container.SystemFields
+                    }))
+            .InLanguage(request.Page.LanguageName);
+
+        var images = await Executor
+            .GetMappedResult<ETG.Core.Content.MediaFile>(
+                imageQuery,
+                DefaultQueryOptions,
+                cancellationToken);
+
+        container.ContainerHeroImage = images
+            .Cast<IContentItemFieldsSource>()
+            .ToArray();
+
+        return container;
     }
 }

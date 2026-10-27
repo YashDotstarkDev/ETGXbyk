@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using CMS.OnlineForms;
 using ETG.Core.Content.Forms;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +33,11 @@ public class SubscribeNowViewModel
         "^(Yes|No)$",
         ErrorMessage = "Please select Yes or No.")]
     public string IsTravelAgent { get; set; } = string.Empty;
+
+    // Optional: supplied by the page, omitted by the footer.
+    public string? FirstName { get; set; }
+
+    public string? LastName { get; set; }
 }
 
 public static class GetSubscribeNowQuery
@@ -42,30 +49,122 @@ public static class GetSubscribeNowQuery
 
     public static bool Save(SubscribeNowViewModel model)
     {
-        var results = new List<ValidationResult>();
+        if (model == null)
+        {
+            throw new ArgumentNullException(nameof(model));
+        }
+
+        var validationResults = new List<ValidationResult>();
 
         if (!Validator.TryValidateObject(
-            model,
-            new ValidationContext(model),
-            results,
-            validateAllProperties: true))
+                model,
+                new ValidationContext(model),
+                validationResults,
+                validateAllProperties: true))
         {
             return false;
         }
 
-        var competitionItem = new CompetitionItem
+        var email = model.EmailAddress.Trim();
+
+        var consumers = BizFormItemProvider
+            .GetItems<CompetitionItem>()
+            .WhereEquals(
+                nameof(CompetitionItem.EmailAddress),
+                email)
+            .ToList();
+
+        var agents = BizFormItemProvider
+            .GetItems<CompetitionAgentsItem>()
+            .WhereEquals(
+                nameof(CompetitionAgentsItem.EmailAddress),
+                email)
+            .ToList();
+
+        // Check existing records across both forms.
+        var previouslySubscribed =
+            consumers.Count > 0 || agents.Count > 0;
+
+        if (model.IsTravelAgent == "Yes")
         {
-            EmailAddress = model.EmailAddress.Trim(),
-            IsTravelAgent = model.IsTravelAgent,
+            // Preserve existing duplicate-selection behaviour.
+            var agent = agents
+                .OrderBy(x => x.ItemID)
+                .FirstOrDefault();
 
-            // Not collected by this subscription form.
-            FirstName = string.Empty,
-            LastName = string.Empty,
-            HasPreviouslySubscribed = string.Empty
-        };
+            if (agent == null)
+            {
+                agent = new CompetitionAgentsItem
+                {
+                    FirstName = string.Empty,
+                    LastName = string.Empty
+                };
+            }
 
-        BizFormItemProvider.SetItem(competitionItem);
+            agent.EmailAddress = email;
+            agent.HasPreviouslySubscribed = previouslySubscribed;
 
-        return competitionItem.ItemID > 0;
+            // Preserve existing names when the footer omits them.
+            if (!string.IsNullOrWhiteSpace(model.FirstName))
+            {
+                agent.FirstName = model.FirstName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.LastName))
+            {
+                agent.LastName = model.LastName.Trim();
+            }
+
+            // Update the system modification timestamp.
+            // Do not overwrite the original FormInserted value.
+            agent.FormUpdated = DateTime.Now;
+
+            BizFormItemProvider.SetItem(agent);
+
+            return agent.ItemID > 0;
+        }
+
+        // Preserve existing duplicate-selection behaviour.
+        var consumer = consumers
+            .OrderBy(x => x.ItemID)
+            .FirstOrDefault();
+
+        if (consumer == null)
+        {
+            consumer = new CompetitionItem
+            {
+                FirstName = string.Empty,
+                LastName = string.Empty
+            };
+        }
+
+        consumer.EmailAddress = email;
+
+        consumer.SetValue(
+            nameof(CompetitionItem.IsTravelAgent),
+            false);
+
+        consumer.SetValue(
+            nameof(CompetitionItem.HasPreviouslySubscribed),
+            previouslySubscribed);
+
+        // Preserve existing names when the footer omits them.
+        if (!string.IsNullOrWhiteSpace(model.FirstName))
+        {
+            consumer.FirstName = model.FirstName.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.LastName))
+        {
+            consumer.LastName = model.LastName.Trim();
+        }
+
+        // Update the system modification timestamp.
+        // Do not overwrite the original FormInserted value.
+        consumer.FormUpdated = DateTime.Now;
+
+        BizFormItemProvider.SetItem(consumer);
+
+        return consumer.ItemID > 0;
     }
 }

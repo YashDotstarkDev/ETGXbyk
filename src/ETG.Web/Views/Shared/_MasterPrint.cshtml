@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="pdf-generation-template">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <title>PDF generation template for Package Detail</title>
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700,900|Raleway:900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="~/css/pdf-generation.css" rel="stylesheet" />
+    <link href="~/css/style.css" rel="stylesheet" />
+    <style>
+        /* ---- PDF print overrides ---- */
+        html.pdf-generation-template body {
+            background: #fff !important;
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            color: #333;
+        }
+
+        /* Remove hero slider chrome — just show first image full-width */
+        .pkgd-hero {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        .pkgd-hero__track {
+            display: flex;
+            height: 100%;
+        }
+
+        .pkgd-hero__slide {
+            flex: 0 0 100%;
+            height: 100%;
+        }
+
+        .pkgd-hero__slide img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        /* Hide nav arrows, counter */
+        .pkgd-hero__arrow,
+        .pkgd-hero__counter {
+            display: none !important;
+        }
+
+        .pkgd-hero__titlebar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+        }
+
+        .pkgd-hero__titlebar h1 {
+            font-size: 22px !important;
+            margin: 0;
+        }
+
+        /* Info bar */
+        .pkg-info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .pkg-info-item {
+            flex: 1 1 150px;
+            padding: 8px 12px;
+            border-right: 1px solid #ddd;
+        }
+
+        .pkg-info-item:last-child { border-right: none; }
+
+        .pkg-info-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 0.5px;
+        }
+
+        .pkg-info-value {
+            font-size: 11px;
+            color: #333;
+        }
+
+        /* Pink text */
+        .text-pink { color: #CA568E !important; }
+        .link-pink { color: #CA568E !important; }
+
+        /* Section titles */
+        /* .pkg-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            border-bottom: 2px solid #CA568E;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        } */
+
+        /* Inclusions list */
+        .pkg-inclusions-list .inclusion-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        /* Accordion — show all expanded, no collapse button styling */
+        .accordion-button {
+            background: #f8f0f4 !important;
+            color: #333 !important;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 8px 12px;
+            border: none;
+            width: 100%;
+            text-align: left;
+            box-shadow: none !important;
+        }
+
+        .accordion-button::after { display: none !important; }
+
+        .accordion-collapse,
+        .accordion-collapse.collapse {
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        .accordion-body {
+            font-size: 12px;
+            padding: 10px 12px;
+        }
+
+        .accordion-item {
+            border: 1px solid #ddd;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        /* Package header */
+        .pkg-header-wrapper {
+            padding: 10px 0;
+        }
+
+        .pkg-title {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        /* Hotel accordion */
+        .hotels .accordion-panel {
+            border: 1px solid #ddd;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .hotels .accordion-panel .title {
+            background: #f8f0f4;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .hotels .accordion-panel .content {
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+
+        .hotels .inner-content img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 8px;
+        }
+
+        /* Page breaks */
+        .pkg-section { page-break-inside: avoid; }
+        .accordion-item { page-break-inside: avoid; }
+
+        /* Hide interactive elements */
+        .pkgd-tabs-bar,
+        .share-panel,
+        .pkg-icon,
+        .pkgd-hero__arrow,
+        .itinerary-actions,
+        .widget-download-link,
+        .pkg-sidebar-sticky,
+        .col-lg-4 { display: none !important; }
+
+        /* Full width content */
+        .col-lg-8 { width: 100% !important; max-width: 100% !important; flex: none !important; }
+
+        /* Container padding */
+        .container { max-width: 100% !important; padding: 0 20px !important; }
+
+        /* Background */
+        .pkg-details-bg { background: #fff !important; }
+        .section-pad { padding: 20px 0 !important; }
+    </style>
+</head>
+<body>
+
+    @RenderBody()
+
+</body>
+</html>

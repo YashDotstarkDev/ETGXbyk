@@ -2,7 +2,10 @@
 
 <!-- ============ CTA BANNERS ============ -->
 <section class="cta-section" aria-label="Start your journey">
-    <img loading="lazy" src="/images/travel_destination.png" alt="Tropical island sunset" class="cta-bg" />
+    @if (!string.IsNullOrEmpty(Model.CTAUrl))
+    {
+        <img loading="lazy" src="@Model.CTABackgroundImage" alt="contact-us" class="cta-bg" />
+    }
     <div class="cta-overlay"></div>
     <div class="container text-center text-white cta-content">
         <h2 class="cta-heading fw-bold">Connect <span class="text-pink">with us</span></h2>

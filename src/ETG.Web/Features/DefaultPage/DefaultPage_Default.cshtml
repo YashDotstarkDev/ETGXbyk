@@ -1,0 +1,169 @@
+@using ETG.Web.Features.DefaultPage
+@using ETG.Web.Services.GoogleReviews
+@model dynamic
+
+@{
+    DefaultPageViewModel? pageModel = null;
+    if (Model is DefaultPageViewModel vm)
+    {
+        pageModel = vm;
+    }
+}
+
+<vc:bread-crumb />
+
+<!-- 1. HERO PARTIAL -->
+@if (pageModel?.Hero != null)
+{
+    <partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
+             model="pageModel.Hero" />
+}
+
+<!-- 2. WIDGET ZONE 1 -->
+<div class="wrapper">
+    <div class="container py-4">
+        <editable-area area-identifier="TopContent" />
+    </div>
+</div>
+
+<!-- 3. GOOGLE REVIEWS (3 cards per row, 6 initially, Load More for rest) -->
+@if (pageModel != null && pageModel.ShowGoogleReviews && pageModel.ReviewsData != null && pageModel.ReviewsData.Reviews.Any(r => !string.IsNullOrWhiteSpace(r.Text)))
+{
+    var allReviews = pageModel.ReviewsData.Reviews
+        .Where(r => !string.IsNullOrWhiteSpace(r.Text))
+        .ToList();
+
+    double avg = pageModel.ReviewsData.Totals?.AverageRating ?? 0;
+    int fullStars = (int)Math.Floor(avg);
+    bool halfStar = (avg - fullStars) >= 0.5;
+    int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    int totalCount = pageModel.ReviewsData.Totals?.ReviewCount ?? allReviews.Count;
+
+    <section class="stories-reviews-section bg-white" aria-labelledby="stories-title">
+        <div class="container">
+            <div class="title-div mb-4">
+                <div class="d-flex flex-row justify-content-between align-items-center gap-3">
+                    <h2 id="stories-title" class="section-title mb-0">What our customers say</h2>
+                    <a href="https://www.google.com/search?q=Entire+Travel+Group#lrd=0x6b12aef2f2930b1d:0x8b67632a2611d211,1,,,," target="_blank" rel="noopener noreferrer" class="btn-review-google">
+                        <img src="/images/google-icon-logo-svgrepo-com.svg" alt="Google" class="google-icon" width="18" height="18" style="width: 18px; height: 18px;">
+                        <span>REVIEW US ON GOOGLE</span>
+                    </a>
+                </div>
+
+                <div class="text-warning mb-1 fs-5 mt-2"
+                     aria-label="@avg out of 5 stars">
+                    @for (int i = 0; i < fullStars; i++)
+                    {
+                        <span aria-hidden="true">&#9733;</span>
+                    }
+
+                    @if (halfStar)
+                    {
+                        <span aria-hidden="true">&#11242;</span>
+                    }
+
+                    @for (int i = 0; i < emptyStars; i++)
+                    {
+                        <span aria-hidden="true">&#9734;</span>
+                    }
+                </div>
+
+                <p class="text-muted small mb-0">
+                    @avg.ToString("0.0") Stars |
+                    @totalCount Review@(totalCount == 1 ? "" : "s")
+                </p>
+            </div>
+
+            <div class="row g-4 text-start align-items-start" id="reviewsGrid">
+                @for (int i = 0; i < allReviews.Count; i++)
+                {
+                    var review = allReviews[i];
+                    int rFull = (int)Math.Floor(review.Rating);
+                    int rEmpty = 5 - rFull;
+                    string cardId = $"review-text-{System.Math.Abs(review.Reviewer.GetHashCode())}-{review.DateTime.Ticks % 10000}";
+                    bool isHidden = i >= 6;
+
+                    <div class="col-12 col-md-6 col-lg-4 review-card-wrapper @(isHidden ? "d-none review-card-hidden" : "")">
+                        <article class="p-4 rounded-3 border h-100 d-flex flex-column review-card"
+                                 style="border-color: #eaeaea !important; background: #fff;">
+                            <div class="mb-3">
+                                <div class="fw-medium text-dark">
+                                    @review.Reviewer
+                                </div>
+                                <div class="text-muted small">
+                                    @review.DateTime.ToRelativeText()
+                                </div>
+                            </div>
+
+                            <div class="text-warning mb-3"
+                                 style="font-size: 0.9rem; letter-spacing: 2px;"
+                                 aria-label="@review.Rating out of 5 stars">
+                                @for (int s = 0; s < rFull; s++)
+                                {
+                                    <span aria-hidden="true">&#9733;</span>
+                                }
+                                @for (int s = 0; s < rEmpty; s++)
+                                {
+                                    <span class="text-secondary" aria-hidden="true">&#9734;</span>
+                                }
+                            </div>
+
+                            <p id="@cardId"
+                               class="text-muted mb-3 flex-grow-1 review-text"
+                               style="font-size: 0.9rem; line-height: 1.5;"
+                               data-short="@review.Text"
+                               data-full="@review.Text">
+                                @review.Text
+                            </p>
+
+                            @if (!string.IsNullOrWhiteSpace(review.Text))
+                            {
+                                <a href="#"
+                                   class="text-pink text-decoration-none link-pink small read-more-btn"
+                                   aria-expanded="false"
+                                   aria-controls="@cardId"
+                                   data-target="#@cardId">
+                                    Read more
+                                </a>
+                            }
+                        </article>
+                    </div>
+                }
+            </div>
+
+            @if (allReviews.Count > 6)
+            {
+                <!-- Load More Action -->
+                <div class="text-center mt-5 pt-2" id="loadMoreSection">
+                    <button type="button"
+                            class="btn-load-more-reviews"
+                            id="btnLoadMoreStories"
+                            onclick="loadMoreReviews(this)">
+                        <span>LOAD MORE REVIEWS</span>
+                    </button>
+                </div>
+
+                <script>
+                    function loadMoreReviews(btn) {
+                        var hiddenCards = document.querySelectorAll('.review-card-hidden');
+                        hiddenCards.forEach(function (card) {
+                            card.classList.remove('d-none');
+                        });
+                        var section = document.getElementById('loadMoreSection');
+                        if (section) {
+                            section.style.display = 'none';
+                        }
+                    }
+                </script>
+            }
+        </div>
+    </section>
+}
+
+<!-- 4. WIDGET ZONE 2 -->
+<div class="wrapper">
+    <div class="container py-4">
+        <editable-area area-identifier="BottomContent" />
+    </div>
+</div>
+

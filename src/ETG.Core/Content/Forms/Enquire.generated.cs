@@ -16,815 +16,836 @@ using CMS.Base;
 using CMS.Helpers;
 using CMS.DataEngine;
 using CMS.OnlineForms;
-using ETG.Core.Content.Forms;
+using CMS.OnlineForms.Types;
 
 [assembly: RegisterBizForm(EnquireItem.CLASS_NAME, typeof(EnquireItem))]
 
-namespace ETG.Core.Content.Forms
+namespace CMS.OnlineForms.Types
 {
-	/// <summary>
-	/// Represents a content item of type EnquireItem.
-	/// </summary>
-	public partial class EnquireItem : BizFormItem
-	{
-		#region "Constants and variables"
-
-		/// <summary>
-		/// The name of the data class.
-		/// </summary>
-		public const string CLASS_NAME = "BizForm.Enquire";
-
-
-		/// <summary>
-		/// The instance of the class that provides extended API for working with EnquireItem fields.
-		/// </summary>
-		private readonly EnquireItemFields mFields;
-
-		#endregion
-
-
-		#region "Properties"
-
-		/// <summary>
-		/// FirstName.
-		/// </summary>
-		[DatabaseField]
-		public string FirstName
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(FirstName)), @"");
-			set => SetValue(nameof(FirstName), value);
-		}
-
-
-		/// <summary>
-		/// LastName.
-		/// </summary>
-		[DatabaseField]
-		public string LastName
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(LastName)), @"");
-			set => SetValue(nameof(LastName), value);
-		}
-
-
-		/// <summary>
-		/// Email.
-		/// </summary>
-		[DatabaseField]
-		public string Email
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Email)), @"");
-			set => SetValue(nameof(Email), value);
-		}
-
-
-		/// <summary>
-		/// Phone.
-		/// </summary>
-		[DatabaseField]
-		public string Phone
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Phone)), @"");
-			set => SetValue(nameof(Phone), value);
-		}
-
-
-		/// <summary>
-		/// PreferredContactMethod.
-		/// </summary>
-		[DatabaseField]
-		public string PreferredContactMethod
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(PreferredContactMethod)), @"");
-			set => SetValue(nameof(PreferredContactMethod), value);
-		}
-
-
-		/// <summary>
-		/// PreferredTourType.
-		/// </summary>
-		[DatabaseField]
-		public string PreferredTourType
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(PreferredTourType)), @"");
-			set => SetValue(nameof(PreferredTourType), value);
-		}
-
-
-		/// <summary>
-		/// PreferredDestination.
-		/// </summary>
-		[DatabaseField]
-		public string PreferredDestination
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(PreferredDestination)), @"");
-			set => SetValue(nameof(PreferredDestination), value);
-		}
-
-
-		/// <summary>
-		/// PreferredExperience.
-		/// </summary>
-		[DatabaseField]
-		public string PreferredExperience
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(PreferredExperience)), @"");
-			set => SetValue(nameof(PreferredExperience), value);
-		}
-
-
-		/// <summary>
-		/// TourCode.
-		/// </summary>
-		[DatabaseField]
-		public string TourCode
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourCode)), @"");
-			set => SetValue(nameof(TourCode), value);
-		}
-
-
-		/// <summary>
-		/// TourName.
-		/// </summary>
-		[DatabaseField]
-		public string TourName
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourName)), @"");
-			set => SetValue(nameof(TourName), value);
-		}
-
-
-		/// <summary>
-		/// TourLink.
-		/// </summary>
-		[DatabaseField]
-		public string TourLink
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourLink)), @"");
-			set => SetValue(nameof(TourLink), value);
-		}
-
-
-		/// <summary>
-		/// Message.
-		/// </summary>
-		[DatabaseField]
-		public string Message
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Message)), @"");
-			set => SetValue(nameof(Message), value);
-		}
-
-
-		/// <summary>
-		/// TourDate.
-		/// </summary>
-		[DatabaseField]
-		public string TourDate
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourDate)), @"");
-			set => SetValue(nameof(TourDate), value);
-		}
-
-
-		/// <summary>
-		/// TourClass.
-		/// </summary>
-		[DatabaseField]
-		public string TourClass
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourClass)), @"");
-			set => SetValue(nameof(TourClass), value);
-		}
-
-
-		/// <summary>
-		/// TourDepartureCity.
-		/// </summary>
-		[DatabaseField]
-		public string TourDepartureCity
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourDepartureCity)), @"");
-			set => SetValue(nameof(TourDepartureCity), value);
-		}
-
-
-		/// <summary>
-		/// TourDuration.
-		/// </summary>
-		[DatabaseField]
-		public string TourDuration
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourDuration)), @"");
-			set => SetValue(nameof(TourDuration), value);
-		}
-
-
-		/// <summary>
-		/// TourQuotedPrice.
-		/// </summary>
-		[DatabaseField]
-		public int TourQuotedPrice
-		{
-			get => ValidationHelper.GetInteger(GetValue(nameof(TourQuotedPrice)), 0);
-			set => SetValue(nameof(TourQuotedPrice), value);
-		}
-
-
-		/// <summary>
-		/// PriceCurrency.
-		/// </summary>
-		[DatabaseField]
-		public string PriceCurrency
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(PriceCurrency)), @"");
-			set => SetValue(nameof(PriceCurrency), value);
-		}
-
-
-		/// <summary>
-		/// TourDiscountText.
-		/// </summary>
-		[DatabaseField]
-		public string TourDiscountText
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(TourDiscountText)), @"");
-			set => SetValue(nameof(TourDiscountText), value);
-		}
-
-
-		/// <summary>
-		/// Travellers.
-		/// </summary>
-		[DatabaseField]
-		public string Travellers
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Travellers)), @"");
-			set => SetValue(nameof(Travellers), value);
-		}
-
-
-		/// <summary>
-		/// Infants.
-		/// </summary>
-		[DatabaseField]
-		public string Infants
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Infants)), @"");
-			set => SetValue(nameof(Infants), value);
-		}
-
-
-		/// <summary>
-		/// SubscribeToNewsletter.
-		/// </summary>
-		[DatabaseField]
-		public bool SubscribeToNewsletter
-		{
-			get => ValidationHelper.GetBoolean(GetValue(nameof(SubscribeToNewsletter)), false);
-			set => SetValue(nameof(SubscribeToNewsletter), value);
-		}
-
-
-		/// <summary>
-		/// UTMCampaign.
-		/// </summary>
-		[DatabaseField]
-		public string UTMCampaign
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(UTMCampaign)), @"");
-			set => SetValue(nameof(UTMCampaign), value);
-		}
-
-
-		/// <summary>
-		/// UTMContent.
-		/// </summary>
-		[DatabaseField]
-		public string UTMContent
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(UTMContent)), @"");
-			set => SetValue(nameof(UTMContent), value);
-		}
-
-
-		/// <summary>
-		/// UTMMedium.
-		/// </summary>
-		[DatabaseField]
-		public string UTMMedium
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(UTMMedium)), @"");
-			set => SetValue(nameof(UTMMedium), value);
-		}
-
-
-		/// <summary>
-		/// UTMSource.
-		/// </summary>
-		[DatabaseField]
-		public string UTMSource
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(UTMSource)), @"");
-			set => SetValue(nameof(UTMSource), value);
-		}
-
-
-		/// <summary>
-		/// UTMTerm.
-		/// </summary>
-		[DatabaseField]
-		public string UTMTerm
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(UTMTerm)), @"");
-			set => SetValue(nameof(UTMTerm), value);
-		}
-
-
-		/// <summary>
-		/// Comments.
-		/// </summary>
-		[DatabaseField]
-		public string Comments
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Comments)), @"");
-			set => SetValue(nameof(Comments), value);
-		}
-
-
-		/// <summary>
-		/// Status.
-		/// </summary>
-		[DatabaseField]
-		public string Status
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(Status)), @"");
-			set => SetValue(nameof(Status), value);
-		}
-
-
-		/// <summary>
-		/// BookingReference.
-		/// </summary>
-		[DatabaseField]
-		public string BookingReference
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(BookingReference)), @"");
-			set => SetValue(nameof(BookingReference), value);
-		}
-
-
-		/// <summary>
-		/// DepartureDate.
-		/// </summary>
-		[DatabaseField]
-		public string DepartureDate
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(DepartureDate)), @"");
-			set => SetValue(nameof(DepartureDate), value);
-		}
-
-
-		/// <summary>
-		/// ReturnDate.
-		/// </summary>
-		[DatabaseField]
-		public string ReturnDate
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(ReturnDate)), @"");
-			set => SetValue(nameof(ReturnDate), value);
-		}
-
-
-		/// <summary>
-		/// AssignedUserGuid.
-		/// </summary>
-		[DatabaseField]
-		public string AssignedUserGuid
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(AssignedUserGuid)), @"");
-			set => SetValue(nameof(AssignedUserGuid), value);
-		}
-
-
-		/// <summary>
-		/// StoreView.
-		/// </summary>
-		[DatabaseField]
-		public string StoreView
-		{
-			get => ValidationHelper.GetString(GetValue(nameof(StoreView)), @"");
-			set => SetValue(nameof(StoreView), value);
-		}
-
-
-		/// <summary>
-		/// IsSpam.
-		/// </summary>
-		[DatabaseField]
-		public bool IsSpam
-		{
-			get => ValidationHelper.GetBoolean(GetValue(nameof(IsSpam)), false);
-			set => SetValue(nameof(IsSpam), value);
-		}
-
-
-		/// <summary>
-		/// Gets an object that provides extended API for working with EnquireItem fields.
-		/// </summary>
-		[RegisterProperty]
-		public EnquireItemFields Fields
-		{
-			get => mFields;
-		}
-
-
-		/// <summary>
-		/// Provides extended API for working with EnquireItem fields.
-		/// </summary>
-		[RegisterAllProperties]
-		public partial class EnquireItemFields : AbstractHierarchicalObject<EnquireItemFields>
-		{
-			/// <summary>
-			/// The content item of type EnquireItem that is a target of the extended API.
-			/// </summary>
-			private readonly EnquireItem mInstance;
-
-
-			/// <summary>
-			/// Initializes a new instance of the <see cref="EnquireItemFields" /> class with the specified content item of type EnquireItem.
-			/// </summary>
-			/// <param name="instance">The content item of type EnquireItem that is a target of the extended API.</param>
-			public EnquireItemFields(EnquireItem instance)
-			{
-				mInstance = instance;
-			}
-
-
-			/// <summary>
-			/// FirstName.
-			/// </summary>
-			public string FirstName
-			{
-				get => mInstance.FirstName;
-				set => mInstance.FirstName = value;
-			}
-
-
-			/// <summary>
-			/// LastName.
-			/// </summary>
-			public string LastName
-			{
-				get => mInstance.LastName;
-				set => mInstance.LastName = value;
-			}
-
-
-			/// <summary>
-			/// Email.
-			/// </summary>
-			public string Email
-			{
-				get => mInstance.Email;
-				set => mInstance.Email = value;
-			}
-
-
-			/// <summary>
-			/// Phone.
-			/// </summary>
-			public string Phone
-			{
-				get => mInstance.Phone;
-				set => mInstance.Phone = value;
-			}
-
-
-			/// <summary>
-			/// PreferredContactMethod.
-			/// </summary>
-			public string PreferredContactMethod
-			{
-				get => mInstance.PreferredContactMethod;
-				set => mInstance.PreferredContactMethod = value;
-			}
-
-
-			/// <summary>
-			/// PreferredTourType.
-			/// </summary>
-			public string PreferredTourType
-			{
-				get => mInstance.PreferredTourType;
-				set => mInstance.PreferredTourType = value;
-			}
-
-
-			/// <summary>
-			/// PreferredDestination.
-			/// </summary>
-			public string PreferredDestination
-			{
-				get => mInstance.PreferredDestination;
-				set => mInstance.PreferredDestination = value;
-			}
-
-
-			/// <summary>
-			/// PreferredExperience.
-			/// </summary>
-			public string PreferredExperience
-			{
-				get => mInstance.PreferredExperience;
-				set => mInstance.PreferredExperience = value;
-			}
-
-
-			/// <summary>
-			/// TourCode.
-			/// </summary>
-			public string TourCode
-			{
-				get => mInstance.TourCode;
-				set => mInstance.TourCode = value;
-			}
-
-
-			/// <summary>
-			/// TourName.
-			/// </summary>
-			public string TourName
-			{
-				get => mInstance.TourName;
-				set => mInstance.TourName = value;
-			}
-
-
-			/// <summary>
-			/// TourLink.
-			/// </summary>
-			public string TourLink
-			{
-				get => mInstance.TourLink;
-				set => mInstance.TourLink = value;
-			}
-
-
-			/// <summary>
-			/// Message.
-			/// </summary>
-			public string Message
-			{
-				get => mInstance.Message;
-				set => mInstance.Message = value;
-			}
-
-
-			/// <summary>
-			/// TourDate.
-			/// </summary>
-			public string TourDate
-			{
-				get => mInstance.TourDate;
-				set => mInstance.TourDate = value;
-			}
-
-
-			/// <summary>
-			/// TourClass.
-			/// </summary>
-			public string TourClass
-			{
-				get => mInstance.TourClass;
-				set => mInstance.TourClass = value;
-			}
-
-
-			/// <summary>
-			/// TourDepartureCity.
-			/// </summary>
-			public string TourDepartureCity
-			{
-				get => mInstance.TourDepartureCity;
-				set => mInstance.TourDepartureCity = value;
-			}
-
-
-			/// <summary>
-			/// TourDuration.
-			/// </summary>
-			public string TourDuration
-			{
-				get => mInstance.TourDuration;
-				set => mInstance.TourDuration = value;
-			}
-
-
-			/// <summary>
-			/// TourQuotedPrice.
-			/// </summary>
-			public int TourQuotedPrice
-			{
-				get => mInstance.TourQuotedPrice;
-				set => mInstance.TourQuotedPrice = value;
-			}
-
-
-			/// <summary>
-			/// PriceCurrency.
-			/// </summary>
-			public string PriceCurrency
-			{
-				get => mInstance.PriceCurrency;
-				set => mInstance.PriceCurrency = value;
-			}
-
-
-			/// <summary>
-			/// TourDiscountText.
-			/// </summary>
-			public string TourDiscountText
-			{
-				get => mInstance.TourDiscountText;
-				set => mInstance.TourDiscountText = value;
-			}
-
-
-			/// <summary>
-			/// Travellers.
-			/// </summary>
-			public string Travellers
-			{
-				get => mInstance.Travellers;
-				set => mInstance.Travellers = value;
-			}
-
-
-			/// <summary>
-			/// Infants.
-			/// </summary>
-			public string Infants
-			{
-				get => mInstance.Infants;
-				set => mInstance.Infants = value;
-			}
-
-
-			/// <summary>
-			/// SubscribeToNewsletter.
-			/// </summary>
-			public bool SubscribeToNewsletter
-			{
-				get => mInstance.SubscribeToNewsletter;
-				set => mInstance.SubscribeToNewsletter = value;
-			}
-
-
-			/// <summary>
-			/// UTMCampaign.
-			/// </summary>
-			public string UTMCampaign
-			{
-				get => mInstance.UTMCampaign;
-				set => mInstance.UTMCampaign = value;
-			}
-
-
-			/// <summary>
-			/// UTMContent.
-			/// </summary>
-			public string UTMContent
-			{
-				get => mInstance.UTMContent;
-				set => mInstance.UTMContent = value;
-			}
-
-
-			/// <summary>
-			/// UTMMedium.
-			/// </summary>
-			public string UTMMedium
-			{
-				get => mInstance.UTMMedium;
-				set => mInstance.UTMMedium = value;
-			}
-
-
-			/// <summary>
-			/// UTMSource.
-			/// </summary>
-			public string UTMSource
-			{
-				get => mInstance.UTMSource;
-				set => mInstance.UTMSource = value;
-			}
-
-
-			/// <summary>
-			/// UTMTerm.
-			/// </summary>
-			public string UTMTerm
-			{
-				get => mInstance.UTMTerm;
-				set => mInstance.UTMTerm = value;
-			}
-
-
-			/// <summary>
-			/// Comments.
-			/// </summary>
-			public string Comments
-			{
-				get => mInstance.Comments;
-				set => mInstance.Comments = value;
-			}
-
-
-			/// <summary>
-			/// Status.
-			/// </summary>
-			public string Status
-			{
-				get => mInstance.Status;
-				set => mInstance.Status = value;
-			}
-
-
-			/// <summary>
-			/// BookingReference.
-			/// </summary>
-			public string BookingReference
-			{
-				get => mInstance.BookingReference;
-				set => mInstance.BookingReference = value;
-			}
-
-
-			/// <summary>
-			/// DepartureDate.
-			/// </summary>
-			public string DepartureDate
-			{
-				get => mInstance.DepartureDate;
-				set => mInstance.DepartureDate = value;
-			}
-
-
-			/// <summary>
-			/// ReturnDate.
-			/// </summary>
-			public string ReturnDate
-			{
-				get => mInstance.ReturnDate;
-				set => mInstance.ReturnDate = value;
-			}
-
-
-			/// <summary>
-			/// AssignedUserGuid.
-			/// </summary>
-			public string AssignedUserGuid
-			{
-				get => mInstance.AssignedUserGuid;
-				set => mInstance.AssignedUserGuid = value;
-			}
-
-
-			/// <summary>
-			/// StoreView.
-			/// </summary>
-			public string StoreView
-			{
-				get => mInstance.StoreView;
-				set => mInstance.StoreView = value;
-			}
-
-
-			/// <summary>
-			/// IsSpam.
-			/// </summary>
-			public bool IsSpam
-			{
-				get => mInstance.IsSpam;
-				set => mInstance.IsSpam = value;
-			}
-		}
-
-		#endregion
-
-
-		#region "Constructors"
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="EnquireItem" /> class.
-		/// </summary>
-		public EnquireItem() : base(CLASS_NAME)
-		{
-			mFields = new EnquireItemFields(this);
-		}
-
-		#endregion
-	}
+    /// <summary>
+    /// Represents a content item of type EnquireItem.
+    /// </summary>
+    public partial class EnquireItem : BizFormItem
+    {
+        #region "Constants and variables"
+
+        /// <summary>
+        /// The name of the data class.
+        /// </summary>
+        public const string CLASS_NAME = "BizForm.Enquire";
+
+
+        /// <summary>
+        /// The instance of the class that provides extended API for working with EnquireItem fields.
+        /// </summary>
+        private readonly EnquireItemFields mFields;
+
+        #endregion
+
+
+        #region "Properties"
+
+        /// <summary>
+        /// Firstname.
+        /// </summary>
+        [DatabaseField]
+        public string Firstname
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Firstname)), @"");
+            set => SetValue(nameof(Firstname), value);
+        }
+
+
+        /// <summary>
+        /// Lastname.
+        /// </summary>
+        [DatabaseField]
+        public string Lastname
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Lastname)), @"");
+            set => SetValue(nameof(Lastname), value);
+        }
+
+
+        /// <summary>
+        /// Email.
+        /// </summary>
+        [DatabaseField]
+        public string Email
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Email)), @"");
+            set => SetValue(nameof(Email), value);
+        }
+
+
+        /// <summary>
+        /// Phone.
+        /// </summary>
+        [DatabaseField]
+        public string Phone
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Phone)), @"");
+            set => SetValue(nameof(Phone), value);
+        }
+
+
+        /// <summary>
+        /// PreferredContactMethod.
+        /// </summary>
+        [DatabaseField]
+        public string PreferredContactMethod
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(PreferredContactMethod)), @"");
+            set => SetValue(nameof(PreferredContactMethod), value);
+        }
+
+
+        /// <summary>
+        /// PreferredTourType.
+        /// </summary>
+        [DatabaseField]
+        public string PreferredTourType
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(PreferredTourType)), @"");
+            set => SetValue(nameof(PreferredTourType), value);
+        }
+
+
+        /// <summary>
+        /// PreferredDestination.
+        /// </summary>
+        [DatabaseField]
+        public string PreferredDestination
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(PreferredDestination)), @"");
+            set => SetValue(nameof(PreferredDestination), value);
+        }
+
+
+        /// <summary>
+        /// PreferredExperience.
+        /// </summary>
+        [DatabaseField]
+        public string PreferredExperience
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(PreferredExperience)), @"");
+            set => SetValue(nameof(PreferredExperience), value);
+        }
+
+
+        /// <summary>
+        /// TourCode.
+        /// </summary>
+        [DatabaseField]
+        public string TourCode
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourCode)), @"");
+            set => SetValue(nameof(TourCode), value);
+        }
+
+
+        /// <summary>
+        /// TourName.
+        /// </summary>
+        [DatabaseField]
+        public string TourName
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourName)), @"");
+            set => SetValue(nameof(TourName), value);
+        }
+
+
+        /// <summary>
+        /// Message.
+        /// </summary>
+        [DatabaseField]
+        public string Message
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Message)), @"");
+            set => SetValue(nameof(Message), value);
+        }
+
+
+        /// <summary>
+        /// TourClass.
+        /// </summary>
+        [DatabaseField]
+        public string TourClass
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourClass)), @"");
+            set => SetValue(nameof(TourClass), value);
+        }
+
+
+        /// <summary>
+        /// TourDate.
+        /// </summary>
+        [DatabaseField]
+        public string TourDate
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourDate)), @"");
+            set => SetValue(nameof(TourDate), value);
+        }
+
+
+        /// <summary>
+        /// SubscribeToNewsletter.
+        /// </summary>
+        [DatabaseField]
+        public bool SubscribeToNewsletter
+        {
+            get => ValidationHelper.GetBoolean(GetValue(nameof(SubscribeToNewsletter)), false);
+            set => SetValue(nameof(SubscribeToNewsletter), value);
+        }
+
+
+        /// <summary>
+        /// TourDepartureCity.
+        /// </summary>
+        [DatabaseField]
+        public string TourDepartureCity
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourDepartureCity)), @"");
+            set => SetValue(nameof(TourDepartureCity), value);
+        }
+
+
+        /// <summary>
+        /// TourQuotedPrice.
+        /// </summary>
+        [DatabaseField]
+        public int TourQuotedPrice
+        {
+            get => ValidationHelper.GetInteger(GetValue(nameof(TourQuotedPrice)), 0);
+            set => SetValue(nameof(TourQuotedPrice), value);
+        }
+
+
+        /// <summary>
+        /// PriceCurrency.
+        /// </summary>
+        [DatabaseField]
+        public string PriceCurrency
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(PriceCurrency)), @"");
+            set => SetValue(nameof(PriceCurrency), value);
+        }
+
+
+        /// <summary>
+        /// UTMCampaign.
+        /// </summary>
+        [DatabaseField]
+        public string UTMCampaign
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(UTMCampaign)), @"");
+            set => SetValue(nameof(UTMCampaign), value);
+        }
+
+
+        /// <summary>
+        /// UTMContent.
+        /// </summary>
+        [DatabaseField]
+        public string UTMContent
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(UTMContent)), @"");
+            set => SetValue(nameof(UTMContent), value);
+        }
+
+
+        /// <summary>
+        /// UTMMedium.
+        /// </summary>
+        [DatabaseField]
+        public string UTMMedium
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(UTMMedium)), @"");
+            set => SetValue(nameof(UTMMedium), value);
+        }
+
+
+        /// <summary>
+        /// UTMSource.
+        /// </summary>
+        [DatabaseField]
+        public string UTMSource
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(UTMSource)), @"");
+            set => SetValue(nameof(UTMSource), value);
+        }
+
+
+        /// <summary>
+        /// UTMTerm.
+        /// </summary>
+        [DatabaseField]
+        public string UTMTerm
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(UTMTerm)), @"");
+            set => SetValue(nameof(UTMTerm), value);
+        }
+
+
+        /// <summary>
+        /// Status.
+        /// </summary>
+        [DatabaseField]
+        public string Status
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Status)), @"New");
+            set => SetValue(nameof(Status), value);
+        }
+
+
+        /// <summary>
+        /// TourLink.
+        /// </summary>
+        [DatabaseField]
+        public string TourLink
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourLink)), @"");
+            set => SetValue(nameof(TourLink), value);
+        }
+
+
+        /// <summary>
+        /// TourDuration.
+        /// </summary>
+        [DatabaseField]
+        public string TourDuration
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourDuration)), @"");
+            set => SetValue(nameof(TourDuration), value);
+        }
+
+
+        /// <summary>
+        /// TourDiscountText.
+        /// </summary>
+        [DatabaseField]
+        public string TourDiscountText
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(TourDiscountText)), @"");
+            set => SetValue(nameof(TourDiscountText), value);
+        }
+
+
+        /// <summary>
+        /// Travellers.
+        /// </summary>
+        [DatabaseField]
+        public string Travellers
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Travellers)), @"");
+            set => SetValue(nameof(Travellers), value);
+        }
+
+
+        /// <summary>
+        /// Children.
+        /// </summary>
+        [DatabaseField]
+        public string Children1
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Children)), @"");
+            set => SetValue(nameof(Children), value);
+        }
+
+
+        /// <summary>
+        /// Infants.
+        /// </summary>
+        [DatabaseField]
+        public string Infants
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Infants)), @"");
+            set => SetValue(nameof(Infants), value);
+        }
+
+
+        /// <summary>
+        /// Comments.
+        /// </summary>
+        [DatabaseField]
+        public string Comments
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(Comments)), @"");
+            set => SetValue(nameof(Comments), value);
+        }
+
+
+        /// <summary>
+        /// BookingReference.
+        /// </summary>
+        [DatabaseField]
+        public string BookingReference
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(BookingReference)), @"");
+            set => SetValue(nameof(BookingReference), value);
+        }
+
+
+        /// <summary>
+        /// DepartureDate.
+        /// </summary>
+        [DatabaseField]
+        public string DepartureDate
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(DepartureDate)), @"");
+            set => SetValue(nameof(DepartureDate), value);
+        }
+
+
+        /// <summary>
+        /// ReturnDate.
+        /// </summary>
+        [DatabaseField]
+        public string ReturnDate
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(ReturnDate)), @"");
+            set => SetValue(nameof(ReturnDate), value);
+        }
+
+
+        /// <summary>
+        /// AssignedUserGuid.
+        /// </summary>
+        [DatabaseField]
+        public Guid AssignedUserGuid
+        {
+            get => ValidationHelper.GetGuid(GetValue(nameof(AssignedUserGuid)), Guid.Empty);
+            set => SetValue(nameof(AssignedUserGuid), value);
+        }
+
+
+        /// <summary>
+        /// StoreView.
+        /// </summary>
+        [DatabaseField]
+        public string StoreView
+        {
+            get => ValidationHelper.GetString(GetValue(nameof(StoreView)), @"");
+            set => SetValue(nameof(StoreView), value);
+        }
+
+
+        /// <summary>
+        /// IsSpam.
+        /// </summary>
+        [DatabaseField]
+        public bool IsSpam
+        {
+            get => ValidationHelper.GetBoolean(GetValue(nameof(IsSpam)), false);
+            set => SetValue(nameof(IsSpam), value);
+        }
+
+
+        /// <summary>
+        /// Gets an object that provides extended API for working with EnquireItem fields.
+        /// </summary>
+        [RegisterProperty]
+        public EnquireItemFields Fields
+        {
+            get => mFields;
+        }
+
+
+        /// <summary>
+        /// Provides extended API for working with EnquireItem fields.
+        /// </summary>
+        [RegisterAllProperties]
+        public partial class EnquireItemFields : AbstractHierarchicalObject<EnquireItemFields>
+        {
+            /// <summary>
+            /// The content item of type EnquireItem that is a target of the extended API.
+            /// </summary>
+            private readonly EnquireItem mInstance;
+
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="EnquireItemFields" /> class with the specified content item of type EnquireItem.
+            /// </summary>
+            /// <param name="instance">The content item of type EnquireItem that is a target of the extended API.</param>
+            public EnquireItemFields(EnquireItem instance)
+            {
+                mInstance = instance;
+            }
+
+
+            /// <summary>
+            /// Firstname.
+            /// </summary>
+            public string Firstname
+            {
+                get => mInstance.Firstname;
+                set => mInstance.Firstname = value;
+            }
+
+
+            /// <summary>
+            /// Lastname.
+            /// </summary>
+            public string Lastname
+            {
+                get => mInstance.Lastname;
+                set => mInstance.Lastname = value;
+            }
+
+
+            /// <summary>
+            /// Email.
+            /// </summary>
+            public string Email
+            {
+                get => mInstance.Email;
+                set => mInstance.Email = value;
+            }
+
+
+            /// <summary>
+            /// Phone.
+            /// </summary>
+            public string Phone
+            {
+                get => mInstance.Phone;
+                set => mInstance.Phone = value;
+            }
+
+
+            /// <summary>
+            /// PreferredContactMethod.
+            /// </summary>
+            public string PreferredContactMethod
+            {
+                get => mInstance.PreferredContactMethod;
+                set => mInstance.PreferredContactMethod = value;
+            }
+
+
+            /// <summary>
+            /// PreferredTourType.
+            /// </summary>
+            public string PreferredTourType
+            {
+                get => mInstance.PreferredTourType;
+                set => mInstance.PreferredTourType = value;
+            }
+
+
+            /// <summary>
+            /// PreferredDestination.
+            /// </summary>
+            public string PreferredDestination
+            {
+                get => mInstance.PreferredDestination;
+                set => mInstance.PreferredDestination = value;
+            }
+
+
+            /// <summary>
+            /// PreferredExperience.
+            /// </summary>
+            public string PreferredExperience
+            {
+                get => mInstance.PreferredExperience;
+                set => mInstance.PreferredExperience = value;
+            }
+
+
+            /// <summary>
+            /// TourCode.
+            /// </summary>
+            public string TourCode
+            {
+                get => mInstance.TourCode;
+                set => mInstance.TourCode = value;
+            }
+
+
+            /// <summary>
+            /// TourName.
+            /// </summary>
+            public string TourName
+            {
+                get => mInstance.TourName;
+                set => mInstance.TourName = value;
+            }
+
+
+            /// <summary>
+            /// Message.
+            /// </summary>
+            public string Message
+            {
+                get => mInstance.Message;
+                set => mInstance.Message = value;
+            }
+
+
+            /// <summary>
+            /// TourClass.
+            /// </summary>
+            public string TourClass
+            {
+                get => mInstance.TourClass;
+                set => mInstance.TourClass = value;
+            }
+
+
+            /// <summary>
+            /// TourDate.
+            /// </summary>
+            public string TourDate
+            {
+                get => mInstance.TourDate;
+                set => mInstance.TourDate = value;
+            }
+
+
+            /// <summary>
+            /// SubscribeToNewsletter.
+            /// </summary>
+            public bool SubscribeToNewsletter
+            {
+                get => mInstance.SubscribeToNewsletter;
+                set => mInstance.SubscribeToNewsletter = value;
+            }
+
+
+            /// <summary>
+            /// TourDepartureCity.
+            /// </summary>
+            public string TourDepartureCity
+            {
+                get => mInstance.TourDepartureCity;
+                set => mInstance.TourDepartureCity = value;
+            }
+
+
+            /// <summary>
+            /// TourQuotedPrice.
+            /// </summary>
+            public int TourQuotedPrice
+            {
+                get => mInstance.TourQuotedPrice;
+                set => mInstance.TourQuotedPrice = value;
+            }
+
+
+            /// <summary>
+            /// PriceCurrency.
+            /// </summary>
+            public string PriceCurrency
+            {
+                get => mInstance.PriceCurrency;
+                set => mInstance.PriceCurrency = value;
+            }
+
+
+            /// <summary>
+            /// UTMCampaign.
+            /// </summary>
+            public string UTMCampaign
+            {
+                get => mInstance.UTMCampaign;
+                set => mInstance.UTMCampaign = value;
+            }
+
+
+            /// <summary>
+            /// UTMContent.
+            /// </summary>
+            public string UTMContent
+            {
+                get => mInstance.UTMContent;
+                set => mInstance.UTMContent = value;
+            }
+
+
+            /// <summary>
+            /// UTMMedium.
+            /// </summary>
+            public string UTMMedium
+            {
+                get => mInstance.UTMMedium;
+                set => mInstance.UTMMedium = value;
+            }
+
+
+            /// <summary>
+            /// UTMSource.
+            /// </summary>
+            public string UTMSource
+            {
+                get => mInstance.UTMSource;
+                set => mInstance.UTMSource = value;
+            }
+
+
+            /// <summary>
+            /// UTMTerm.
+            /// </summary>
+            public string UTMTerm
+            {
+                get => mInstance.UTMTerm;
+                set => mInstance.UTMTerm = value;
+            }
+
+
+            /// <summary>
+            /// Status.
+            /// </summary>
+            public string Status
+            {
+                get => mInstance.Status;
+                set => mInstance.Status = value;
+            }
+
+
+            /// <summary>
+            /// TourLink.
+            /// </summary>
+            public string TourLink
+            {
+                get => mInstance.TourLink;
+                set => mInstance.TourLink = value;
+            }
+
+
+            /// <summary>
+            /// TourDuration.
+            /// </summary>
+            public string TourDuration
+            {
+                get => mInstance.TourDuration;
+                set => mInstance.TourDuration = value;
+            }
+
+
+            /// <summary>
+            /// TourDiscountText.
+            /// </summary>
+            public string TourDiscountText
+            {
+                get => mInstance.TourDiscountText;
+                set => mInstance.TourDiscountText = value;
+            }
+
+
+            /// <summary>
+            /// Travellers.
+            /// </summary>
+            public string Travellers
+            {
+                get => mInstance.Travellers;
+                set => mInstance.Travellers = value;
+            }
+
+
+            /// <summary>
+            /// Children.
+            /// </summary>
+            public string Children
+            {
+                get => mInstance.Children1;
+                set => mInstance.Children1 = value;
+            }
+
+
+            /// <summary>
+            /// Infants.
+            /// </summary>
+            public string Infants
+            {
+                get => mInstance.Infants;
+                set => mInstance.Infants = value;
+            }
+
+
+            /// <summary>
+            /// Comments.
+            /// </summary>
+            public string Comments
+            {
+                get => mInstance.Comments;
+                set => mInstance.Comments = value;
+            }
+
+
+            /// <summary>
+            /// BookingReference.
+            /// </summary>
+            public string BookingReference
+            {
+                get => mInstance.BookingReference;
+                set => mInstance.BookingReference = value;
+            }
+
+
+            /// <summary>
+            /// DepartureDate.
+            /// </summary>
+            public string DepartureDate
+            {
+                get => mInstance.DepartureDate;
+                set => mInstance.DepartureDate = value;
+            }
+
+
+            /// <summary>
+            /// ReturnDate.
+            /// </summary>
+            public string ReturnDate
+            {
+                get => mInstance.ReturnDate;
+                set => mInstance.ReturnDate = value;
+            }
+
+
+            /// <summary>
+            /// AssignedUserGuid.
+            /// </summary>
+            public Guid AssignedUserGuid
+            {
+                get => mInstance.AssignedUserGuid;
+                set => mInstance.AssignedUserGuid = value;
+            }
+
+
+            /// <summary>
+            /// StoreView.
+            /// </summary>
+            public string StoreView
+            {
+                get => mInstance.StoreView;
+                set => mInstance.StoreView = value;
+            }
+
+
+            /// <summary>
+            /// IsSpam.
+            /// </summary>
+            public bool IsSpam
+            {
+                get => mInstance.IsSpam;
+                set => mInstance.IsSpam = value;
+            }
+        }
+
+        #endregion
+
+
+        #region "Constructors"
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnquireItem" /> class.
+        /// </summary>
+        public EnquireItem() : base(CLASS_NAME)
+        {
+            mFields = new EnquireItemFields(this);
+        }
+
+        #endregion
+    }
 }

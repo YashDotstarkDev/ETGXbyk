@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ETG.Web.Features.Search;
 
@@ -31,7 +32,7 @@ public class ArticleIndexingStrategy(
     public const string FIELD_EXPERIENCE = "experience";
 
     private static readonly ContentQueryExecutionOptions BackgroundQueryOptions =
-        new() { ForPreview = true, IncludeSecuredItems = true };
+        new() { ForPreview = false, IncludeSecuredItems = true };
 
     public override IndexSettings GetAlgoliaIndexSettings() => new()
     {
@@ -56,8 +57,8 @@ public class ArticleIndexingStrategy(
 
     private async Task<IEnumerable<JObject>?> MapArticleAsync(Guid itemGuid)
     {
-        
         int contentItemId = 0;
+        int webPageItemId = 0;
         string treePath = "";
 
         try
@@ -65,6 +66,7 @@ public class ArticleIndexingStrategy(
             var page = new ObjectQuery("cms.webpageitem").WhereEquals("WebPageItemGUID", itemGuid).FirstOrDefault();
             if (page != null)
             {
+                webPageItemId = page.GetIntegerValue("WebPageItemID", 0);
                 contentItemId = page.GetIntegerValue("WebPageItemContentItemID", 0);
                 treePath = page.GetStringValue("WebPageItemTreePath", "");
             }
@@ -82,15 +84,29 @@ public class ArticleIndexingStrategy(
         var query = new ContentItemQueryBuilder()
            .ForContentType("ETG.Article", cfg => cfg
                 .Where(w => w.WhereEquals("ContentItemID", contentItemId))
+                .WithLinkedItems(2)
                 .TopN(1));
 
-        var results = await queryExecutor.GetWebPageResult(query, contentQueryResultMapper.Map<ETG.Core.Content.Article>, BackgroundQueryOptions);
+        var results = await queryExecutor.GetMappedWebPageResult<ETG.Core.Content.Article>(query, BackgroundQueryOptions);
         var article = results.FirstOrDefault();
         if (article is null) return null;
 
         string url = treePath.ToLowerInvariant();
-        var heroImage = article.ArticleHeroImage?.FirstOrDefault();
-        var imageUrl = heroImage is MediaFile mf ? mf.LegacyMediaFileAsset?.Url ?? string.Empty : string.Empty;
+        var heroImage = article.ArticleHeroImage?.OfType<MediaFile>().FirstOrDefault() ?? article.ArticleHeroImage?.FirstOrDefault() as MediaFile;
+        var asset = heroImage?.LegacyMediaFileAsset;
+        string imageUrl = string.Empty;
+
+        if (asset != null)
+        {
+            if (!string.IsNullOrWhiteSpace(asset.Url))
+            {
+                imageUrl = asset.Url.TrimStart('~');
+            }
+            else if (asset.Metadata != null)
+            {
+                imageUrl = $"/getContentAsset/{asset.Metadata.Identifier}/{asset.Metadata.Name}";
+            }
+        }
 
         var destinationIds = article.ArticleDestinations?.Select(d => d.WebPageGuid).ToList() ?? new List<Guid>();
         var destinationNames = OmniResolveGuids(destinationIds);
@@ -101,11 +117,51 @@ public class ArticleIndexingStrategy(
         var experienceIds = article.ArticleExperiences?.Select(e => e.WebPageGuid).ToList() ?? new List<Guid>();
         var experienceNames = OmniResolveGuids(experienceIds);
 
+        string articleUrl = string.Empty;
+        if (webPageItemId > 0)
+        {
+            try
+            {
+                var urlPathRecord = new ObjectQuery("cms.webpageurlpath")
+                    .WhereEquals("WebPageUrlPathWebPageItemID", webPageItemId)
+                    .WhereTrue("WebPageUrlPathIsLatest")
+                    .OrderByDescending("WebPageUrlPathIsDraft")
+                    .FirstOrDefault();
+
+                if (urlPathRecord != null)
+                {
+                    string path = urlPathRecord.GetStringValue("WebPageUrlPath", "");
+                    if (path.StartsWith("en/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        path = path.Substring(3);
+                    }
+                    articleUrl = path;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to resolve URL via cms.webpageurlpath for WebPageItemID {WebPageItemID}", webPageItemId);
+            }
+        }
+
+        articleUrl = articleUrl.TrimStart('~');
+
+        if (string.IsNullOrWhiteSpace(articleUrl))
+        {
+            articleUrl = "/" + url.Trim('~', '/').Split('/').Last();
+        }
+        else if (!articleUrl.StartsWith("/"))
+        {
+            articleUrl = "/" + articleUrl;
+        }
+
+        articleUrl = articleUrl.ToLowerInvariant();
+
         return [new JObject
         {
             [FIELD_TITLE]       = article.ArticleTitle ?? article.DocumentName ?? "",
             [FIELD_SUMMARY]     = article.ArticleSummary ?? "",
-            [FIELD_URL]         = url,
+            [FIELD_URL]         = articleUrl,
             [FIELD_IMAGE]       = imageUrl,
             [FIELD_DATE]        = article.ArticleDate.ToString("o"),
             [FIELD_AUTHOR]      = "",

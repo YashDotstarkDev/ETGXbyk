@@ -4,14 +4,11 @@ using ETG.Core.Components;
 using ETG.Core.Content;
 using ETG.Web.Components.PageBuilder.Widgets.ImageGallery;
 using ETG.Web.Rendering;
-//using J2N.Collections.Generic;
 using Kentico.Content.Web.Mvc;
 using Kentico.PageBuilder.Web.Mvc;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Websites.FormAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using ReverseMarkdown.Converters;
-using System.ComponentModel;
 using XperienceCommunity.KenticoComponentIcons;
 
 [assembly: RegisterWidget(
@@ -35,20 +32,34 @@ public class ImageGalleryWidget(IContentRetriever contentRetriever) : ViewCompon
     public async Task<IViewComponentResult> InvokeAsync(ComponentViewModel<ImageGalleryProperties> cvm)
     {
         var props = cvm.Properties;
-var imageIds = props.ImagePaths
-    .Where(image => image.Identifier != Guid.Empty)
-    .Select(image => image.Identifier)
-    .ToList();
 
-if (imageIds.Count == 0)
-{
-    return View("~/Components/ComponentError.cshtml",
-        new ComponentErrorViewModel(
-            NAME, ComponentType.Widget, "No valid images have been selected."));
-}
+        // The widget now stores the GUID(s) of ImageFolder items, not MediaFile items.
+        var folderIds = props.ImagePaths?
+            .Where(item => item.Identifier != Guid.Empty)
+            .Select(item => item.Identifier)
+            .ToList() ?? [];
 
-var images = await contentRetriever
-    .RetrieveContentByGuids<MediaFile>(imageIds);
+        if (folderIds.Count == 0)
+        {
+            return View("~/Components/ComponentError.cshtml",
+                new ComponentErrorViewModel(
+                    NAME, ComponentType.Widget, "No valid images have been selected."));
+        }
+
+        // Levels: ImageFolder -> Image -> MediaFile (the actual asset)
+        var folders = await contentRetriever
+            .RetrieveContentByGuids<ImageFolder>(
+                folderIds,
+                new RetrieveContentParameters
+                {
+                    LinkedItemsMaxLevel = 2
+                });
+
+        var images = folders
+            .SelectMany(folder => folder.SelectedImages ?? [])
+            .SelectMany(image => image.ImageFilePath ?? [])
+            .OfType<MediaFile>()
+            .ToList();
 
         return Validate(props, images)
             .Match(
@@ -56,12 +67,14 @@ var images = await contentRetriever
                 vm => View("~/Components/ComponentError.cshtml", vm));
     }
 
-    private static Result<ImageGalleryWidgetViewModel, ComponentErrorViewModel> Validate(ImageGalleryProperties props, IEnumerable<MediaFile> images)
+    private static Result<ImageGalleryWidgetViewModel, ComponentErrorViewModel> Validate(
+        ImageGalleryProperties props,
+        IEnumerable<MediaFile> images)
     {
         if (!props.ImagePaths.Any())
         {
             return Result.Failure<ImageGalleryWidgetViewModel, ComponentErrorViewModel>(
-                new ComponentErrorViewModel(NAME, ComponentType.Widget,"No images have been selected."));
+                new ComponentErrorViewModel(NAME, ComponentType.Widget, "No images have been selected."));
         }
 
         var imageViewModels = images
@@ -83,8 +96,9 @@ var images = await contentRetriever
 [FormCategory(Label = "Content", Order = 1)]
 public class ImageGalleryProperties : BaseWidgetProperties
 {
+    // Selector now points at the folder type (name kept as ImagePaths so saved data keeps its key).
     [ContentItemSelectorComponent(
-        MediaFile.CONTENT_TYPE_NAME,
+        ImageFolder.CONTENT_TYPE_NAME,
         Label = "Images",
         MinimumItems = 1,
         MaximumItems = 50,

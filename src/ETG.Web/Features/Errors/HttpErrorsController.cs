@@ -1,27 +1,38 @@
-﻿using ETG.Core.Content;
+using System.Threading;
+using System.Threading.Tasks;
+using ETG.Core.Content;
 using ETG.Web.Infrastructure;
+using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ETG.Web.Features.Errors;
 
 [Route("error")]
-public class HttpErrorsController(WebPageMetaService metaService) : Controller
+public class HttpErrorsController(WebPageMetaService metaService, IMediator mediator) : Controller
 {
     private readonly WebPageMetaService metaService = metaService;
+    private readonly IMediator mediator = mediator;
 
     [HttpGet("{code:int}")]
-    public ActionResult Error(int code)
+    public async Task<ActionResult> Error(int code, CancellationToken cancellationToken)
     {
         if (code != 404)
         {
-            metaService.SetMeta(new WebPageMeta("Error", "There was a problem handling your request.",""));
+            metaService.SetMeta(new WebPageMeta("Error", "There was a problem handling your request.", ""));
+
+            Response.StatusCode = code >= 400 && code < 600 ? code : StatusCodes.Status500InternalServerError;
 
             return View("~/Features/Errors/Exception.cshtml", new ErrorPageViewModel { StatusCode = code });
         }
 
-        metaService.SetMeta(new WebPageMeta("Not Found", "The page you requested could not be found.",""));
+        metaService.SetMeta(new WebPageMeta("Looks like you've lost your way", "Let us help get you back on track. Search a destination, experience or tour, or browse the content below for some inspiration.", ""));
 
-        return View("~/Features/Errors/NotFound.cshtml", new ErrorPageViewModel { StatusCode = code });
+        Response.StatusCode = StatusCodes.Status404NotFound;
+
+        var model = await mediator.Send(new PageNotFoundQuery(), cancellationToken);
+
+        return View("~/Features/Errors/NotFound.cshtml", model);
     }
 }
 

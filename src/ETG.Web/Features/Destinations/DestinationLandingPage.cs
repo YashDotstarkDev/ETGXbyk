@@ -1,4 +1,5 @@
-﻿using CMS.Websites;
+﻿using CMS.ContentEngine;
+using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Web.Features.Destinations.Operations;
@@ -25,7 +26,8 @@ public sealed class DestinationLandingPageController(
     IWebPageDataContextRetriever contextRetriever,
     IWebPageUrlRetriever urlRetriever,
     IWebsiteChannelContext websiteChannelContext,
-    WebPageMetaService metaService
+    WebPageMetaService metaService,
+    ITaxonomyRetriever taxonomyRetriever
     ) : Controller
 {
     public async Task<IActionResult> Index(
@@ -45,6 +47,7 @@ public sealed class DestinationLandingPageController(
             return NotFound();
         }
 
+        // Existing destination query remains unchanged.
         var destinations = await mediator.Send(
             new MainDestinationsQuery(
                 data.WebPage,
@@ -52,10 +55,13 @@ public sealed class DestinationLandingPageController(
                 container.SystemFields.WebPageItemTreePath),
             cancellationToken);
 
+        // Categories now come from the tags on each destination.
         var model = await DestinationLandingPageViewModel.CreateAsync(
             container,
             destinations,
-            urlRetriever);
+            urlRetriever,
+            taxonomyRetriever,
+            "en-AU");
 
         var heroImage = container.ContainerHeroImage?
             .OfType<ETG.Core.Content.MediaFile>()

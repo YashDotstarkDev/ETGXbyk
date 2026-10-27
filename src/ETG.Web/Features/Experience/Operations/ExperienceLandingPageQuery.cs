@@ -1,4 +1,8 @@
-﻿using CMS.ContentEngine;
+﻿
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CMS.ContentEngine;
 using CMS.Websites;
 using ETG.Core.Content;
 using ETG.Core.Operations;
@@ -34,22 +38,45 @@ public class ExperienceLandingPageQueryHandler(
         ExperienceLandingPageQuery request,
         CancellationToken cancellationToken = default)
     {
+        // Load the container without linked items.
         var landingPageQuery = new ContentItemQueryBuilder()
-    .ForWebPage(request.Page);
+            .ForWebPage(request.Page);
 
-        var landingPage = (
+        var landingPageResults =
             await Executor.GetMappedWebPageResult<ContainerContent>(
                 landingPageQuery,
                 DefaultQueryOptions,
-                cancellationToken
-            )
-        ).FirstOrDefault();
+                cancellationToken);
+
+        var landingPage = landingPageResults.FirstOrDefault();
 
         if (landingPage is null)
         {
             return null;
         }
 
+        // Retrieve only MediaFile items selected in ContainerHeroImage.
+        var heroQuery = new ContentItemQueryBuilder()
+            .ForContentType(
+                MediaFile.CONTENT_TYPE_NAME,
+                config => config.LinkedFrom(
+                    ContainerContent.CONTENT_TYPE_NAME,
+                    nameof(ContainerContent.ContainerHeroImage),
+                    new IContentItemIdentifier[]
+                    {
+                        landingPage.SystemFields
+                    }));
+
+        var heroImages = await Executor.GetMappedResult<MediaFile>(
+            heroQuery,
+            DefaultQueryOptions,
+            cancellationToken);
+
+        landingPage.ContainerHeroImage = heroImages
+            .Cast<IContentItemFieldsSource>()
+            .ToArray();
+
+        // Retrieve child Experience pages.
         var experiencesQuery = new ContentItemQueryBuilder()
             .ForContentType(
                 ExperienceContent.CONTENT_TYPE_NAME,
@@ -58,24 +85,18 @@ public class ExperienceLandingPageQueryHandler(
                         websiteChannelName: request.ChannelName,
                         pathMatch: PathMatch.Children(
                             landingPage.SystemFields.WebPageItemTreePath,
-                            nestingLevel: 1
-                        )
-                    )
+                            nestingLevel: 1))
                     .WithLinkedItems(4)
-                    .OrderBy(nameof(WebPageFields.WebPageItemOrder))
-            );
+                    .OrderBy("WebPageItemOrder"));
 
-        var experiences = (
+        var experiences =
             await Executor.GetMappedWebPageResult<ExperienceContent>(
                 experiencesQuery,
                 DefaultQueryOptions,
-                cancellationToken
-            )
-        ).ToList();
+                cancellationToken);
 
         return new ExperienceLandingPageQueryResponse(
             landingPage,
-            experiences
-        );
+            experiences.ToList());
     }
 }

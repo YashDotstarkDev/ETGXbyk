@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ETG.Web.Components.ViewComponents.BreadCrumb;
 
@@ -15,7 +15,9 @@ public class BreadCrumbViewComponent : ViewComponent
         bool isArticleLanding = modelType.Contains("ArticleLanding");
         bool isArticlePost = modelType.Contains("ArticlePost") || (modelType.Contains("Article") && !isArticleLanding);
 
-        var viewModel = GetBreadCrumbQuery.Get(currentPath, currentPageTitle, isArticleLanding, isArticlePost);
+        var articleLandingTitle = ViewContext.ViewData["ArticleLandingTitle"]?.ToString();
+
+        var viewModel = GetBreadCrumbQuery.Get(currentPath, currentPageTitle, isArticleLanding, isArticlePost, articleLandingTitle);
 
         return View(
             "~/Components/ViewComponents/BreadCrumb/BreadCrumb.cshtml",

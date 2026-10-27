@@ -1,25 +1,107 @@
-﻿@model ETG.Web.Features.Errors.ErrorPageViewModel
+@model ETG.Web.Features.Errors.PageNotFoundViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Looks like you've lost your way";
+}
 
-<main>
-    <section class="section section--error-hero" style="--section-bg-image: var(--error404-bg)">
-        <div class="container">
-            <h1 class="text-center">@Model.StatusCode<span class="text-secondary">.</span></h1>
-        </div>
-    </section>
-    <section class="section text-center">
+<main class="bg-white">
+    <!-- Top 404 Hero Section with Homepage Dropdown Form -->
+    <section class="section-pad text-center position-relative" style="background-color: #ededed; z-index: 20;">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5">
-
-                    <h2 class="fs-md-6">Page not found.</h2>
-
-                    <p class="mt-md-3">The page you were looking for could not be found.</p>
-                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center my-3 my-md-5 pt-2">
-                        <a class="btn btn-primary btn-lg" href="/q-and-a">Search our Q&A discussions</a>
-                        <a class="btn btn-outline-primary btn-lg" href="/">Or return to the home page</a>
+                <div class="col-12 col-lg-10 col-xl-9">
+                    <h1 class="error-title text-uppercase mb-2 display-4" style="letter-spacing: 0.5px;font-weight: 700;">Looks like you've
+                        <span class="accent-italic"> lost your way</span>
+                        </h1>
+                        <div style="display:flex; align-items:center;justify-content:center">
+                    <p class="text-muted mb-4" style="width:47rem;font-size:22px;">
+                        Let us help get you back on track. Search a destination, experience or tour, or browse the content below for some inspiration.
+                    </p>
                     </div>
+                    <!-- Algolia Dropdown Search Form (Matching Homepage) -->
+                    <form class="hero-search shadow-lg text-start"
+                          role="search"
+                          id="heroSearchForm"
+                          data-from="404page"
+                          data-app-id="@Model.SearchAppId"
+                          data-api-key="@Model.SearchApiKey"
+                          data-index-name="@Model.SearchIndexName">
+
+                        <div class="row g-0 align-items-center">
+
+                            <!-- 1. Destination (DYNAMIC from Algolia) -->
+                            <div class="col-4 col-md-3 search-field">
+                                <label class="form-label">Destination</label>
+
+                                <select class="form-select tom-select"
+                                        aria-label="Destination"
+                                        id="heroDestination">
+                                    <option value="all">Select</option>
+                                </select>
+                            </div>
+
+                            <!-- 2. Experience (DYNAMIC from Algolia) -->
+                            <div class="col-4 col-md-3 search-field">
+                                <label class="form-label">Experience</label>
+
+                                <select class="form-select tom-select"
+                                        aria-label="Experience"
+                                        id="heroExperience">
+                                    <option value="all">Select</option>
+                                </select>
+                            </div>
+
+                            <!-- 3. Keyword -->
+                            <div class="col-4 col-md-3 search-field">
+                                <label class="form-label">Keyword</label>
+
+                                <input type="text"
+                                       name="Keyword"
+                                       id="heroKeyword"
+                                       placeholder="Keyword"
+                                       class="form-control">
+                            </div>
+
+                            <!-- 4. Button -->
+                            <div class="col-12 col-md-3 d-grid mt-3 mt-md-0 text-center">
+                                <button type="submit"
+                                        class="btn btn-pink btn-lg search-btn">
+                                    Find
+                                </button>
+                            </div>
+
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Tour Packages Listing (8 Recently Published Packages Ordered by Lowest Price) -->
+    @if (Model.Tours != null && Model.Tours.Tours.Any())
+    {
+        <partial name="~/Views/Shared/Partial/Tour/_TourListing.cshtml" model="Model.Tours" />
+    }
+
+    <!-- Related Articles Section (Top 3 Recently Published Articles) -->
+    @if (Model.Articles != null && Model.Articles.Any())
+    {
+        <section class="section-pad blogs-page-layout">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-end mb-4 title-div">
+                    <h2 class="section-title">Read what we've written</h2>
+                    <a href="/articles" class="view-all-btn">View All</a>
+                </div>
+
+                <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml" model="Model.Articles" />
+            </div>
+        </section>
+    }
 </main>
+
+@section Scripts
+{
+    <!-- Algolia External Scripts for Dropdown Search -->
+    <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+    <script src="~/algolia/homepagescript.js" asp-append-version="true"></script>
+}

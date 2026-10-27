@@ -62,7 +62,7 @@ public class GetWebsiteLayoutContentQueryHandler(ContentItemQueryTools tools,
 
             return new WebsiteLayoutContentViewModel
             {
-                BrandLogoSvg = SafeString(global?.BrandLogo),
+                BrandLogoSvg = SafeString((global?.BrandLogo) ?? (layout?.BrandLogo)),
                 BrandLogoAltText = SafeString(layout?.BrandLogoAltText),
                 ContactNumber = SafeString(layout?.ContactNumber),
                 NavCtaText = SafeString(layout?.NavCtaText),
@@ -70,7 +70,7 @@ public class GetWebsiteLayoutContentQueryHandler(ContentItemQueryTools tools,
                 OneTreeLogoAltText = SafeString(layout?.OneTreeLogoAltText),
                 SustainableHeading = SafeString(layout?.SustainableHeading),
                 SustainableDescription = SafeString(layout?.SustainableDescription),
-                FooterLogoUrl = SafeAssetUrl(global?.FooterLogo),
+                FooterLogoUrl = SafeAssetUrl((global?.FooterLogo) ?? (layout?.FooterLogo)),
                 FooterLogoAltText = SafeString(layout?.FooterLogoAltText),
                 ContactUsText = SafeString(layout?.ContactUsText),
                 AwardsImageSvg = SafeString(layout?.AwardsImage),

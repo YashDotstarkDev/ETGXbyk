@@ -2,7 +2,7 @@
 @using ETG.Web.Rendering
 @using ETG.Core.Models.Tour
 
-@model (ETG.Core.Content.Tour Tour, ETG.Web.Services.Tour.TourPricingResult PriceInfo)
+@model (ETG.Core.Content.Tour Tour, ETG.Web.Services.Tour.TourPricingResult PriceInfo, ETGBooking.PromotionInfo? Promotion, ETG.DiscountAndOffer? Discount)
 
 @{
     var tour = Model.Tour;
@@ -10,42 +10,79 @@
 
     var price = priceInfo.CurrentPrice;
 
-    var discount = tour.TourDiscountAndOffer?
-         .SelectMany(folder =>
-             folder.SelectedDiscountAndOffers
-             ?? Enumerable.Empty<ETG.DiscountAndOffer>())
-         .FirstOrDefault();
+    var promotion = Model.Promotion;
+    var discount = Model.Discount;
 }
 
-@if (discount != null)
+@if (promotion != null)
 {
-    @if (discount.DiscountExpiry > DateTime.UtcNow.Date)
-    {
-        <!-- Top On Sale Bar -->
-        <div class="widget-offer-bar">
-            <div class="widget-offer-left">
-                <div>SAVE $1,250</div>
+    var promotionDiscountText = promotion.PromotionDollarDiscount > 0
+        ? $"SAVE ${promotion.PromotionDollarDiscount}PP"
+        : promotion.PromotionPercentDiscount > 0
+            ? $"SAVE {promotion.PromotionPercentDiscount:0}%"
+            : string.Empty;
+
+    <div class="widget-offer-bar">
+        <div class="widget-offer-left">
+            <div>
+                @promotionDiscountText
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(tour.TourPriceTypeLabel))
+            {
                 <div style="font-size: 10px;">
-                        @Html.Raw(
-                        tour.TourPriceTypeLabel.Replace(
-                            ",",
-                            "<br>" ))
+                    @Html.Raw(
+                        tour.TourPriceTypeLabel.Replace(",", "<br>"))
                 </div>
-            </div>        
-            <div class="widget-offer-right">
-                <div style="font-size: 10px;">OFFER ENDS IN</div>
-                <div class="js-offer-countdown"
-                data-end="@discount.DiscountExpiry.Date.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ss")"
-                style="display: flex; align-items: center; gap: 3px;">
-                    <i class="bi bi-clock" style="margin-right: 5px;"></i>
-                    <span data-countdown="days">00</span>D :
-                    <span data-countdown="hours">00</span>H :
-                    <span data-countdown="minutes">00</span>M :
-                    <span data-countdown="seconds">00</span>S
-                </div>                  
-            </div>        
+            }
         </div>
-    }
+
+        <div class="widget-offer-right">
+            <div style="font-size: 10px;">
+                OFFER ENDS IN
+            </div>
+
+            <div class="js-offer-countdown"
+                 data-end="@promotion.PromotionToDate.ToString("yyyy-MM-ddTHH:mm:ss")"
+                 style="display: flex; align-items: center; gap: 3px; white-space:nowrap;">
+
+                <i class="bi bi-clock" style="margin-right: 5px;"></i>
+
+                <span data-countdown="days">00</span>D :
+                <span data-countdown="hours">00</span>H :
+                <span data-countdown="minutes">00</span>M :
+                <span data-countdown="seconds">00</span>S
+            </div>
+        </div>
+    </div>
+}
+else if (discount != null)
+{
+    <div class="widget-offer-bar d-block">
+
+        @Html.Raw(@discount.DiscountText)
+
+            <div class="widget-offer-right">
+
+            <div style="font-size: 10px;">
+                OFFER ENDS IN
+            </div>
+
+            <div class="js-offer-countdown"
+                 data-end="@discount.DiscountExpiry.Date.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ss")"
+                 style="display: flex; align-items: center; gap: 3px;">
+
+                <i class="bi bi-clock" style="margin-right: 5px;"></i>
+
+                <span data-countdown="days">00</span>D :
+                <span data-countdown="hours">00</span>H :
+                <span data-countdown="minutes">00</span>M :
+                <span data-countdown="seconds">00</span>S
+
+            </div>
+
+        </div>
+    </div>
 }
 
 <!-- Price Section -->
@@ -55,10 +92,16 @@
         <div class="widget-price-from">@(tour.TourNights + 1) DAYS</div>
     }
 
-    @if (priceInfo.CurrentPrice > 0)
+    @if (priceInfo.CurrentPrice < priceInfo.OriginalPrice)
     {
         <div class="widget-price-from">
             FROM @priceInfo.CurrencyCode <del>@priceInfo.OriginalPrice</del>
+        </div>
+    }
+    else
+    {
+        <div class="widget-price-from">
+            FROM 
         </div>
     }
 
@@ -100,7 +143,7 @@
                 @foreach (var icon in inclusionIcons)
                 {
                     <div class="widget-icon-wrapper">
-                        <i class="@icon.FaClass" aria-hidden="true"></i>
+                        @Html.Raw(icon.FaClass)
                     </div>
 
                     @if (icon != inclusionIcons.Last())
@@ -115,14 +158,14 @@
     @if (!string.IsNullOrWhiteSpace(tour.TourCode))
     {
         <!-- Button -->
-        <a href="/enquire/@tour.TourCode" class="btn btn-pink widget-enquiry-btn">ENQUIRE NOW</a>
+        <a href="/enquires/@tour.TourCode" class="btn btn-pink widget-enquiry-btn">ENQUIRE NOW</a>
     }
 
     @if (!string.IsNullOrWhiteSpace(tour.TourCode))
     {
         <!-- Download Link -->
         <div class="widget-download-link">
-            <a href="/pdf/@tour.TourCode">
+            <a href="/pdf/@tour.TourCode" target="_blank">
                 <i class="bi bi-download widget-download-icon"></i>Download Itinerary PDF
             </a>
         </div>

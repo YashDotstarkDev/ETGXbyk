@@ -15,58 +15,61 @@ using CMS.ContentEngine;
 
 namespace ETG.Core.Content
 {
-    /// <summary>
-    /// Represents a content item of type <see cref="ImageTileCta"/>.
-    /// </summary>
-    [RegisterContentTypeMapping(CONTENT_TYPE_NAME)]
-    public partial class ImageTileCta : IContentItemFieldsSource
-    {
-        /// <summary>
-        /// Code name of the content type.
-        /// </summary>
-        public const string CONTENT_TYPE_NAME = "ETG.ImageTileCta";
+	/// <summary>
+	/// Represents a content item of type <see cref="ImageTileCta"/>.
+	/// </summary>
+	[RegisterContentTypeMapping(CONTENT_TYPE_NAME)]
+	public partial class ImageTileCta : IContentItemFieldsSource
+	{
+		/// <summary>
+		/// Code name of the content type.
+		/// </summary>
+		public const string CONTENT_TYPE_NAME = "ETG.ImageTileCta";
 
 
-        /// <summary>
-        /// Represents system properties for a content item.
-        /// </summary>
-        [SystemField]
-        public ContentItemFields SystemFields { get; set; }
+		/// <summary>
+		/// Represents system properties for a content item.
+		/// </summary>
+		[SystemField]
+		public ContentItemFields SystemFields { get; set; }
 
 
-        /// <summary>
-        /// Caption.
-        /// </summary>
-        public string Caption { get; set; }
+		/// <summary>
+		/// Caption.
+		/// </summary>
+		public string Caption { get; set; }
 
 
-        /// <summary>
-        /// SubCaption.
-        /// </summary>
-        public string SubCaption { get; set; }
+		/// <summary>
+		/// SubCaption.
+		/// </summary>
+		public string SubCaption { get; set; }
 
 
-        /// <summary>
-        /// Image.
-        /// </summary>
-        public IEnumerable<IContentItemFieldsSource> Image { get; set; }
+		/// <summary>
+		/// Image.
+		/// </summary>
+		public IEnumerable<IContentItemFieldsSource> Image { get; set; }
 
 
-        /// <summary>
-        /// CtaUrl.
-        /// </summary>
-        public string CtaUrl { get; set; }
+		/// <summary>
+		/// CtaUrl.
+		/// </summary>
+		public IEnumerable<IContentItemFieldsSource> CtaUrl { get; set; }
 
 
-        /// <summary>
-        /// CtaLabel.
-        /// </summary>
-        public string CtaLabel { get; set; }
+		/// <summary>
+		/// CtaLabel.
+		/// </summary>
+		public string CtaLabel { get; set; }
 
 
-        /// <summary>
-        /// DocumentName.
-        /// </summary>
-        public string DocumentName { get; set; }
+		/// <summary>
+		/// DocumentName.
+		/// </summary>
+		public string DocumentName { get; set; }
+
+        public string CardTag { get; set; }
+
     }
 }

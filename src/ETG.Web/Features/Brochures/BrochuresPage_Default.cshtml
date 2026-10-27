@@ -11,7 +11,7 @@
 
 <vc:bread-crumb />
 
-<main class="container-fluid brochure-section bg-lightgray">
+<main class="container-fluid brochure-section bg-lightgray etg-brochures-page">
     <div class="container brochure-container">
 
         <div class="row">
@@ -36,10 +36,10 @@
         }
         else
         {
-            <div class="row g-4 brochure-grid">
+            <div class="brochure-grid">
                 @foreach (var brochure in Model.Brochures)
                 {
-                    <div class="col-12 col-md-6 col-lg-4">
+                    <div class="brochure-grid-item">
                         <article class="brochure-card">
                             <div class="brochure-img-wrapper">
                                 @if (!string.IsNullOrWhiteSpace(

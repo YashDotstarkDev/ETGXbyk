@@ -144,16 +144,20 @@
                 @pageModel.DestinationHeading
             </h1>
 
-            <a href="#" class="tahiti-hero__cta">
+            <a href="@(string.IsNullOrWhiteSpace(pageModel.CtaButtonUrl) ? "#" : pageModel.CtaButtonUrl)"
+               class="tahiti-hero__cta">
                 <i class="bi bi-chat-square-text"
                    aria-hidden="true"></i>
-                Speak to a Tahiti specialist
+                @(string.IsNullOrWhiteSpace(pageModel.CtaButtonText)
+                    ? "SPESK TO A SPECIALIST"
+                    : pageModel.CtaButtonText)
             </a>
         </div>
     </div>
 </section>
 
 @* Summary and detail from the currently routed destination. *@
+@*
 @if (!string.IsNullOrWhiteSpace(pageModel.DestinationSummary)
     || !string.IsNullOrWhiteSpace(pageModel.DestinationDetail))
 {
@@ -196,15 +200,22 @@
         </div>
     </section>
 }
+*@
 
-<section class="destination-content-section py-5">
-    <div class="container">
         <editable-area area-identifier="Zone1" />
-    </div>
-</section>
 
 @* Helpful Information between Zone1 and Zone2. *@
-@if (!string.IsNullOrWhiteSpace(pageModel.DestinationWhenToVisit))
+@{
+    var helpfulAccordionItems = pageModel.SelectedAccordionItemFolders
+        .SelectMany(folder => folder.SelectedAccordionItems
+            ?? System.Linq.Enumerable.Empty<ETG.Core.Content.AccordionItem>())
+        .ToList();
+
+    var hasWhenToVisit =
+        !string.IsNullOrWhiteSpace(pageModel.DestinationWhenToVisit);
+}
+
+@if (hasWhenToVisit || helpfulAccordionItems.Any())
 {
     <section class="section-pad destination-helpful-section"
              aria-labelledby="destination-helpful-title">
@@ -212,34 +223,69 @@
             <div class="row">
                 <div class="col-lg-10">
                     <h2 id="destination-helpful-title"
-                        class="destination-helpful__title">
+                        class="destination-helpful__title"
+                        style="text-transform: none;">
                         Helpful Information
                     </h2>
 
                     <div class="accordion pkg-accordion"
                          id="destinationHelpfulAccordion">
-                        <div class="accordion-item">
-                            <h3 class="accordion-header"
-                                id="destinationWhenToVisitHeading">
-                                <button class="accordion-button collapsed"
-                                        type="button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#destinationWhenToVisit"
-                                        aria-expanded="false"
-                                        aria-controls="destinationWhenToVisit">
-                                    When to visit
-                                </button>
-                            </h3>
 
-                            <div id="destinationWhenToVisit"
-                                 class="accordion-collapse collapse"
-                                 aria-labelledby="destinationWhenToVisitHeading"
-                                 data-bs-parent="#destinationHelpfulAccordion">
-                                <div class="accordion-body">
-                                    @Html.Raw(pageModel.DestinationWhenToVisit)
+                        @if (hasWhenToVisit)
+                        {
+                            <div class="accordion-item">
+                                <h3 class="accordion-header"
+                                    id="destinationWhenToVisitHeading">
+                                    <button class="accordion-button collapsed"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#destinationWhenToVisit"
+                                            aria-expanded="false"
+                                            aria-controls="destinationWhenToVisit">
+                                        When to visit
+                                    </button>
+                                </h3>
+
+                                <div id="destinationWhenToVisit"
+                                     class="accordion-collapse collapse"
+                                     aria-labelledby="destinationWhenToVisitHeading"
+                                     data-bs-parent="#destinationHelpfulAccordion">
+                                    <div class="accordion-body">
+                                        @Html.Raw(pageModel.DestinationWhenToVisit)
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        }
+
+                        @for (var index = 0; index < helpfulAccordionItems.Count; index++)
+                        {
+                            var item = helpfulAccordionItems[index];
+                            var headingId = $"destinationHelpfulHeading{index}";
+                            var collapseId = $"destinationHelpfulCollapse{index}";
+
+                            <div class="accordion-item">
+                                <h3 class="accordion-header"
+                                    id="@headingId">
+                                    <button class="accordion-button collapsed"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="@($"#{collapseId}")"
+                                            aria-expanded="false"
+                                            aria-controls="@collapseId">
+                                        @item.AccordionHeading
+                                    </button>
+                                </h3>
+
+                                <div id="@collapseId"
+                                     class="accordion-collapse collapse"
+                                     aria-labelledby="@headingId"
+                                     data-bs-parent="#destinationHelpfulAccordion">
+                                    <div class="accordion-body">
+                                        @Html.Raw(item.AccordionContents)
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -247,11 +293,8 @@
     </section>
 }
 
-<section class="destination-content-section py-5">
-    <div class="container">
+
         <editable-area area-identifier="Zone2" />
-    </div>
-</section>
 
 @if (Model.CTA != null)
 {
@@ -259,15 +302,26 @@
              model="Model.CTA" />
 }
 
-@if (pageModel?.RelatedArticles?.Any() == true)
+@{
+    var relatedArticles = pageModel.RelatedArticles?.ToList();
+}
+
+@if (relatedArticles?.Any() == true)
 {
     <section class="related-articles-section py-5">
         <div class="container">
             <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
                 <div>
-                    <h2 class="section-title mb-2">
-                        Travel Blogs &amp; Guides
-                    </h2>
+                   <h2 class="section-title mb-2">
+    @if (!string.IsNullOrWhiteSpace(pageModel.DestinationRelatedArticlesHeader))
+    {
+        @pageModel.DestinationRelatedArticlesHeader
+    }
+    else
+    {
+        <text>Read what we've written on @pageModel.DestinationHeading</text>
+    }
+</h2>
 
                     <div class="section-title-line"></div>
                 </div>
@@ -282,17 +336,18 @@
                 of experts to help you plan your next unforgettable
                 journey.
             </p>
+
             <partial name="~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml"
-                     model="pageModel.RelatedArticles.Take(3)" />
+                     model="relatedArticles.Take(3).ToList()" />
         </div>
     </section>
 }
 
-                    @if (sticky is not null
-    && sticky.DisplaySticky
-    && (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1)
-        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail2)
-        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
+
+@if (sticky is not null && sticky.DisplaySticky
+&& (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1)
+|| !string.IsNullOrWhiteSpace(sticky.CampaignDetail2)
+|| !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
 {
     <partial name="~/Views/Shared/Partial/Common/_CampaignStickyBar.cshtml"
              model="pageModel" />

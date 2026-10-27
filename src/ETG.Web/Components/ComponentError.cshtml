@@ -1,19 +1,25 @@
+@using Kentico.PageBuilder.Web.Mvc
+@inject IPageBuilderDataContextRetriever PageBuilderContext
+
 @model ETG.Web.Components.ComponentErrorViewModel
 
-<xpc-page-builder-content>
-  <div xpc-preview-outline="@Model.ComponentLabel">
-    <strong>
-      This component needs to be setup or is misconfigured. Please resolve the
-      errors below:
-    </strong>
+@if (PageBuilderContext.Retrieve().EditMode)
+{
+  <xpc-page-builder-content>
+    <div xpc-preview-outline="@Model.ComponentLabel">
+      <strong>
+        This component needs to be setup or is misconfigured. Please resolve the
+        errors below:
+      </strong>
 
-    <div class="text-danger validation-summary-errors" data-valmsg-summary="true">
-      <ul>
-        @foreach (string err in Model.Errors)
-        {
-          <li>@err</li>
-        }
-      </ul>
+      <div class="text-danger validation-summary-errors" data-valmsg-summary="true">
+        <ul>
+          @foreach (string err in Model.Errors)
+          {
+            <li>@err</li>
+          }
+        </ul>
+      </div>
     </div>
-  </div>
-</xpc-page-builder-content>
+  </xpc-page-builder-content>
+}

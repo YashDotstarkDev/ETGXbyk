@@ -1,9 +1,8 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Core.Models; 
-using ETG.Web.Components.ViewComponents.Pagination;
 using ETG.Web.Features;
 using ETG.Web.Features.Article;
 using ETG.Web.Infrastructure;
@@ -41,7 +40,7 @@ public class ArticleLandingPageTemplateController(
     IConfiguration configuration,
     WebPageMetaService metaService) : Controller
 {
-    public async Task<IActionResult> Index([FromQuery] int page = 1, [FromQuery] int pageSize = 30)
+    public async Task<IActionResult> Index()
     {
         if (!contextRetriever.TryRetrieve(out var data))
             return NotFound();
@@ -79,34 +78,16 @@ public class ArticleLandingPageTemplateController(
             }
         }
 
-        if (pageSize != 30 && pageSize != 60) pageSize = 30;
-
-        // Fetch ALL articles
+        // Only fetch top 3 featured articles (grid is fully Algolia-powered)
         var articlesResult = await mediator.Send(new ArticleLandingPageQuery(channelContext.WebsiteChannelName));
-        var allArticles = articlesResult.Items;
-
-        // --- PAGINATION LOGIC: TOP 3 FIXED, rest paginated ---
-        var featuredArticles = allArticles.Take(3).ToList();
-        var gridPool = allArticles.Skip(3).ToList();
-
-        int totalArticles = allArticles.Count;
-        int totalGridArticles = gridPool.Count;
-        int totalPages = (int)Math.Ceiling(totalGridArticles / (double)pageSize);
-        if (totalPages < 1) totalPages = 1;
-
-        page = Math.Max(1, Math.Min(page, totalPages));
-
-        var pagedGridArticles = gridPool
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var featuredArticles = articlesResult.Items.Take(3).ToList();
+        var excludedObjectIds = featuredArticles
+            .Select(a => a.SystemFields?.WebPageItemGUID.ToString() ?? string.Empty)
+            .Where(id => !string.IsNullOrEmpty(id))
             .ToList();
 
-        var finalArticles = new List<ETG.Core.Content.Article>();
-        finalArticles.AddRange(featuredArticles);
-        finalArticles.AddRange(pagedGridArticles);
-
         var articleViewModels = new List<ArticleViewModel>();
-        foreach (var article in finalArticles)
+        foreach (var article in featuredArticles)
         {
             var vmArticle = await ArticleViewModel.CreateAsync(article, urlRetriever, taxonomyRetriever);
             articleViewModels.Add(vmArticle);
@@ -136,7 +117,7 @@ public class ArticleLandingPageTemplateController(
             Hero = new HeroViewModel
             {
                 Heading = pageTitle,
-                HeadingText = pageHeroCaption, // <--- Maps exactly to the caption/subtitle!
+                HeadingText = pageHeroCaption,
                 HeroImageUrl = heroImageUrl,
                 HeroImageAltText = heroAlt,
                 DisableOverlay = false
@@ -144,15 +125,12 @@ public class ArticleLandingPageTemplateController(
 
             Articles = articleViewModels,
             PopularDestinations = popularDestinations,
-            Page = page,
-            PageSize = pageSize,
-            TotalPages = totalPages,
-            TotalArticles = totalArticles,
+            ExcludedObjectIds = excludedObjectIds,
 
             // --- Algolia config (read from appsettings, passed safely to view) ---
             AlgoliaAppId = configuration["CMSAlgoliaSearch:ApplicationId"] ?? string.Empty,
             AlgoliaSearchKey = configuration["CMSAlgoliaSearch:SearchKey"] ?? string.Empty,
-            AlgoliaIndexName = configuration["CMSAlgoliaSearch:IndexArticle"] ?? "etg_articles"
+            AlgoliaIndexName = configuration["CMSAlgoliaSearch:IndexArticle"] ?? "Article"
         };
 
 
@@ -163,7 +141,6 @@ public class ArticleLandingPageTemplateController(
                 heroImageUrl);
         }
 
-        //return new TemplateResult(vm);
         return View(
             "~/Features/Article/ArticleLandingPage_Default.cshtml",
             vm);
@@ -178,7 +155,7 @@ public class NavigationLinkViewModel
     public string Url { get; set; } = string.Empty;
 }
 
-public class ArticleLandingPageViewModel : IPagedViewModel
+public class ArticleLandingPageViewModel
 {
     public string Title { get; set; } = string.Empty;
     public string HeroImageUrl { get; set; } = string.Empty;
@@ -191,22 +168,9 @@ public class ArticleLandingPageViewModel : IPagedViewModel
 
     public List<ArticleViewModel> Articles { get; set; } = new();
     public List<NavigationLinkViewModel> PopularDestinations { get; set; } = new();
-
-    public int Page { get; set; }
-    public int PageSize { get; set; }
-    public int TotalPages { get; set; }
-    public int TotalArticles { get; set; }
+    public List<string> ExcludedObjectIds { get; set; } = new();
 
     public string AlgoliaAppId { get; set; } = string.Empty;
     public string AlgoliaSearchKey { get; set; } = string.Empty;
     public string AlgoliaIndexName { get; set; } = string.Empty;
-
-    public IEnumerable<KeyValuePair<string, string?>> GetRouteData(int page)
-    {
-        return new Dictionary<string, string?>
-        {
-            { "page", page.ToString() },
-            { "pageSize", PageSize.ToString() }
-        };
-    }
 }

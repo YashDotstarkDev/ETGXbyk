@@ -416,6 +416,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (!target || !footer) return;
 
+    // Always relocate the bar to sit right after the footer,
+    // no matter where the component was rendered on the page.
+    if (footer.nextElementSibling !== target) {
+        footer.insertAdjacentElement('afterend', target);
+    }
+
     // Create a spacer to reserve space when target is fixed
     const spacer = document.createElement('div');
     spacer.style.display = 'none';
@@ -1325,7 +1331,7 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('.sidebar-btn').forEach(function (btn) {
 
-        btn.addEventListener('click', function () {
+        btn.addEventListener('mouseenter', function () {
             var panelId = this.getAttribute('data-panel');
             var container = this.closest('.etg-mega');
 
@@ -1562,16 +1568,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!nav || !moreMenu || !moreBtn || !moreDropdown) return;
 
+    const DESKTOP_BREAKPOINT = 1400;
+
     const mainItems = Array.from(
         nav.querySelectorAll(".nav-item:not(.pkgd-more-menu)")
     );
-
-    const dropdownLinks = Array.from(
-        moreDropdown.querySelectorAll("a")
+    const mainLinks = Array.from(
+        nav.querySelectorAll(".nav-item:not(.pkgd-more-menu) .nav-link")
     );
+    const dropdownLinks = Array.from(moreDropdown.querySelectorAll("a"));
+
+    // Sections that exist on the page (taken from dropdown links, which list every tab)
+    const sectionIds = dropdownLinks
+        .map(function (a) { return (a.getAttribute("href") || "").replace("#", ""); })
+        .filter(function (id) { return id && document.getElementById(id); });
+
+    let currentId = null;
+    let clickLock = false;
+    let lockTimer = null;
 
     function isDesktop() {
-        return window.innerWidth >= 1400;
+        return window.innerWidth >= DESKTOP_BREAKPOINT;
     }
 
     function closeMore() {
@@ -1579,223 +1596,278 @@ document.addEventListener("DOMContentLoaded", function () {
         moreBtn.setAttribute("aria-expanded", "false");
     }
 
-    // Dropdown smooth scroll
-    dropdownLinks.forEach(function (a) {
+    /* ---------- Active state ---------- */
 
-        a.addEventListener("click", function (e) {
+    function setActive(id) {
+        if (!id) return;
+        currentId = id;
 
-            e.preventDefault();
-            e.stopPropagation();
-
-            closeMore();
-
-            const href = a.getAttribute("href");
-
-            if (!href || !href.startsWith("#")) {
-                return;
-            }
-
-            const targetId = href.substring(1);
-            const target = document.getElementById(targetId);
-
-            if (!target) {
-                return;
-            }
-
-            // Set active main navigation item
-            const mainNavLink = nav.querySelector(
-                '.nav-link[href="#' + targetId + '"]'
-            );
-
-            if (mainNavLink) {
-
-                nav.querySelectorAll(".nav-link").forEach(function (link) {
-                    link.classList.remove("active");
-                });
-
-                mainNavLink.classList.add("active");
-            }
-
-            const tabsBar = document.querySelector(".pkgd-tabs-bar");
-
-            const tabsH = tabsBar
-                ? tabsBar.offsetHeight
-                : 0;
-
-            const navH = window.innerWidth >= 768
-                ? 117
-                : 70;
-
-            const offset = navH + tabsH + 12;
-
-            const top =
-                target.getBoundingClientRect().top +
-                window.pageYOffset -
-                offset;
-
-            window.scrollTo({
-                top: Math.max(0, top),
-                behavior: "smooth"
-            });
+        mainLinks.forEach(function (link) {
+            link.classList.toggle("active", link.getAttribute("href") === "#" + id);
         });
-    });
-
-    function buildDropdownLinks(labelsToPush) {
 
         dropdownLinks.forEach(function (a) {
-
-            const label = a.getAttribute("data-label");
-
-            const isAlwaysMore =
-                a.getAttribute("data-always-more") === "true";
-
-            if (
-                isAlwaysMore ||
-                labelsToPush.includes(label)
-            ) {
-                a.style.display = "";
-            } else {
-                a.style.display = "none";
-            }
+            a.classList.toggle("active", a.getAttribute("href") === "#" + id);
         });
+
+        // Highlight the MORE button when the active tab is hidden inside it
+        const activeItem = mainItems.find(function (item) {
+            const link = item.querySelector(".nav-link");
+            return link && link.getAttribute("href") === "#" + id;
+        });
+        const hiddenInMore = !activeItem || activeItem.style.display === "none";
+        moreBtn.classList.toggle("active", hiddenInMore);
+    }
+
+    /* ---------- Smooth scroll ---------- */
+
+    function getOffset() {
+        const tabsBar = document.querySelector(".pkgd-tabs-bar");
+        const tabsH = tabsBar ? tabsBar.offsetHeight : 0;
+        const navH = window.innerWidth >= 768 ? 117 : 70;
+        return navH + tabsH + 12;
+    }
+
+    function scrollToSection(id) {
+        const target = document.getElementById(id);
+        if (!target) return;
+
+        // Lock the scroll-spy while the smooth scroll runs, so the
+        // clicked tab does not flicker through the in-between sections
+        clickLock = true;
+        clearTimeout(lockTimer);
+        lockTimer = setTimeout(function () { clickLock = false; }, 150);
+
+        setActive(id);
+
+        const top =
+            target.getBoundingClientRect().top +
+            window.pageYOffset -
+            getOffset();
+
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+
+    function handleLinkClick(e) {
+        const href = this.getAttribute("href");
+        if (!href || !href.startsWith("#")) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        closeMore();
+        scrollToSection(href.substring(1));
+    }
+
+    mainLinks.forEach(function (a) { a.addEventListener("click", handleLinkClick); });
+    dropdownLinks.forEach(function (a) { a.addEventListener("click", handleLinkClick); });
+
+    /* ---------- Scroll spy ---------- */
+
+    let ticking = false;
+
+    function onScroll() {
+        if (clickLock) {
+            // keep extending the lock until the smooth scroll has stopped
+            clearTimeout(lockTimer);
+            lockTimer = setTimeout(function () { clickLock = false; }, 150);
+            return;
+        }
+
+        if (ticking) return;
+        ticking = true;
+
+        window.requestAnimationFrame(function () {
+            ticking = false;
+
+            const line = getOffset() + 20;
+            let activeId = null;
+
+            sectionIds.forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el && el.getBoundingClientRect().top <= line) {
+                    activeId = id;
+                }
+            });
+
+            // At the very bottom of the page, pick the last section
+            if (window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2) {
+                activeId = sectionIds[sectionIds.length - 1] || activeId;
+            }
+
+            if (!activeId) activeId = sectionIds[0];
+            if (activeId && activeId !== currentId) setActive(activeId);
+        });
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    /* ---------- Overflow / MORE menu ---------- */
+
+    function buildDropdownLinks(labelsToPush) {
+        let anyVisible = false;
+
+        dropdownLinks.forEach(function (a) {
+            const show = labelsToPush.includes(a.getAttribute("data-label"));
+            a.style.display = show ? "" : "none";
+            if (show) anyVisible = true;
+        });
+
+        return anyVisible;
     }
 
     function updateDividers(visibleItems) {
-
-        mainItems.forEach(function (item) {
-            item.classList.remove("show-divider");
-        });
-
-        visibleItems.forEach(function (item) {
-            item.classList.add("show-divider");
-        });
+        mainItems.forEach(function (item) { item.classList.remove("show-divider"); });
+        visibleItems.forEach(function (item) { item.classList.add("show-divider"); });
     }
 
-    function applyMobileLayout() {
-
+       function applyMobileLayout() {
         const labelsToPush = [];
         const visibleItems = [];
+ 
+
+        const candidates = mainItems
+            .filter(function (item) {
+                return item.getAttribute("data-mobile-visible") === "true";
+            })
+            .slice(0, 3);
+ 
 
         mainItems.forEach(function (item) {
-
+            item.style.display = candidates.includes(item) ? "" : "none";
+        });
+        moreMenu.style.display = "";
+ 
+        const navWidth = nav.clientWidth;
+        const gap = parseFloat(window.getComputedStyle(nav).columnGap) || 0;
+        let used = moreMenu.offsetWidth;
+        let overflowing = false;
+ 
+        mainItems.forEach(function (item) {
             const label = item.getAttribute("data-label");
-
-            if (
-                item.getAttribute("data-mobile-visible") === "true"
-            ) {
-                item.style.display = "";
+ 
+            if (!candidates.includes(item)) {
+                if (label) labelsToPush.push(label);
+                return;
+            }
+ 
+            const w = item.offsetWidth;
+ 
+            // Not enough room? Send it (and everything after it) to MORE
+            if (!overflowing && used + gap + w <= navWidth) {
+                used += gap + w;
                 visibleItems.push(item);
             } else {
+                overflowing = true;
                 item.style.display = "none";
-
-                if (label) {
-                    labelsToPush.push(label);
-                }
+                if (label) labelsToPush.push(label);
             }
         });
-
-        moreMenu.style.display = "";
-
-        buildDropdownLinks(labelsToPush);
+ 
+        const hasHidden = buildDropdownLinks(labelsToPush);
+        moreMenu.style.display = hasHidden ? "" : "none";
+        if (!hasHidden) closeMore();
+ 
         updateDividers(visibleItems);
     }
 
     function applyDesktopLayout() {
+        // 1. Reset everything so we can measure real widths
+        //    (data-always-more items are normal candidates on desktop,
+        //     they are listed last so they overflow first)
+        mainItems.forEach(function (item) { item.style.display = ""; });
+        moreMenu.style.display = "";
+
+        const navWidth = nav.clientWidth;
+        const gap = parseFloat(window.getComputedStyle(nav).columnGap) || 0;
+        const moreWidth = moreMenu.offsetWidth;
+        const widths = mainItems.map(function (item) { return item.offsetWidth; });
 
         const labelsToPush = [];
         const visibleItems = [];
 
-        // Reset items before measuring
-        mainItems.forEach(function (item) {
+        // 2. Does everything fit WITHOUT the MORE button?
+        const totalWidth =
+            widths.reduce(function (sum, w) { return sum + w; }, 0) +
+            gap * Math.max(0, mainItems.length - 1);
 
-            item.style.display =
-                item.getAttribute("data-always-more") === "true"
-                    ? "none"
-                    : "";
-        });
+        if (totalWidth <= navWidth) {
+            visibleItems.push.apply(visibleItems, mainItems);
+            moreMenu.style.display = "none";
+            closeMore();
+            buildDropdownLinks([]);
+            updateDividers(visibleItems);
+            return;
+        }
 
-        moreMenu.style.display = "";
+        // 3. Not everything fits: reserve room for MORE and push the rest into it
+        let used = moreWidth + gap;
+        let overflowing = false;
 
-        const navWidth = nav.clientWidth;
-        const moreBtnWidth = moreMenu.offsetWidth;
-
-        const styles = window.getComputedStyle(nav);
-        const gap = parseFloat(styles.columnGap) || 0;
-
-        let usedWidth = moreBtnWidth;
-
-        mainItems.forEach(function (item) {
-
+        mainItems.forEach(function (item, i) {
             const label = item.getAttribute("data-label");
 
-            if (
-                item.getAttribute("data-always-more") === "true"
-            ) {
-                if (label) {
-                    labelsToPush.push(label);
-                }
-
-                return;
-            }
-
-            const itemWidth = item.offsetWidth;
-
-            if (usedWidth + itemWidth > navWidth) {
-
-                item.style.display = "none";
-
-                if (label) {
-                    labelsToPush.push(label);
-                }
-
-            } else {
-
-                usedWidth += itemWidth + gap;
+            if (!overflowing && used + widths[i] <= navWidth) {
+                used += widths[i] + gap;
                 visibleItems.push(item);
+            } else {
+                overflowing = true; // once one overflows, all following ones do too
+                item.style.display = "none";
+                if (label) labelsToPush.push(label);
             }
         });
 
-        buildDropdownLinks(labelsToPush);
+        const hasHidden = buildDropdownLinks(labelsToPush);
+        moreMenu.style.display = hasHidden ? "" : "none";
         updateDividers(visibleItems);
     }
 
     function recalc() {
-
         if (isDesktop()) {
             applyDesktopLayout();
         } else {
             applyMobileLayout();
         }
+
+        // Re-sync active state (the active tab may have moved in/out of MORE)
+        if (currentId) setActive(currentId);
     }
 
-    // Toggle More menu
-    moreBtn.addEventListener("click", function (e) {
+    /* ---------- MORE toggle ---------- */
 
+    moreBtn.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
 
         const isOpen = moreMenu.classList.toggle("open");
-
-        moreBtn.setAttribute(
-            "aria-expanded",
-            String(isOpen)
-        );
+        moreBtn.setAttribute("aria-expanded", String(isOpen));
     });
 
-    // Close when clicking outside
     document.addEventListener("click", function (e) {
-
-        if (!moreMenu.contains(e.target)) {
-            closeMore();
-        }
+        if (!moreMenu.contains(e.target)) closeMore();
     });
+
+    /* ---------- Init ---------- */
+
+    const initial = nav.querySelector(".nav-link.active") || mainLinks[0];
+    if (initial) {
+        currentId = (initial.getAttribute("href") || "").replace("#", "") || null;
+    }
 
     recalc();
+    onScroll();
 
-    window.addEventListener("resize", recalc);
+    let resizeTimer;
+    window.addEventListener("resize", function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(recalc, 50);
+    });
+
+    // Re-measure once fonts/images have loaded (widths change after that)
+    window.addEventListener("load", recalc);
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(recalc);
+    }
 });
-
-    
 /* ============================================================
    ADVANCED FILTERS ACCORDION & SHOW MORE
    ============================================================ */
@@ -1895,7 +1967,32 @@ if (document.readyState === 'loading') {
       document.querySelectorAll('.search-filter-select').forEach(select => {
         new TomSelect(select, {
           create: false,
+            searchField: [],
+            controlInput: null,
           wrapperClass: 'ts-wrapper search-filter-select-wrapper'
         });
       });
     });
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+    headings.forEach(heading => {
+        if (!heading || typeof heading.innerText !== 'string' || !heading.innerText.trim()) return;
+
+        // Process node by node to protect future child elements
+        const capitalizeNodeText = (node) => {
+            node.childNodes.forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    child.textContent = child.textContent
+                        .toLowerCase()
+                        .replace(/\b\w/g, char => char.toUpperCase());
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    capitalizeNodeText(child);
+                }
+            });
+        };
+        capitalizeNodeText(heading);
+    });
+});

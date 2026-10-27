@@ -1,0 +1,288 @@
+@using ETG.Web.Features.Careers
+@model CareerApplyPageViewModel
+
+@if (Model == null || Model.Page == null)
+{
+    return;
+}
+@{
+    Model.Form ??= new CareerApplyFormViewModel();
+    var page = Model.Page;
+    var form = Model.Form;
+}
+
+<vc:bread-crumb />
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+
+            <h1 class="mb-4">
+                Apply @(Model.Role != null && !string.IsNullOrWhiteSpace(Model.Role.Title) ? $"for {Model.Role.Title}" : "")
+            </h1>
+
+          
+            @if (!string.IsNullOrWhiteSpace(page.PageContent))
+            {
+                <div class="mb-4 html-text">
+                    @Html.Raw(page.PageContent)
+                </div>
+            }
+
+            @if (Model.Form != null && !string.IsNullOrEmpty(Model.Form.ErrorMessage))
+            {
+                <div class="alert alert-danger mb-4" role="alert">
+                    @Html.Raw(Model.Form.ErrorMessage)
+                </div>
+            }
+
+            <div id="formErrorMessage" class="alert alert-danger d-none mb-4" role="alert"></div>
+
+            <form id="careerApplyForm" class="contact-form needs-validation" method="post" action="/api/careers/apply" enctype="multipart/form-data" novalidate>
+                @Html.AntiForgeryToken()
+
+               
+                <input type="hidden" asp-for="Form.Role" id="role" />
+
+                <!-- Honeypot -->
+                <div style="display:none;" aria-hidden="true">
+                    <input asp-for="Form.Friend" tabindex="-1" autocomplete="off" />
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Form.FirstName" class="form-label">
+                            First name <span class="text-pink">*</span>
+                        </label>
+                        <input asp-for="Form.FirstName"
+                               type="text"
+                               class="form-control contact-input"
+                               id="firstName"
+                               autocomplete="given-name"
+                               required />
+                        <div class="invalid-feedback">
+                            Please enter a valid first name.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Form.LastName" class="form-label">
+                            Last name <span class="text-pink">*</span>
+                        </label>
+                        <input asp-for="Form.LastName"
+                               type="text"
+                               class="form-control contact-input"
+                               id="lastName"
+                               autocomplete="family-name"
+                               required />
+                        <div class="invalid-feedback">
+                            Please enter a valid last name.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Form.Email" class="form-label">
+                            Email <span class="text-pink">*</span>
+                        </label>
+                        <input asp-for="Form.Email"
+                               type="email"
+                               class="form-control contact-input"
+                               id="email"
+                               autocomplete="email"
+                               required />
+                        <div class="invalid-feedback">
+                            Please enter your email address.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Form.Phone" class="form-label">
+                            Phone <span class="text-pink">*</span>
+                        </label>
+                        <input asp-for="Form.Phone"
+                               type="tel"
+                               class="form-control contact-input"
+                               id="phone"
+                               autocomplete="tel"
+                               required />
+                        <div class="invalid-feedback">
+                            Please enter your phone number.
+                        </div>
+                    </div>
+                </div>
+
+              
+                <div class="mb-3">
+                    <label class="form-label d-block">Preferred contact method</label>
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="radio" asp-for="Form.PreferredContactMethod" id="contactEmail" value="Email" checked />
+                        <label class="form-check-label" for="contactEmail">Email</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Form.PreferredContactMethod" id="contactPhone" value="Phone" />
+                        <label class="form-check-label" for="contactPhone">Phone</label>
+                    </div>
+                </div>
+
+            
+                <div class="mb-3">
+                    <input type="file"
+                           asp-for="Form.CVFile"
+                           id="cvFile"
+                           style="display:none;"
+                           accept=".pdf,.doc,.docx" />
+                    <button type="button" class="btn btn-pink" id="attachCvBtn" onclick="document.getElementById('cvFile').click();">
+                        ATTACH CV
+                    </button>
+                    <span id="cvFileName" class="ms-2 text-muted"></span>
+                </div>
+
+               
+                <div class="mb-4">
+                    <label asp-for="Form.Comments" class="form-label">
+                        Questions or comments
+                    </label>
+                    <textarea asp-for="Form.Comments"
+                              class="form-control contact-textarea"
+                              id="comments"
+                              rows="4"
+                              placeholder="optional"></textarea>
+                </div>
+
+                <input type="hidden" id="recaptchaToken" name="g-recaptcha-response" />
+                <input type="hidden" id="recaptchaAction" name="g-recaptcha-action" value="career_apply_submit" />
+
+                <button type="submit" id="applybutton" class="btn btn-pink contact-submit-btn">
+                    SUBMIT
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<editable-area area-identifier="editableBottom" />
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById("careerApplyForm");
+        if (!form) return;
+
+        const firstName = document.getElementById("firstName");
+        const lastName = document.getElementById("lastName");
+        const email = document.getElementById("email");
+        const phone = document.getElementById("phone");
+        const cvFile = document.getElementById("cvFile");
+        const cvFileName = document.getElementById("cvFileName");
+        const errorMessage = document.getElementById("formErrorMessage");
+        const submitButton = document.getElementById("applybutton");
+
+        if (cvFile && cvFileName) {
+            cvFile.addEventListener("change", function() {
+                if (this.files && this.files.length > 0) {
+                    cvFileName.textContent = this.files[0].name;
+                } else {
+                    cvFileName.textContent = "";
+                }
+            });
+        }
+
+        function showFieldError(field, message) {
+            if (!field) return;
+            field.classList.add("is-invalid");
+            const feedback = field.parentElement.querySelector(".invalid-feedback");
+            if (feedback) feedback.textContent = message;
+        }
+
+        function clearFieldError(field) {
+            if (!field) return;
+            field.classList.remove("is-invalid");
+        }
+
+        function isValidEmail(value) {
+            return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(value);
+        }
+
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            let isValid = true;
+
+            [firstName, lastName, email, phone].forEach(clearFieldError);
+            if (errorMessage) errorMessage.classList.add("d-none");
+
+            if (!firstName.value.trim()) { showFieldError(firstName, "Please enter a valid first name."); isValid = false; }
+            if (!lastName.value.trim()) { showFieldError(lastName, "Please enter a valid last name."); isValid = false; }
+            if (!email.value.trim() || !isValidEmail(email.value.trim())) { showFieldError(email, "Please enter your email address."); isValid = false; }
+            if (!phone.value.trim()) { showFieldError(phone, "Please enter your phone number."); isValid = false; }
+
+            if (!cvFile.files || cvFile.files.length === 0) {
+                if (errorMessage) {
+                    errorMessage.textContent = "Please attach your CV.";
+                    errorMessage.classList.remove("d-none");
+                }
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            if (submitButton) submitButton.disabled = true;
+
+            try {
+                
+                const recaptchaToken = document.getElementById("recaptchaToken");
+                const recaptchaAction = document.getElementById("recaptchaAction");
+                if (window.grecaptcha && window.grecaptcha.execute) {
+                    try {
+                        const siteKeyMeta = document.querySelector('meta[name="captchaSiteKey"]');
+                        const siteKey = siteKeyMeta ? siteKeyMeta.content : "";
+                        if (siteKey) {
+                            await new Promise(r => window.grecaptcha.ready(r));
+                            const token = await window.grecaptcha.execute(siteKey, { action: recaptchaAction?.value || "career_apply_submit" });
+                            if (recaptchaToken && token) {
+                                recaptchaToken.value = token;
+                            }
+                        }
+                    } catch (capErr) {
+                        console.warn("reCAPTCHA execution skipped or failed:", capErr);
+                    }
+                }
+
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    if (errorMessage) {
+                        let msg = result.message;
+                        if (!msg && result.errors) {
+                            msg = Object.values(result.errors).join("<br/>");
+                        }
+                        errorMessage.innerHTML = msg || "Please check the form.";
+                        errorMessage.classList.remove("d-none");
+                    }
+                    return;
+                }
+
+                if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                } else {
+                    form.reset();
+                    if (cvFileName) cvFileName.textContent = "";
+                    alert("Application submitted successfully!");
+                }
+            } catch (err) {
+                if (errorMessage) {
+                    errorMessage.textContent = "Something went wrong. Please try again.";
+                    errorMessage.classList.remove("d-none");
+                }
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+            }
+        });
+    });
+</script>

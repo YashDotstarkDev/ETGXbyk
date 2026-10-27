@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
@@ -86,7 +86,7 @@ public class TourLandingViewModel
         {
             ApplicationId = config["CMSAlgoliaSearch:ApplicationId"] ?? "",
             SearchKey = config["CMSAlgoliaSearch:SearchKey"] ?? "",
-            TourIndexName = config["CMSAlgoliaSearch:SearchIndexTour"] ?? "SiteSearch",
+            TourIndexName = config["CMSAlgoliaSearch:SearchIndexTour"] ?? "TourPricing-Live",
             Heading = page?.PageHeading ?? ""
         };
     }
