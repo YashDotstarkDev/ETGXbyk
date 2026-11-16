@@ -70,9 +70,13 @@ public class SmallTilesWidgetTests : BaseWebTest
     {
         Assert.Multiple(() =>
         {
-            Assert.That(SmallTilesWidget.IDENTIFIER,
+            Assert.That(
+                SmallTilesWidget.IDENTIFIER,
                 Is.EqualTo("ETG.Web.Widget.SmallTiles"));
-            Assert.That(SmallTilesWidget.NAME, Is.EqualTo("Small Tiles"));
+
+            Assert.That(
+                SmallTilesWidget.NAME,
+                Is.EqualTo("Small Tiles"));
         });
     }
 
@@ -83,7 +87,6 @@ public class SmallTilesWidgetTests : BaseWebTest
     [Category(Pass)]
     public async Task NoUsableIds_ReturnsExactError(string scenario)
     {
-        // Arrange
         var props = new SmallTilesWidgetProperties
         {
             Path = scenario switch
@@ -91,32 +94,38 @@ public class SmallTilesWidgetTests : BaseWebTest
                 "null" => null!,
                 "empty" => Array.Empty<ContentItemReference>(),
                 "empty-guid" => References(Guid.Empty),
-                "multiple-empty-guids" => References(Guid.Empty, Guid.Empty),
-                _ => throw new ArgumentOutOfRangeException(nameof(scenario))
+                "multiple-empty-guids" =>
+                    References(Guid.Empty, Guid.Empty),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(scenario))
             }
         };
 
-        // Act
         var result = await widget.InvokeAsync(Model(props));
 
-        // Assert
         Assert.That(result, Is.TypeOf<ViewViewComponentResult>());
+
         var view = (ViewViewComponentResult)result;
 
         Assert.That(view.ViewName, Is.EqualTo(ErrorView));
-        Assert.That(view.ViewData.Model,
+        Assert.That(
+            view.ViewData.Model,
             Is.TypeOf<ComponentErrorViewModel>());
 
         var error = (ComponentErrorViewModel)view.ViewData.Model!;
 
         Assert.Multiple(() =>
         {
-            Assert.That(error.ComponentLabel,
+            Assert.That(
+                error.ComponentLabel,
                 Is.EqualTo("Small Tiles Widget"));
-            Assert.That(error.Errors, Is.EqualTo(new[]
-            {
-                "No tiles have been selected."
-            }));
+
+            Assert.That(
+                error.Errors,
+                Is.EqualTo(new[]
+                {
+                    "No tiles have been selected."
+                }));
         });
 
         VerifyNoDependencies();
@@ -129,7 +138,6 @@ public class SmallTilesWidgetTests : BaseWebTest
     [Category(Gap)]
     public void InvalidNullInputs_DocumentMissingGuards(string scenario)
     {
-        // Arrange
         var model = scenario switch
         {
             "null-model" => null,
@@ -150,9 +158,12 @@ public class SmallTilesWidgetTests : BaseWebTest
             _ => throw new ArgumentOutOfRangeException(nameof(scenario))
         };
 
-        // Act / Assert: passing documents the crash, not safe handling.
+        // Documents the current missing null guards.
         Assert.ThrowsAsync<NullReferenceException>(
-            async () => { await widget.InvokeAsync(model!); });
+            async () =>
+            {
+                await widget.InvokeAsync(model!);
+            });
 
         VerifyNoDependencies();
     }
@@ -170,15 +181,14 @@ public class SmallTilesWidgetTests : BaseWebTest
             "%ZZ"
         };
 
-        return values.Select(value =>
-            new TestCaseData(new object?[] { value }));
+        return values.Select(
+            value => new TestCaseData(new object?[] { value }));
     }
 
     [TestCaseSource(nameof(TextCases))]
     [Category(Pass)]
     public void ViewModel_CopiesTextAndCtaUrlUnchanged(string? value)
     {
-        // Arrange
         var props = new SmallTilesWidgetProperties
         {
             Heading = value!,
@@ -189,13 +199,11 @@ public class SmallTilesWidgetTests : BaseWebTest
         IReadOnlyList<SmallTileViewModel> tiles =
             Array.Empty<SmallTileViewModel>();
 
-        // Act: the third argument is required.
         var model = new SmallTilesWidgetViewModel(
             props,
             tiles,
             value!);
 
-        // Assert: these fields are copied, not normalized or sanitized.
         Assert.Multiple(() =>
         {
             Assert.That(model.Heading, Is.EqualTo(value));
@@ -220,22 +228,27 @@ public class SmallTilesWidgetTests : BaseWebTest
             Array.Empty<SmallTileViewModel>(),
             "");
 
-        Assert.That(model.CtaButtonText,
-            Is.EqualTo(string.IsNullOrWhiteSpace(value)
-                ? "View All"
-                : value));
+        Assert.That(
+            model.CtaButtonText,
+            Is.EqualTo(
+                string.IsNullOrWhiteSpace(value)
+                    ? "View All"
+                    : value));
     }
 
     [Test]
     [Category(Pass)]
     public void ViewModel_PreservesGeneratedTilesAndCtaUrl()
     {
+        var dimensions = Text();
+
         var tile = new SmallTileViewModel(
             Text(),
             Text(),
             $"/images/{Text()}.jpg",
             $"/{Text()}",
-            Text());
+            Text(),
+            dimensions);
 
         IReadOnlyList<SmallTileViewModel> tiles = new[] { tile };
         var ctaUrl = $"/{Text()}";
@@ -250,6 +263,9 @@ public class SmallTilesWidgetTests : BaseWebTest
             Assert.That(model.Tiles, Is.SameAs(tiles));
             Assert.That(model.Tiles.Count, Is.EqualTo(1));
             Assert.That(model.Tiles[0], Is.SameAs(tile));
+            Assert.That(
+                model.Tiles[0].Dimensions,
+                Is.EqualTo(dimensions));
             Assert.That(model.CtaButtonUrl, Is.EqualTo(ctaUrl));
         });
     }
@@ -263,9 +279,15 @@ public class SmallTilesWidgetTests : BaseWebTest
         var imageUrl = $"/images/{Text()}.jpg";
         var ctaUrl = $"/{Text()}";
         var label = Text();
+        var dimensions = Text();
 
         var model = new SmallTileViewModel(
-            caption, subcaption, imageUrl, ctaUrl, label);
+            caption,
+            subcaption,
+            imageUrl,
+            ctaUrl,
+            label,
+            dimensions);
 
         Assert.Multiple(() =>
         {
@@ -274,6 +296,7 @@ public class SmallTilesWidgetTests : BaseWebTest
             Assert.That(model.ImageUrl, Is.EqualTo(imageUrl));
             Assert.That(model.CtaUrl, Is.EqualTo(ctaUrl));
             Assert.That(model.CtaLabel, Is.EqualTo(label));
+            Assert.That(model.Dimensions, Is.EqualTo(dimensions));
         });
     }
 
@@ -282,16 +305,24 @@ public class SmallTilesWidgetTests : BaseWebTest
     public void SmallTileViewModel_PreservesSubmittedValues(string? value)
     {
         var model = new SmallTileViewModel(
-            value!, value!, value!, value!, value!);
+            value!,
+            value!,
+            value!,
+            value!,
+            value!,
+            value!);
 
-        Assert.That(new[]
-        {
-            model.Caption,
-            model.SubCaption,
-            model.ImageUrl,
-            model.CtaUrl,
-            model.CtaLabel
-        }, Is.EqualTo(Enumerable.Repeat(value, 5)));
+        Assert.That(
+            new[]
+            {
+                model.Caption,
+                model.SubCaption,
+                model.ImageUrl,
+                model.CtaUrl,
+                model.CtaLabel,
+                model.Dimensions
+            },
+            Is.EqualTo(Enumerable.Repeat(value, 6)));
     }
 
     [Test]
@@ -320,10 +351,20 @@ public class SmallTilesWidgetTests : BaseWebTest
     public static IEnumerable<TestCaseData> ThemeCases()
     {
         foreach (var name in Enum.GetNames<TileThemeOptions>())
+        {
             yield return new TestCaseData(name);
+        }
 
-        foreach (var value in new string?[] { null, "", " ", "InvalidTheme" })
+        foreach (var value in new string?[]
+                 {
+                     null,
+                     "",
+                     " ",
+                     "InvalidTheme"
+                 })
+        {
             yield return new TestCaseData(new object?[] { value });
+        }
     }
 
     [TestCaseSource(nameof(ThemeCases))]
@@ -371,10 +412,11 @@ public class SmallTilesWidgetTests : BaseWebTest
     private static string GenerateText(int seed) =>
         CreateText(new Random(seed));
 
-    private static string CreateText(Random generator) => new(
-        Enumerable.Range(0, 16)
-            .Select(_ => (char)('a' + generator.Next(26)))
-            .ToArray());
+    private static string CreateText(Random generator) =>
+        new string(
+            Enumerable.Range(0, 16)
+                .Select(_ => (char)('a' + generator.Next(26)))
+                .ToArray());
 
     private static ContentItemReference[] References(params Guid[] ids) =>
         ids.Select(id => new ContentItemReference
@@ -382,8 +424,7 @@ public class SmallTilesWidgetTests : BaseWebTest
             Identifier = id
         }).ToArray();
 
-    // Retains your existing test-only fixture technique.
-    // Only Properties is initialized; no private widget methods are tested.
+    // Retains the existing test-only fixture technique.
     private static ComponentViewModel<SmallTilesWidgetProperties> Model(
         SmallTilesWidgetProperties? props)
     {
@@ -415,7 +456,8 @@ public class SmallTilesWidgetTests : BaseWebTest
             }
 
             var field = current.GetField(
-                "<Properties>k__BackingField", flags);
+                "<Properties>k__BackingField",
+                flags);
 
             if (field != null)
             {
@@ -432,8 +474,10 @@ public class SmallTilesWidgetTests : BaseWebTest
         void VerifyProperties()
         {
             if (!ReferenceEquals(component.Properties, props))
+            {
                 throw new InvalidOperationException(
                     "Component.Properties was not initialized correctly.");
+            }
         }
     }
 }

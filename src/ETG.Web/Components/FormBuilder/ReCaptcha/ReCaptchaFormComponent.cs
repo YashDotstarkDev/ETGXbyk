@@ -22,11 +22,8 @@ using XperienceCommunity.KenticoComponentIcons;
 namespace ETG.Web.Components.FormBuilder.ReCaptcha;
 
 /// <summary>
-/// Represents a reCAPTCHA form component.
+/// Represents a reCAPTCHA form component for Kentico Form Builder.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of <see cref="RecaptchaComponent"/>
-/// </remarks>
 public class ReCaptchaFormComponent(
     IHttpContextAccessor httpContextAccessor,
     ILocalizationService localizationService,
@@ -53,9 +50,13 @@ public class ReCaptchaFormComponent(
     private readonly ReCaptchaSettings captchaOptions = captchaOptions.Value;
     private bool? mSkipRecaptcha;
 
+    /// <summary>
+    /// Provides access to the injected <see cref="CaptchaValidator"/>.
+    /// </summary>
+    public CaptchaValidator Validator => validator;
 
     /// <summary>
-    /// Holds nothing and is here just because it is required.
+    /// Holds nothing and is here just because it is required by FormComponent.
     /// </summary>
     public string Value
     {
@@ -84,12 +85,10 @@ public class ReCaptchaFormComponent(
         set;
     } = "";
 
-
     /// <summary>
     /// Determines whether the component is configured and allowed to be displayed.
     /// </summary>
     public bool IsConfigured => AreKeysConfigured && !SkipRecaptcha;
-
 
     /// <summary>
     /// Indicates whether to skip the reCAPTCHA validation.
@@ -101,19 +100,17 @@ public class ReCaptchaFormComponent(
         {
             if (!mSkipRecaptcha.HasValue)
             {
-                mSkipRecaptcha = captchaOptions.IsValidationDisabled;
+                mSkipRecaptcha = validator.IsValidationDisabled();
             }
 
             return mSkipRecaptcha.Value;
         }
     }
 
-
     /// <summary>
-    /// Indicates whether both required keys are configured in the Settings application.
+    /// Indicates whether both required keys are configured in Channel settings or appsettings.
     /// </summary>
-    public bool AreKeysConfigured => !string.IsNullOrEmpty(captchaOptions.SiteKey) && !string.IsNullOrEmpty(captchaOptions.SecretKey);
-
+    public bool AreKeysConfigured => validator.AreKeysConfigured();
 
     /// <summary>
     /// Label "for" cannot be used for this component. 
@@ -124,7 +121,6 @@ public class ReCaptchaFormComponent(
     /// </remarks>
     public override string? LabelForPropertyName => null!;
 
-
     /// <inheritdoc/>
     public override void LoadProperties(FormComponentProperties properties)
     {
@@ -133,13 +129,11 @@ public class ReCaptchaFormComponent(
         Properties.Label = string.Empty;
     }
 
-
     /// <summary>
     /// Returns empty string since the <see cref="Value"/> does not hold anything.
     /// </summary>
     /// <returns>Returns the value of the form component.</returns>
     public override string GetValue() => string.Empty;
-
 
     /// <summary>
     /// Does nothing since the <see cref="Value"/> does not need to hold anything.
@@ -149,7 +143,6 @@ public class ReCaptchaFormComponent(
     {
         // the Value does not need to hold anything
     }
-
 
     /// <summary>
     /// Performs validation of the reCAPTCHA component.
@@ -172,63 +165,43 @@ public class ReCaptchaFormComponent(
 
         if (httpContext is null)
         {
-            return [new("Cannot validate captcha without outside of an active HTTP request")];
+            return [new("Cannot validate captcha outside of an active HTTP request")];
         }
 
-        var validationResult = ValidateResponse(httpContext);
-        if (validationResult != null)
+        var token = httpContext.Request.Form.TryGetValue(RESPONSE_KEY, out var value) ? value[0] : string.Empty;
+
+        string expectedAction = httpContext.Request.Form.TryGetValue("g-recaptcha-action", out var action)
+            ? action[0] ?? "form_builder_submit"
+            : "form_builder_submit";
+
+        var cancellationToken = httpContext.RequestAborted;
+        var validationResult = validator.ValidateCaptchaSync(
+            token,
+            expectedAction,
+            cancellationToken,
+            TimeSpan.FromSeconds(5));
+
+        if (!validationResult.IsSuccess)
         {
-            if (!string.IsNullOrEmpty(validationResult.ErrorMessage))
+            string errorKey = validationResult.ErrorMessage switch
             {
-                errors.Add(new ValidationResult(localizationService.GetString(validationResult.ErrorMessage)));
-            }
-            else
+                "reCAPTCHA score verification failed." => "recaptcha.error.scorenotmet",
+                "Invalid reCAPTCHA action." => "recaptcha.error.actionmismatch",
+                "Unable to verify reCAPTCHA with Google." => "recaptcha.error.serverunavailable",
+                "reCAPTCHA verification timed out. Please try again." => "recaptcha.error.serverunavailable",
+                _ => validationResult.ErrorMessage ?? "recaptcha.error.serverunavailable"
+            };
+
+            var localizedMessage = localizationService.GetString(errorKey);
+            if (string.IsNullOrWhiteSpace(localizedMessage) || localizedMessage == errorKey)
             {
-                if (validationResult.Score < captchaOptions.ScoreThredhold)
-                {
-                    errors.Add(new ValidationResult(localizationService.GetString("recaptcha.error.scorenotmet")));
-                }
-                if (!ActionIsValid(httpContext, validationResult))
-                {
-                    errors.Add(new ValidationResult(localizationService.GetString("recaptcha.error.actionmismatch")));
-                }
+                localizedMessage = validationResult.ErrorMessage ?? "reCAPTCHA verification failed.";
             }
-        }
-        else
-        {
-            errors.Add(new ValidationResult(localizationService.GetString("recaptcha.error.serverunavailable")));
+
+            errors.Add(new ValidationResult(localizedMessage));
         }
 
         return errors;
-    }
-
-
-    private RecaptchaResponse ValidateResponse(HttpContext httpContext)
-    {
-        var validator = new RecaptchaValidator
-        {
-            PrivateKey = captchaOptions.SecretKey,
-            RemoteIP = RequestContext.UserHostAddress,
-            Response = httpContext.Request.Form.TryGetValue(RESPONSE_KEY, out var value) ? value[0] : string.Empty
-        };
-
-        return validator.Validate().Result;
-    }
-
-
-    private static bool ActionIsValid(HttpContext httpContext, RecaptchaResponse validationResult)
-    {
-        if (!httpContext.Request.Form.TryGetValue("g-recaptcha-action", out var action))
-        {
-            return false;
-        }
-
-        if (action[0] is not string actionValue)
-        {
-            return false;
-        }
-
-        return actionValue.Equals(validationResult.Action, StringComparison.OrdinalIgnoreCase);
     }
 }
 
@@ -243,4 +216,3 @@ public class ReCaptchaFormComponentProperties : FormComponentProperties<string>
     public override bool SmartField { get; set; }
     public override string Tooltip { get; set; } = "";
 }
-

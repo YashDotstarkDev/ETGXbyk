@@ -1,0 +1,228 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.Event
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Mvc.Rendering
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Event Section START HERE ===== -->
+        <!-- ===== Event_Section START HERE ===== -->
+        <tr>
+          <td align="center" valign="top"><table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+              <tbody>
+                <tr>
+                  <td align="center" valign="top" style="padding: 0px 100px;" class="em_aside24"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                      <tbody>
+                        <tr>
+                          <td align="center" valign="top" bgcolor="#333333" style="padding: 0px 30px; border-radius: 8px;" class="em_aside15A"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tbody>
+                                <tr>
+                                  <td height="35" style="height:35px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top" style="padding-bottom:20px;"><table align="left" border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                        <tr>
+                                          <td align="center" valign="middle" style="line-height: 0px; font-size: 0px; padding-right: 7px;"><img src="@* TODO: Convert macro: {%  CurrentSite.SitePresentationURL  %} *@/edm/images2024/img11.png" width="17" alt="" style="display: block; max-width:17px;"/></td>
+                                          <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 23px; line-height:25px; font-weight: 800; color: #ffffff; text-transform: uppercase;">@Model.Title</td>
+                                        </tr>
+                                      </tbody>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td align="center" valign="top" class="em_full_img"><img src="@Model.Image" width="540" alt="@Model.Title" border="0" style="display: block; max-width: 540px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #ffffff;"/></td>
+                                </tr>
+                                <tr>
+                                  <td height="46" style="height:46px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                                    <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px; line-height: 26px; color: #ffffff; padding-bottom: 17px;">@((MarkupString)(Model.Description ?? string.Empty)) </td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #ffffff;">@Model.Copy</td>
+                                </tr>
+                                <tr>
+                                  <td height="44" style="height:44px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#686868"></td>
+                                </tr>
+                                @* TODO: Convert macro: {%  if (!string.IsNullOrWhiteSpace(Location1)) {    %} *@
+                                <tr>
+                                  <td height="17" style="height:17px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="center" valign="top" style="padding-bottom: 26px;" class="em_pbottom"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                        <tr>
+                                          <th align="center" valign="top" class="em_clear"><table width="152" align="left" style="width: 152px;" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 20px; line-height:25px; font-weight: bold; color: #ffffff;">@Model.Location1</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                          <th width="31" style="width: 31px;" class="em_hide em_h20">&nbsp;</th>
+                                          <th align="center" valign="top" class="em_clear em_ptopb" style="padding-top: 2px;"><table width="357" align="left" style="width: 357px;" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top"><table  align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink em_f16" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold;"><span style="font-size: 12px;">DATE</span><br />
+                                                             @Model.Location1StartDate?.ToString("dd MMM yyyy")</td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="18" style="width: 18px; line-height: 0px; font-size: 0px;" class="em_side24">&nbsp;</td>
+                                                  <td align="left" valign="top"><table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink em_f16" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold;"><span style="font-size: 12px;">TIME</span><br />
+                                                            @Model.Location1StartDate?.ToString("h:mm tt") - @Model.Location1EndDate?.ToString("h:mm tt") </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="60" style="width: 60px;" class="em_hide">&nbsp;</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                        </tr>
+                                      </tbody>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#686868"></td>
+                                </tr>
+                                @* TODO: Convert macro: {%  if (!string.IsNullOrWhiteSpace(Location2)) {    %} *@
+                                <tr>
+                                  <td height="17" style="height:17px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="center" valign="top" style="padding-bottom: 28px;" class="em_pbottom"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                        <tr>
+                                          <th align="center" valign="top" class="em_clear"><table width="152" align="left" style="width: 152px;" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 20px; line-height:25px; font-weight: bold; color: #ffffff;">@Model.Location2</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                          <th width="31" style="width: 31px;" class="em_hide em_h20">&nbsp;</th>
+                                          <th align="center" valign="top" class="em_clear em_ptopb" style="padding-top: 2px;"><table width="357" align="left" style="width: 357px;" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top"><table  align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink em_f16" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold;"><span style="font-size: 12px;">DATE</span><br />
+                                                              @Model.Location2StartDate?.ToString("dd MMM yyyy")</td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="18" style="width: 18px; line-height: 0px; font-size: 0px;" class="em_side24">&nbsp;</td>
+                                                  <td align="left" valign="top"><table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink em_f16" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold;"><span style="font-size: 12px;">TIME</span><br />
+                                                            @Model.Location2StartDate?.ToString("h:mm tt") - @Model.Location2EndDate?.ToString("h:mm tt") </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="60" style="width: 60px;" class="em_hide">&nbsp;</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                        </tr>
+                                      </tbody>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#686868"></td>
+                                </tr>
+                                @* TODO: Convert macro: {%  if (!string.IsNullOrWhiteSpace(Location3)) {    %} *@
+                                <tr>
+                                  <td height="17" style="height:17px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="center" valign="top" style="padding-bottom: 26px;" class="em_pbottom"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                        <tr>
+                                          <th align="center" valign="top" class="em_clear"><table width="152" align="left" style="width: 152px;" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 20px; line-height:25px; font-weight: bold; color: #ffffff;">@Model.Location3</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                          <th width="31" style="width: 31px;" class="em_hide em_h20">&nbsp;</th>
+                                          <th align="center" valign="top" class="em_clear em_ptopb" style="padding-top: 2px;"><table width="357" align="left" style="width: 357px;" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top"><table  align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink em_f16" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold;"><span style="font-size: 12px;">DATE</span><br />
+                                                              @Model.Location3StartDate?.ToString("dd MMM yyyy")</td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="18" style="width: 18px; line-height: 0px; font-size: 0px;" class="em_side24">&nbsp;</td>
+                                                  <td align="left" valign="top"><table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink em_f16"  style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold;"><span style="font-size: 12px;">TIME</span><br />
+                                                             @Model.Location3StartDate?.ToString("h:mm tt") - @Model.Location3EndDate?.ToString("h:mm tt") </td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="60" style="width: 60px;" class="em_hide">&nbsp;</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                        </tr>
+                                      </tbody>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#686868"></td>
+                                </tr>
+                                <tr>
+                                  <td height="18" style="height:18px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top">
+                                    @if (!string.IsNullOrWhiteSpace(@Model.CTALabel))
+                                                                                  {
+                                  <table align="left" bgcolor="#CA568E" border="0" cellspacing="0" cellpadding="0" style="background-color:#CA568E; border-radius:30px;">
+                                    <tr>
+                                      <td class="em_defaultlink" align="center" valign="middle" height="48" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #ffffff; height:48px; text-transform: uppercase; padding: 0 20px;"><a href="@Model.CTAUrl" target="_blank" style="text-decoration:none; color:#ffffff; line-height:48px; display:block;">@Model.CTALabel</a></td>
+                                      </tr>
+                                                           </table>
+                                                                                   }
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td height="77" style="height:77px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                              </tbody>
+                            </table></td>
+                        </tr>
+                        <tr>
+                          <td height="80" style="height:80px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                      </tbody>
+                    </table></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
+        <!-- ===== // Event_Section END HERE ===== --> 
+<!-- ===== // Event Section END HERE ===== -->

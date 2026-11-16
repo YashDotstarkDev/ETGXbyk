@@ -1,4 +1,4 @@
-﻿@model ETG.Web.Components.ViewComponents.SubscribeNow.SubscribeNowViewModel
+@model ETG.Web.Components.ViewComponents.SubscribeNow.SubscribeNowViewModel
 
 <style>
     .subscribe-now-form[hidden] {
@@ -74,6 +74,10 @@
                             style="border-radius: 4px; font-size: 0.85rem; padding: 6px 24px;">
                         Subscribe
                     </button>
+
+                    <!-- reCAPTCHA v3 Partial View -->
+                    <partial name="~/Components/FormBuilder/ReCaptcha/ReCaptcha.cshtml"
+                             view-data='@new ViewDataDictionary(ViewData) { { "ActionName", "subscribe_now_submit" } }' />
                 </form>
 
                 <p class="subscribe-now-result mt-2 mb-0"
@@ -128,6 +132,13 @@
             button.disabled = true;
 
             try {
+                // Fetch token using recaptcha.js
+                const { validateCaptcha } = await import('@Url.Content("~/js/recaptcha.js")');
+                const token = await validateCaptcha("subscribe_now_submit");
+                const tokenInput = form.querySelector('[name="g-recaptcha-response"]');
+                if (tokenInput && token) {
+                    tokenInput.value = token;
+                }
                 const response = await fetch(form.action, {
                     method: "POST",
                     body: new FormData(form),

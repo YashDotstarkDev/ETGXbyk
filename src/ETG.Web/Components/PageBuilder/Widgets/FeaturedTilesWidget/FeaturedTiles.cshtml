@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.FeaturedTiles
+@using ETG.Web.Components.PageBuilder.Widgets.FeaturedTiles
 @model FeaturedTilesWidgetViewModel
 
 @using System.Globalization
@@ -7,6 +7,19 @@
         string.IsNullOrWhiteSpace(text)
             ? string.Empty
             : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
+
+    (int w, int h) GetDimensions(string? dimensions, int defaultW, int defaultH)
+    {
+        if (string.IsNullOrWhiteSpace(dimensions))
+        {
+            return (defaultW, defaultH);
+        }
+
+        var parts = dimensions.Split(',', StringSplitOptions.TrimEntries);
+        var w = parts.Length > 0 && int.TryParse(parts[0], out var parsedW) && parsedW > 0 ? parsedW : defaultW;
+        var h = parts.Length > 1 && int.TryParse(parts[1], out var parsedH) && parsedH > 0 ? parsedH : defaultH;
+        return (w, h);
+    }
 }
 @if (!string.IsNullOrWhiteSpace(Model.SectionId))
 {
@@ -40,11 +53,12 @@
                 <div class="row g-3 row-cols-2 row-cols-md-3 row-cols-lg-6 mt-2">
                     @foreach (var tile in Model.Tiles)
                     {
+                        var (w, h) = GetDimensions(tile.Dimensions, 272, 400);
                         <div class="col">
                             @if (Model.TileType == TileTypeOptions.TilesAreLinks)
                             {
                                 <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="home-featured-card">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:992px) 17vw, (min-width:768px) 33vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                                     <div class="home-featured-overlay"></div>
 
                                      @if (!string.IsNullOrWhiteSpace(tile.CardTag))
@@ -75,7 +89,7 @@
                             else
                             {
                                 <div class="home-featured-card">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:992px) 17vw, (min-width:768px) 33vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                                     <div class="home-featured-overlay"></div>
 
                                      @if (!string.IsNullOrWhiteSpace(tile.CardTag))
@@ -126,18 +140,19 @@
                 <div class="row g-4">
                     @foreach (var tile in Model.Tiles)
                     {
+                        var (w, h) = GetDimensions(tile.Dimensions, 272, 292);
                         <div class="col-6 col-sm-6 col-lg-3 text-center">
                             @if (Model.TileType == TileTypeOptions.TilesAreLinks)
                             {
                                 <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="style-tile">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:992px) 17vw, (min-width:768px) 33vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                                     <p>@Cap(tile.Caption)</p>
                                 </a>
                             }
                             else
                             {
                                 <div class="style-tile">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:992px) 17vw, (min-width:768px) 33vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                                     <p>@Cap(tile.Caption)</p>
                                 </div>
                             }
@@ -163,12 +178,13 @@
                 <div class="row g-4">
                     @foreach (var tile in Model.Tiles)
                     {
+                        var (w, h) = GetDimensions(tile.Dimensions, 272, 400);
                         <div class="col-12 col-sm-6 col-lg-3">
                             @if (Model.TileType == TileTypeOptions.TilesAreLinks)
                             {
                                 <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="text-decoration-none">
-                                    <article class="card-tile"> 
-                                        <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <article class="card-tile">
+                                        <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:992px) 17vw, (min-width:768px) 33vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                                         <div class="card-tile-overlay">
                                             <h3>@Cap(tile.Caption)</h3>
                                         </div>
@@ -178,7 +194,7 @@
                             else
                             {
                                 <article class="card-tile">
-                                    <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                                    <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:992px) 17vw, (min-width:768px) 33vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                                     <div class="card-tile-overlay">
                                         <h3>@Cap(tile.Caption)</h3>
                                     </div>

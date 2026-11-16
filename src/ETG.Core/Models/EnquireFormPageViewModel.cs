@@ -6,6 +6,7 @@ namespace ETG.Core.Models;
 public sealed class EnquireFormPageViewModel
 {
     public Container Page { get; set; } = default!;
+    public string FormHeading { get; set; } = "Enquire Now";
     public EnquireFormViewModel Form { get; set; } = new();
     public IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>Destinations { get; set; } = [];
     public IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>Experiences  { get; set; } = [];

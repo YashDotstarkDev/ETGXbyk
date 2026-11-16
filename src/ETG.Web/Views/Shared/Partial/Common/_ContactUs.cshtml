@@ -1,10 +1,17 @@
-﻿@model ETG.Core.Models.ContactUsViewModel
+@model ETG.Core.Models.ContactUsViewModel
 
 <!-- ============ CTA BANNERS ============ -->
 <section class="cta-section" aria-label="Start your journey">
-    @if (!string.IsNullOrEmpty(Model.CTAUrl))
+    @if (!string.IsNullOrEmpty(Model.CTABackgroundImage))
     {
-        <img loading="lazy" src="@Model.CTABackgroundImage" alt="contact-us" class="cta-bg" />
+        <img loading="lazy" 
+             src="@Model.CTABackgroundImage.Imgixify(1296, 420)"
+             srcset="@Model.CTABackgroundImage.ImgixSrcset(1296, 420, null)"
+             sizes="100vw"
+             width="1296"
+             height="420"
+             alt="contact-us" 
+             class="cta-bg" />
     }
     <div class="cta-overlay"></div>
     <div class="container text-center text-white cta-content">

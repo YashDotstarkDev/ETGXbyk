@@ -1,80 +1,58 @@
 ﻿using ETG.Core.Content;
 using ETG.Core.Models.Tour;
-using Kentico.Content.Web.Mvc;
 using System.Globalization;
 using TourContent = ETG.Core.Content.Tour;
 
 namespace ETG.Web.Services.Tour;
 
 public sealed class TourSummaryService(
-    IContentRetriever contentRetriever, ITourPricingService pricingService)
+    ITourPricingService pricingService)
     : ITourSummaryService
 {
     public async Task<TourSummaryViewModel> MapToViewModelAsync(
         TourContent tour,
-        string path, TourPricingResult? priceInfo)
+        string path,
+        TourPricingResult? priceInfo,
+        string? primaryCountryName = null)
     {
-
-        var heroImages = tour.TourHeroImage?
+        var heroImage = tour.TourHeroImage?
             .OfType<MediaFile>()
             .FirstOrDefault();
 
-        var heroImage = tour.SelectedImageFolders?
-                        .FirstOrDefault()?
-                        .SelectedImages?
-                        .FirstOrDefault()?
-                        .ImageFilePath?
-                        .OfType<MediaFile>()
-                        .FirstOrDefault()
-                        ?? heroImages;
-
-        var primaryCountryGuid =
-            tour.TourPrimaryCountry?
-                .FirstOrDefault()?
-                .WebPageGuid;
-
-        var primaryCountryName = string.Empty;
-
-        if (primaryCountryGuid is Guid countryGuid &&
-            countryGuid != Guid.Empty)
+        if (heroImage == null)
         {
-            var countries =
-                await contentRetriever
-                    .RetrievePagesByGuids<Destination>(
-                        [countryGuid]);
-
-            var country = countries.FirstOrDefault();
-
-            primaryCountryName =
-                country?.DestinationName ?? string.Empty;
+            heroImage = tour.SelectedImageFolders?
+                .SelectMany(folder =>
+                    folder.SelectedImages ?? [])
+                .SelectMany(image =>
+                    image.ImageFilePath ?? [])
+                .OfType<MediaFile>()
+                .FirstOrDefault();
         }
 
-        var badge =
-            !string.IsNullOrWhiteSpace(primaryCountryName)
-                ? primaryCountryName.ToUpperInvariant()
-                : !string.IsNullOrWhiteSpace(
-                    tour.TourDestinationCity)
-                    ? tour.TourDestinationCity
-                        .ToUpperInvariant()
-                    : !string.IsNullOrWhiteSpace(
-                        tour.TourDepartureCity)
-                        ? tour.TourDepartureCity
-                            .ToUpperInvariant()
-                        : string.Empty;
+
+        var resolvedPrimaryCountryName =
+            primaryCountryName ?? string.Empty;
+
+        var badge = !string.IsNullOrWhiteSpace(primaryCountryName)
+        ? primaryCountryName.ToUpperInvariant()
+        : string.Empty;
 
         var daysLabel =
             tour.TourNights > 0
-                ? $"{tour.TourNights + 1} DAYS FROM"
+                ? $"{tour.TourNights + 1} DAYS"
                 : string.Empty;
 
-        var price = priceInfo ?? await pricingService.GetPriceAsync(tour);
+ 
+        var price = priceInfo ??
+            await pricingService.GetPriceAsync(tour);
 
         var originalPriceText =
-      price.OriginalPrice > 0
-          ? price.OriginalPrice.ToString(
-              "N0",
-              CultureInfo.InvariantCulture)
-          : string.Empty;
+            price.OriginalPrice > 0
+                ? price.OriginalPrice.ToString(
+                    "N0",
+                    CultureInfo.InvariantCulture)
+                : string.Empty;
 
         var currentPriceText =
             price.CurrentPrice > 0
@@ -94,25 +72,38 @@ public sealed class TourSummaryService(
 
         return new TourSummaryViewModel
         {
-            Name = tour.TourName ?? "",
-            TourCode = tour.TourCode ?? "",
+            Name = tour.TourName ?? string.Empty,
+
+            TourCode = tour.TourCode ?? string.Empty,
+
             Badge = badge,
+
             Path = path,
-            Description = tour.TourSummary ?? "",
+
+            Description = tour.TourSummary ?? string.Empty,
+
             HeroImageUrl =
                 heroImage?.LegacyMediaFileAsset?.Url
-                ?? "",
+                ?? string.Empty,
+
             HeroImageAlt =
                 heroImage?.LegacyMediaFileTitle
-                ?? "",
+                ?? string.Empty,
+
             DaysFromLabel = daysLabel,
+
             OriginalPrice = displayOriginalPrice,
-            CurrentPrice = string.IsNullOrEmpty(currentPriceText)
-                            ? ""
-                            : $"{price.CurrencySymbol}{currentPriceText}",
+
+            CurrentPrice = currentPriceText,
+
+            CurrencySymbol = price.CurrencySymbol,
+
             Currency = price.CurrencyCode,
+
             PriceTypeLabel =
-                tour.TourPriceTypeLabel ?? "",
+                tour.TourPriceTypeLabel
+                ?? string.Empty,
+
             InclusionIcons =
                 TourSummaryViewModel.ParseInclusions(
                     tour.TourPriceInclusions)

@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.FeaturedContentPanel
+@using ETG.Web.Components.PageBuilder.Widgets.FeaturedContentPanel
 @model FeaturedContentPanelWidgetViewModel
 
 <section class="section-pad" aria-labelledby="every-traveller-title">
@@ -32,7 +32,11 @@
             <div class="col-lg-7 position-relative z-1">
                 @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
                 {
-                    <img src="@Model.Image.LegacyMediaFileAsset.Url"
+                    <img src="@Model.Image.Imgixify(850, 550)"
+                         srcset="@Model.Image.ImgixSrcset(850, 550, null)"
+                         width="850"
+                         height="550"
+                         loading="lazy"
                          alt="@(string.IsNullOrEmpty(Model.ImageCaption) ? (Model.Image.LegacyMediaFileTitle ?? Model.Heading) : Model.ImageCaption)"
                          class="img-fluid overlap-img w-100" />
                 }

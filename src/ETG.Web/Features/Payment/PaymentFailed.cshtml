@@ -1,0 +1,64 @@
+@model ETG.Web.Features.Payment.PaymentPageViewModel
+
+@{
+    ViewData["Title"] = "Payment Failed";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.HeroImageUrl))
+{
+    <div class="position-relative overflow-hidden mb-4" style="max-height: 340px; background-color: #2d3748;">
+        <img src="@Model.HeroImageUrl.Imgixify(1920, 480)" 
+             srcset="@Model.HeroImageUrl.ImgixSrcset(1920, 480, new[] { 1 })"
+             width="1920"
+             height="480"
+             alt="@(Model.HeroImage?.LegacyMediaFileTitle ?? "Payment Failed")" 
+             class="w-100 h-100 object-fit-cover" 
+             style="min-height: 200px; max-height: 340px;" />
+        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0, 0, 0, 0.45);">
+            <h1 class="about-hero-title text-white fw-bold display-4">Payment <span class="text-pink">Failed</span> </h1>
+        </div>
+    </div>
+}
+
+<div class="container py-5 my-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center">
+                <div class="mb-4">
+                    <i class="fa-solid fa-circle-exclamation text-danger" style="font-size: 4rem;"></i>
+                </div>
+
+                <h1 class="h2 fw-bold text-dark mb-3">Payment Could Not Be Completed</h1>
+
+                <p class="lead text-secondary mb-4">
+                    We were unable to process your transaction. No funds were charged to your account.
+                </p>
+
+                <div class="alert alert-warning text-start mb-4">
+                    <h5 class="alert-heading fw-bold"><i class="fa-solid fa-info-circle me-2"></i>Possible Reasons:</h5>
+                    <ul class="mb-0 ps-3">
+                        <li>The card details or expiry date were entered incorrectly.</li>
+                        <li>The transaction was declined or cancelled.</li>
+                        <li>Your bank may require 3D Secure verification.</li>
+                    </ul>
+                </div>
+
+                @if (Model.Payment != null && !string.IsNullOrWhiteSpace(Model.Payment.PaymentInvoiceReference))
+                {
+                    <p class="text-muted mb-4">
+                        Invoice Reference: <strong>@Model.Payment.PaymentInvoiceReference</strong>
+                    </p>
+                }
+
+                <div class="d-flex justify-content-center gap-3 mt-2 flex-wrap">
+                    <a href="/client-payments" class="btn btn-primary px-4 py-2" style="background-color: #ca568e; border-color: #ca568e;">
+                        <i class="fa-solid fa-rotate-left me-2"></i>Try Again
+                    </a>
+                    <a href="/contact-us" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="fa-solid fa-envelope me-2"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

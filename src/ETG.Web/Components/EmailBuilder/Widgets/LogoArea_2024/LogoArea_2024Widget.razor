@@ -1,0 +1,53 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.LogoArea_2024
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Logo Area (2024) Section START HERE ===== -->
+        <!-- ===== Header_Logo_Section START HERE ===== -->
+        <tr>
+          <td align="center" valign="top"><table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+              <tbody>
+                <tr>
+                  <td align="center" valign="top" style="padding: 0px 100px;" class="em_aside24"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                      <tbody>
+                        <tr>
+                          <td height="30" style="height: 30px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td align="center" valign="top"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                              <tbody>
+                                <tr>
+                                  <td align="left" valign="top">
+                                    @if (!string.IsNullOrWhiteSpace(Model.Image))
+                                    {
+                                      <a href="https://www.entiretravel.com.au/" target="_blank" style="text-decoration: none;"><img src="@Model.Image" width="122" alt="ENTIRE TRAVEL GROUP" border="0" style="display: block; max-width: 122px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;"/></a>
+                                    }
+                                  </td>
+                                  <td width="200" style="width: 200px;" class="em_side15"></td>
+                                  <td align="right" valign="middle" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 16px; line-height: 17px; font-weight: bold; color: #333333; text-transform: uppercase; ">
+                                    @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                                    {
+                                      @Model.Heading
+                                    }
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table></td>
+                        </tr>
+                        <tr>
+                          <td height="30" style="height: 30px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#E4E4E4"><img src="edm/images2024/spacer.gif" width="1" height="1" alt="" border="0" style="display: block; "/></td>
+                        </tr>
+                      </tbody>
+                    </table></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
+        <!-- ===== // Header_Logo_Section END HERE ===== --> 
+<!-- ===== // Logo Area (2024) Section END HERE ===== -->

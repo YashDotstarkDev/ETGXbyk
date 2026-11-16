@@ -1,18 +1,49 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
+using CMS.Websites.Routing;
 using CSharpFunctionalExtensions;
 using ETG;
 using ETG.Core.Content;
 using ETG.Core.Operations;
 using ETG.Web.Rendering;
 using Kentico.Content.Web.Mvc.Routing;
-using CMS.Websites.Routing;
+using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace ETG.Web.Components.ViewComponents.Shared;
 
 public record GetWebsiteLayoutContentQuery : IQuery<Maybe<WebsiteLayoutContentViewModel>>, ICacheByValueQuery
 {
     public string CacheValueKey => "WebsiteLayoutContent";
+}
+
+
+public interface IWebsiteLayoutAccessor
+{
+    Task<WebsiteLayoutContentViewModel?> GetAsync(CancellationToken cancellationToken = default);
+}
+
+public sealed class WebsiteLayoutAccessor(IMediator mediator, ILogger<WebsiteLayoutAccessor> logger) : IWebsiteLayoutAccessor
+{
+    private Task<WebsiteLayoutContentViewModel?>? pending;
+
+    // Scoped = one instance per request, so the first component loads it and the rest reuse it.
+    public Task<WebsiteLayoutContentViewModel?> GetAsync(CancellationToken cancellationToken = default) =>
+        pending ??= LoadAsync(cancellationToken);
+
+    private async Task<WebsiteLayoutContentViewModel?> LoadAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await mediator.Send(new GetWebsiteLayoutContentQuery(), cancellationToken);
+            return result.HasValue ? result.Value : null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Layout content could not be loaded; views will use their fallbacks.");
+            return null;
+        }
+    }
 }
 
 public class GetWebsiteLayoutContentQueryHandler(ContentItemQueryTools tools,
@@ -29,12 +60,14 @@ public class GetWebsiteLayoutContentQueryHandler(ContentItemQueryTools tools,
     {
         try
         {
+            var channelName = ResolveChannelName();
+
             // ── 1. WebsiteLayoutContent (page type — text/alt-text/copy fields) ────
             var layoutBuilder = new ContentItemQueryBuilder()
                 .ForContentType(
                     WebsiteLayoutContent.CONTENT_TYPE_NAME,
                     p => p.WithLinkedItems(2)
-                          .ForWebsite(tools.WebsiteChannelContext.WebsiteChannelName, PathMatch.Single(LayoutContentPath)));
+                          .ForWebsite(channelName, PathMatch.Single(LayoutContentPath)));
 
             var layoutResult = await Executor.GetMappedResult<WebsiteLayoutContent>(layoutBuilder, DefaultQueryOptions, cancellationToken);
             var layout = layoutResult.FirstOrDefault();
@@ -54,15 +87,32 @@ public class GetWebsiteLayoutContentQueryHandler(ContentItemQueryTools tools,
             }
 
             var currentLanguage = currentLanguageRetriever.Get();
-            var channelName = tools.WebsiteChannelContext.WebsiteChannelName;
 
-            var searchUrlResult = await urlRetriever.Retrieve("/search", channelName, currentLanguage);
-            var contactUrlResult = await urlRetriever.Retrieve("/enquire", channelName, currentLanguage);
+            string? searchPageUrl = null;
+            try
+            {
+                var searchUrlResult = await urlRetriever.Retrieve("/search", channelName, currentLanguage);
+                searchPageUrl = searchUrlResult?.RelativePath;
+            }
+            catch
+            {
+                searchPageUrl = "/search";
+            }
 
+            string? contactPageUrl = null;
+            try
+            {
+                var contactUrlResult = await urlRetriever.Retrieve("/enquire", channelName, currentLanguage);
+                contactPageUrl = contactUrlResult?.RelativePath;
+            }
+            catch
+            {
+                contactPageUrl = "/enquire";
+            }
 
             return new WebsiteLayoutContentViewModel
             {
-                BrandLogoSvg = SafeString((global?.BrandLogo) ?? (layout?.BrandLogo)),
+                BrandLogoSvg = SafeString(layout?.BrandLogo),
                 BrandLogoAltText = SafeString(layout?.BrandLogoAltText),
                 ContactNumber = SafeString(layout?.ContactNumber),
                 NavCtaText = SafeString(layout?.NavCtaText),
@@ -70,21 +120,29 @@ public class GetWebsiteLayoutContentQueryHandler(ContentItemQueryTools tools,
                 OneTreeLogoAltText = SafeString(layout?.OneTreeLogoAltText),
                 SustainableHeading = SafeString(layout?.SustainableHeading),
                 SustainableDescription = SafeString(layout?.SustainableDescription),
-                FooterLogoUrl = SafeAssetUrl((global?.FooterLogo) ?? (layout?.FooterLogo)),
+                FooterLogoUrl = SafeAssetUrl(layout?.FooterLogo),
                 FooterLogoAltText = SafeString(layout?.FooterLogoAltText),
                 ContactUsText = SafeString(layout?.ContactUsText),
                 AwardsImageSvg = SafeString(layout?.AwardsImage),
                 AwardsImageAltText = SafeString(layout?.AwardsImageAltText),
                 CopyrightText = SafeString(layout?.CopyrightText),
 
-                SearchPageUrl = searchUrlResult?.RelativePath,
-                ContactPageUrl = contactUrlResult?.RelativePath
+                SearchPageUrl = searchPageUrl,
+                ContactPageUrl = contactPageUrl
             };
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return Maybe.None;
         }
+    }
+
+    private string ResolveChannelName()
+    {
+        var channelName = tools.WebsiteChannelContext.WebsiteChannelName;
+        return string.IsNullOrWhiteSpace(channelName) || channelName == "Website"
+            ? "ETG"
+            : channelName;
     }
 
     private static string? SafeString(string? value) =>

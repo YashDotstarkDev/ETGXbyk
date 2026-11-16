@@ -1,4 +1,4 @@
-﻿@using System.Collections.Generic
+@using System.Collections.Generic
 @using System.Linq
 @using ETG.Web.Features.Destinations
 @model IReadOnlyList<DestinationLandingCategoryViewModel>
@@ -41,7 +41,10 @@
                             <div class="hd-dest-card__img-wrap">
                                 @if (item.Image?.LegacyMediaFileAsset is not null)
                                 {
-                                    <img src="@item.Image.LegacyMediaFileAsset.Url"
+                                    <img src="@item.Image.Imgixify(380, 214)"
+                                         srcset="@item.Image.ImgixSrcset(380, 214, null)"
+                                         width="380"
+                                         height="214"
                                          alt="@item.Heading"
                                          loading="lazy" />
                                 }

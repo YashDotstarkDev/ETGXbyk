@@ -40,6 +40,20 @@ public class FooterViewModel
 
     /// <summary>Copyright line, e.g. "© 2025 Company. All rights reserved."</summary>
     public string CopyrightText { get; init; } = "";
+
+    public FooterViewModel WithLayout(ETG.Web.Components.ViewComponents.Shared.WebsiteLayoutContentViewModel? layout) =>
+        new()
+        {
+            Logo = Logo,
+            SiteName = SiteName,
+            Tagline = Tagline,
+            SocialLinks = SocialLinks,
+            Columns = Columns,
+            BottomLinks = BottomLinks,
+            Contact = Contact,
+            CopyrightText = CopyrightText,
+            Layout = layout
+        };
 }
 
 /// <summary>One column in the footer link grid.</summary>

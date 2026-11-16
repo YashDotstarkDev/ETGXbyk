@@ -1,4 +1,5 @@
 using CMS.EmailEngine;
+using Etg;
 using ETG;
 using ETG.Core.Content;
 using ETG.Core.Content.Pages;
@@ -7,6 +8,8 @@ using ETG.Web.Features.TourPackage.Pdf;
 using ETG.Web.Features.Search;
 using ETG.Web.Features.Search.Services;
 using Kentico.Content.Web.Mvc.Routing;
+using Kentico.EmailBuilder.Web.Mvc;
+using Kentico.OnlineMarketing.Web.Mvc;
 using Kentico.PageBuilder.Web.Mvc;
 using Kentico.Web.Mvc;
 using Kentico.Xperience.Algolia;
@@ -44,11 +47,28 @@ public static class ServiceCollectionXperienceExtensions
                         Page.CONTENT_TYPE_NAME,
                         CareerRole.CONTENT_TYPE_NAME,
                         Tour.CONTENT_TYPE_NAME,
+                        PaymentPage.CONTENT_TYPE_NAME,
                         DefaultContent.CONTENT_TYPE_NAME
                     ]
                 });
 
+                // Enable Email Builder, Marketing routes, and Statistics logging
+                features.UseEmailBuilder();
+                features.UseEmailMarketing();
+                features.UseEmailStatisticsLogging();
+
                 features.UseWebPageRouting();
+            })
+            // Configure Email Builder options and register your email content type
+            .Configure<EmailBuilderOptions>(options =>
+            {
+                options.AllowedEmailContentTypeNames =
+                [
+                    EmailTemplate.CONTENT_TYPE_NAME
+                ];
+
+                // Keep the built-in default section enabled for HTML table layouts
+                options.RegisterDefaultSection = true;
             })
             .AddKenticoAlgolia(b =>
             {
@@ -76,7 +96,7 @@ public static class ServiceCollectionXperienceExtensions
             .AddXperienceSystemSmtp(options =>
             {
                 var smtpConfig = config.GetSection("SmtpOptions");
-            
+
                 options.Server = new SmtpServer
                 {
                     Host = smtpConfig["Server:Host"],
@@ -84,16 +104,14 @@ public static class ServiceCollectionXperienceExtensions
                     UserName = smtpConfig["Server:UserName"],
                     Password = smtpConfig["Server:Password"]
                 };
-            
+
                 options.Encoding = Encoding.UTF8;
                 options.TransferEncoding = TransferEncoding.QuotedPrintable;
             })
-            .Configure<SystemEmailOptions>(config.GetSection("SystemEmailOptions"))
+
             .AddHttpContextAccessor()
             .Configure<PdfSettings>(
                 config.GetSection(PdfSettings.SectionName))
             .AddScoped<IPDFGenerator, PDFGenerator>()
             .AddScoped<ITourPdfProvider, TourPdfProvider>();
-
-
 }

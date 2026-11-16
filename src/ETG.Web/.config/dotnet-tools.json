@@ -6,8 +6,15 @@
       "version": "31.2.3",
       "commands": [
         "kentico-xperience-dbmanager"
-      ]
+      ],
+      "rollForward": false
+    },
+    "dotnet-ef": {
+      "version": "10.0.14",
+      "commands": [
+        "dotnet-ef"
+      ],
+      "rollForward": false
     }
   }
 }
-

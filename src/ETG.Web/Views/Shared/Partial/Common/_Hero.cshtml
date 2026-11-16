@@ -1,5 +1,6 @@
 @using System.Collections.Generic
 @using System.Linq
+@using System.Text.RegularExpressions
 @using ETG.Core.Models
 @model HeroViewModel
 
@@ -9,14 +10,37 @@
 }
 
 @{
-    var words = (Model.Heading ?? "")
-        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var isRichText = !string.IsNullOrWhiteSpace(Model.Heading) &&
+                     Model.Heading.Contains('<') && Model.Heading.Contains('>');
+
+    var words = !isRichText
+        ? (Model.Heading ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        : Array.Empty<string>();
 
     var headingBeforeLastWord = words.Length > 1
         ? string.Join(" ", words.Take(words.Length - 1))
         : "";
 
     var pinkWord = words.LastOrDefault() ?? "";
+
+    var plainHeadingText = isRichText
+        ? Regex.Replace(Regex.Replace(Model.Heading!, "<.*?>", " "), @"\s+", " ").Trim()
+        : (Model.Heading ?? "");
+
+    var plainWords = isRichText
+        ? plainHeadingText.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        : words;
+
+    var alreadyHasPink = isRichText && Model.Heading!.Contains("text-pink", StringComparison.OrdinalIgnoreCase);
+
+    var formattedRichTextHeading = isRichText
+        ? (!alreadyHasPink && plainWords.Length > 1
+            ? Regex.Replace(
+                Model.Heading!,
+                "(?i)(?<=\\s|^|>)([\\w\\-'’]+)([.,!?]?\\s*(?:&nbsp;)*(?:</[^>]+>|\\s|<br\\s*/?>|&nbsp;)*$)",
+                "<span class=\"text-pink\" style=\"font-family: 'Plus Jakarta Sans', sans-serif;\">$1</span>$2")
+            : Model.Heading)
+        : "";
 
     var slides = new List<HeroGalleryImageItem>();
 
@@ -25,7 +49,8 @@
         slides.Add(new HeroGalleryImageItem(
             Model.HeroImageUrl,
             Model.HeroImageAltText,
-            Model.HeroCaption ?? ""
+            Model.HeroCaption ?? "",
+            Model.HeroImageAccreditation ?? ""
         ));
     }
 
@@ -44,22 +69,39 @@
     var isSlider = slides.Count > 1;
 }
 
-<section class="about-hero position-relative"
-         aria-label="@($"{Model.Heading} hero banner")">
-
+<section class="blogs-hero position-relative" style="min-height: 420px; display: flex; align-items: flex-end; overflow: hidden;" aria-label="@($"{plainHeadingText} hero banner")">
     @if (isSlider)
     {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
         <div class="swiper hero-swiper position-absolute top-0 start-0 w-100 h-100">
             <div class="swiper-wrapper">
+                @{ var sIdx = 0; }
                 @foreach (var slide in slides)
                 {
+                    var isFirst = sIdx == 0;
                     <div class="swiper-slide position-relative w-100 h-100">
-                        <img src="@slide.ImageUrl"
-                             alt="@slide.AltText"
-                             class="about-hero-img w-100 h-100 object-fit-cover"
-                             loading="lazy" />
+                        <picture>
+                            <!-- Mobile: Taller crop (ar=4:5) -->
+                            <source media="(max-width: 767px)"
+                                    srcset="@slide.ImageUrl.ImgixSrcset(400, 500, null)" />
+                            <!-- Desktop: Original crop (capped at 1x to avoid 3840px excessive download - B6-003) -->
+                            <img src="@slide.ImageUrl.Imgixify(1920, 600)"
+                                 srcset="@slide.ImageUrl.ImgixSrcset(1920, 600, new[] { 1 })"
+                                 width="1920"
+                                 height="600"
+                                 alt="@slide.AltText"
+                                 class="position-absolute w-100 h-100 object-fit-cover"
+                                 style="top: 0; left: 0; z-index: 0; aspect-ratio: 1920 / 600;"
+                                 loading="@(sIdx == 0 ? "eager" : "lazy")"
+                                 fetchpriority="@(sIdx == 0 ? "high" : "auto")"
+                                 decoding="async" />
+                        </picture>
+                        <div class="caption-top">
+                            <i class="bi bi-geo-alt"></i>
+                            @slide.Caption
+                        </div>
                     </div>
+                    sIdx++;
                 }
             </div>
         </div>
@@ -67,70 +109,84 @@
     else if (slides.Count == 1)
     {
         var singleSlide = slides[0];
-        <img src="@singleSlide.ImageUrl"
-             alt="@singleSlide.AltText"
-             class="about-hero-img w-100 object-fit-cover"
-             loading="lazy" />
+        <picture>
+            <!-- Mobile: Taller crop (ar=4:5) -->
+            <source media="(max-width: 767px)"
+                    srcset="@singleSlide.ImageUrl.ImgixSrcset(400, 500, null)" />
+            <!-- Desktop: Original crop (capped at 1x to avoid 3840px excessive download - B6-003) -->
+            <img src="@singleSlide.ImageUrl.Imgixify(1920, 600)"
+                 srcset="@singleSlide.ImageUrl.ImgixSrcset(1920, 600, new[] { 1 })"
+                 width="1920"
+                 height="600"
+                 alt="@singleSlide.AltText"
+                 class="position-absolute w-100 h-100 object-fit-cover"
+                 style="top: 0; left: 0; z-index: 0;"
+                 loading="eager"
+                 fetchpriority="high"
+                 decoding="async" />
+            <div class="caption-top">
+                <i class="bi bi-geo-alt"></i>
+                @singleSlide.HeroImageAccreditation
+            </div>
+        </picture>
     }
 
-    @if (Model.DisableOverlay == false)
-    {
-        <div class="about-hero-shade position-absolute top-0 start-0 w-100 h-100"
-             style="z-index: 1;"
-             aria-hidden="true"></div>
-    }
+    <div class="position-absolute w-100 h-100" style="top: 0; left: 0; background: linear-gradient(0deg, rgba(0, 0, 0, 0.70) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.20) 100%); z-index: 1;"></div>
 
     @if (!string.IsNullOrWhiteSpace(Model.HeroForegroundImageUrl))
     {
-        <img src="@Model.HeroForegroundImageUrl"
+        <img src="@Model.HeroForegroundImageUrl.Imgixify(0, 0, false, false)"
              alt=""
-             class="about-hero-foreground position-absolute"
+             class="position-absolute"
              style="z-index: 2;"
              aria-hidden="true" />
     }
 
-    <div class="about-hero-overlay position-absolute top-0 start-0 w-100 h-100
-        d-flex align-items-end justify-content-center" style="z-index: 2;">
-        <div class="container text-white">
-            <div class="about-hero__content text-center">
-                @if (!string.IsNullOrWhiteSpace(Model.Heading))
+    <div class="container position-relative text-center text-white" style="z-index: 2; padding: 30px 20px;">
+        @if (!string.IsNullOrWhiteSpace(Model.Heading))
+        {
+            @if (isRichText)
+            {
+                <style>
+                    .hero-heading p { display: inline; margin: 0; padding: 0; font: inherit; color: inherit; }
+                </style>
+            }
+            <h1 class="display-3 fw-bold mb-3 hero-heading" style="text-shadow: 0 2px 10px rgba(0,0,0,0.2); font-size:50px;">
+                @if (isRichText)
                 {
-                    <h1 class="about-hero-title text-white fw-bold display-4"
-                        style="font-size: 50px;">
-                        @if (words.Length > 1)
-                        {
-                            @headingBeforeLastWord
-                            <text> </text><span class="text-pink">@pinkWord</span>
-                        }
-                        else
-                        {
-                            @Model.Heading
-                        }
-                    </h1>
+                    @Html.Raw(formattedRichTextHeading)
                 }
-
-                @if (!string.IsNullOrWhiteSpace(Model.HeadingText))
+                else if (words.Length > 1)
                 {
-                    <p>@Model.HeadingText</p>
+                    @headingBeforeLastWord
+                    <text> </text><span class="text-pink" style="font-family: 'Plus Jakarta Sans', sans-serif;">@pinkWord</span>
                 }
-
-                @if (!string.IsNullOrWhiteSpace(Model.HeroAccreditation))
+                else
                 {
-                    <p class="hero-accreditation">@Model.HeroAccreditation</p>
+                    @Model.Heading
                 }
+            </h1>
+        }
 
+        @if (!string.IsNullOrWhiteSpace(Model.HeadingText))
+        {
+            <p class="lead mb-0 fs-5 mx-auto" style="max-width: 600px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">@Model.HeadingText</p>
+        }
 
-                @if (!string.IsNullOrWhiteSpace(Model.HeroContactUsPath))
-                {
-                    <a href="@Model.HeroContactUsPath">Contact us</a>
-                }
+        @if (!string.IsNullOrWhiteSpace(Model.HeroAccreditation))
+        {
+            <p class="lead mb-0 fs-5 mx-auto" style="max-width: 600px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">@Model.HeroAccreditation</p>
+        }
 
-                @if (!string.IsNullOrWhiteSpace(Model.HeroPhone))
-                {
-                    <a href="tel:@Model.HeroPhone">@Model.HeroPhone</a>
-                }
-            </div>
-        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.HeroContactUsPath))
+        {
+            <a href="@Model.HeroContactUsPath" class="lead mb-0 fs-5 mx-auto" style="max-width: 600px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">Contact us</a>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.HeroPhone))
+        {
+            <a href="tel:@Model.HeroPhone" class="lead mb-0 fs-5 mx-auto" style="max-width: 600px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">@Model.HeroPhone</a>
+        }
     </div>
 </section>
 

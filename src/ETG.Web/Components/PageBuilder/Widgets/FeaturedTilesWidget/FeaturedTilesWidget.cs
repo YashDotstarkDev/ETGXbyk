@@ -100,7 +100,8 @@ public class FeaturedTilesWidget(
                 imageUrl,
                 ctaUrl,
                 tile.CtaLabel ?? string.Empty,
-                tile.CardTag ?? string.Empty));
+                tile.CardTag ?? string.Empty,
+                tile.Dimensions ?? string.Empty));
         }
 
         if (tiles.Count == 0)
@@ -218,7 +219,7 @@ public class ImageTileViewModel
 
     public string CardTag { get; }
 
-
+    public string Dimensions { get; }
     public bool HasLink => !string.IsNullOrWhiteSpace(CtaUrl);
 
     public ImageTileViewModel(
@@ -227,7 +228,8 @@ public class ImageTileViewModel
         string imageUrl,
         string ctaUrl,
         string ctaLabel,
-        string cardTag)
+        string cardTag,
+        string dimensions)
     {
         Caption = caption;
         SubCaption = subCaption;
@@ -235,6 +237,7 @@ public class ImageTileViewModel
         CtaUrl = ctaUrl;
         CtaLabel = ctaLabel;
         CardTag = cardTag;
+        Dimensions = dimensions;
     }
 }
 

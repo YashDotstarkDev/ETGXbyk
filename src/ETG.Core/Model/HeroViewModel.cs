@@ -1,6 +1,6 @@
 namespace ETG.Core.Models;
 
-public record HeroGalleryImageItem(string ImageUrl, string? AltText = "", string? Caption = "");
+public record HeroGalleryImageItem(string ImageUrl, string? AltText = "", string? Caption = "",string? HeroImageAccreditation="");
 
 public class HeroViewModel
 {

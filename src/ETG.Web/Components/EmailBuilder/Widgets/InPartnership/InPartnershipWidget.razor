@@ -1,0 +1,116 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.InPartnership
+@using Microsoft.AspNetCore.Components
+
+<!-- ===== In Partnership Section START HERE ===== -->
+<tr>
+    <td align="center" valign="top">
+        <table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+            <tbody>
+                <tr>
+                    <td align="center" valign="top" style="padding: 0px 100px;" class="em_aside24">
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                            <tbody>
+                                <tr>
+                                    <td align="center" valign="top" style="padding: 0px 30px;" class="em_pad0">
+                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#E4E4E4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td height="20" style="height: 20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                            </tr>
+
+                                            <!-- 1 Image -->
+                                            @if (Model.HasImage1 && !Model.HasImage2 && !Model.HasImage3)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tr>
+                                                                <td width="35%" style="width: 35%; line-height: 0px; font-size: 0px;"></td>
+                                                                <td align="center" valign="middle" width="30%" style="width:30%;">
+                                                                    <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl1) ? "#" : Model.CtaUrl1)" target="_blank" style="text-decoration: none; display: block;">
+                                                                        <img src="@Model.Image1Url" width="100%" alt="@Model.ImageAltText1" border="0" style="display: block; max-width: 100%; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                    </a>
+                                                                </td>
+                                                                <td width="35%" style="width: 35%; line-height: 0px; font-size: 0px;"></td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            <!-- 2 Images -->
+                                            @if (Model.HasImage1 && Model.HasImage2 && !Model.HasImage3)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tr>
+                                                                <td width="18%" style="width: 18%; line-height: 0px; font-size: 0px;"></td>
+                                                                <td align="center" valign="middle" width="30%" style="width:30%;">
+                                                                    <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl1) ? "#" : Model.CtaUrl1)" target="_blank" style="text-decoration: none; display: block;">
+                                                                        <img src="@Model.Image1Url" width="100%" alt="@Model.ImageAltText1" border="0" style="display: block; max-width: 100%; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                    </a>
+                                                                </td>
+                                                                <td width="5%" style="width: 5%; line-height: 0px; font-size: 0px;"></td>
+                                                                <td align="center" valign="middle" width="30%" style="width:30%;">
+                                                                    <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl2) ? "#" : Model.CtaUrl2)" target="_blank" style="text-decoration: none; display: block;">
+                                                                        <img src="@Model.Image2Url" width="100%" alt="@Model.ImageAltText2" border="0" style="display: block; max-width: 100%; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                    </a>
+                                                                </td>
+                                                                <td width="18%" style="width: 18%; line-height: 0px; font-size: 0px;"></td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            <!-- 3 Images -->
+                                            @if (Model.HasImage1 && Model.HasImage2 && Model.HasImage3)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tr>
+                                                                <td align="center" valign="middle" width="30%" style="width:30%;">
+                                                                    <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl1) ? "#" : Model.CtaUrl1)" target="_blank" style="text-decoration: none; display: block;">
+                                                                        <img src="@Model.Image1Url" width="100%" alt="@Model.ImageAltText1" border="0" style="display: block; max-width: 100%; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                    </a>
+                                                                </td>
+                                                                <td width="5%" style="width: 5%; line-height: 0px; font-size: 0px;"></td>
+                                                                <td align="center" valign="middle" width="30%" style="width:30%;">
+                                                                    <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl2) ? "#" : Model.CtaUrl2)" target="_blank" style="text-decoration: none; display: block;">
+                                                                        <img src="@Model.Image2Url" width="100%" alt="@Model.ImageAltText2" border="0" style="display: block; max-width: 100%; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                    </a>
+                                                                </td>
+                                                                <td width="5%" style="width: 5%; line-height: 0px; font-size: 0px;"></td>
+                                                                <td align="center" valign="middle" width="30%" style="width:30%;">
+                                                                    <a href="@(string.IsNullOrWhiteSpace(Model.CtaUrl3) ? "#" : Model.CtaUrl3)" target="_blank" style="text-decoration: none; display: block;">
+                                                                        <img src="@Model.Image3Url" width="100%" alt="@Model.ImageAltText3" border="0" style="display: block; max-width: 100%; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            <tr>
+                                                <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#E4E4E4"></td>
+                                            </tr>
+                                            <tr>
+                                                <td height="80" style="height: 80px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </td>
+</tr>
+<!-- ===== // In Partnership Section END HERE ===== -->

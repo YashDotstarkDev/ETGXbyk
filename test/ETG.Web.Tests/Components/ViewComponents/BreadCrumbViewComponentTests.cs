@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using CMS.Websites;
 using ETG.Web.Components.ViewComponents.BreadCrumb;
+using Kentico.Content.Web.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Moq;
 using NUnit.Framework;
 
 namespace ETG.Web.Tests.Components.ViewComponents;
@@ -20,7 +24,9 @@ public class BreadCrumbViewComponentTests : BaseWebTest
     {
         base.Setup();
 
-        _component = new BreadCrumbViewComponent
+        _component = new BreadCrumbViewComponent(
+            Mock.Of<IContentRetriever>(),
+            Mock.Of<IWebPageUrlRetriever>())
         {
             ViewComponentContext = new ViewComponentContext
             {
@@ -58,7 +64,9 @@ public class BreadCrumbViewComponentTests : BaseWebTest
 
     [TestCaseSource(nameof(PathCases))]
     public void Get_ReturnsExpectedBreadcrumbs(
-        string? path, string[] labels, string[] urls)
+        string? path,
+        string[] labels,
+        string[] urls)
     {
         var model = GetBreadCrumbQuery.Get(path!);
 
@@ -66,13 +74,17 @@ public class BreadCrumbViewComponentTests : BaseWebTest
     }
 
     [TestCaseSource(nameof(PathCases))]
-    public void Invoke_ReturnsExpectedViewAndBreadcrumbs(
-        string? path, string[] labels, string[] urls)
+    public async Task Invoke_ReturnsExpectedViewAndBreadcrumbs(
+        string? path,
+        string[] labels,
+        string[] urls)
     {
         _component.HttpContext.Request.Path =
-            path == null ? default(PathString) : new PathString(path);
+            path == null
+                ? default(PathString)
+                : new PathString(path);
 
-        var model = InvokeModel();
+        var model = await InvokeModelAsync();
 
         AssertItems(model, labels, urls);
     }
@@ -90,10 +102,15 @@ public class BreadCrumbViewComponentTests : BaseWebTest
     [TestCase(false, true, "My Story")]
     [TestCase(true, true, "Stories")]
     public void Get_ReturnsArticleBreadcrumbs(
-        bool landing, bool post, string? title)
+        bool landing,
+        bool post,
+        string? title)
     {
         var model = GetBreadCrumbQuery.Get(
-            "/articles/story", title!, landing, post);
+            "/articles/story",
+            title!,
+            landing,
+            post);
 
         AssertArticle(model, landing, title);
     }
@@ -102,8 +119,9 @@ public class BreadCrumbViewComponentTests : BaseWebTest
     [TestCase("Post", "My Story")]
     [TestCase("Overlap", "Stories")]
     [TestCase("Lowercase", null)]
-    public void Invoke_DetectsArticleModels(
-        string kind, string? title)
+    public async Task Invoke_DetectsArticleModels(
+        string kind,
+        string? title)
     {
         _component.HttpContext.Request.Path = "/articles/story";
         _component.ViewContext.ViewData["Title"] = title;
@@ -116,7 +134,7 @@ public class BreadCrumbViewComponentTests : BaseWebTest
             _ => new articlepostpage()
         };
 
-        var model = InvokeModel();
+        var model = await InvokeModelAsync();
 
         if (kind == "Lowercase")
         {
@@ -132,25 +150,32 @@ public class BreadCrumbViewComponentTests : BaseWebTest
         }
     }
 
-    private BreadCrumbViewModel InvokeModel()
+    private async Task<BreadCrumbViewModel> InvokeModelAsync()
     {
-        var result = _component.Invoke();
+        var result = await _component.InvokeAsync();
 
-        Assert.That(result, Is.TypeOf<ViewViewComponentResult>());
+        Assert.That(
+            result,
+            Is.TypeOf<ViewViewComponentResult>());
 
         var view = (ViewViewComponentResult)result;
 
-        Assert.That(view.ViewName, Is.EqualTo(
-            "~/Components/ViewComponents/BreadCrumb/BreadCrumb.cshtml"));
+        Assert.That(
+            view.ViewName,
+            Is.EqualTo(
+                "~/Components/ViewComponents/BreadCrumb/BreadCrumb.cshtml"));
 
-        Assert.That(view.ViewData.Model,
+        Assert.That(
+            view.ViewData.Model,
             Is.TypeOf<BreadCrumbViewModel>());
 
         return (BreadCrumbViewModel)view.ViewData.Model!;
     }
 
     private static void AssertArticle(
-        BreadCrumbViewModel model, bool landing, string? title)
+        BreadCrumbViewModel model,
+        bool landing,
+        string? title)
     {
         var label = string.IsNullOrEmpty(title)
             ? landing ? "The Explorer's Log" : "Article"
@@ -167,7 +192,9 @@ public class BreadCrumbViewComponentTests : BaseWebTest
     }
 
     private static void AssertItems(
-        BreadCrumbViewModel model, string[] labels, string[] urls)
+        BreadCrumbViewModel model,
+        string[] labels,
+        string[] urls)
     {
         var items = model.Items.ToArray();
 
@@ -177,9 +204,16 @@ public class BreadCrumbViewComponentTests : BaseWebTest
         {
             for (var i = 0; i < items.Length; i++)
             {
-                Assert.That(items[i].Label, Is.EqualTo(labels[i]));
-                Assert.That(items[i].Url, Is.EqualTo(urls[i]));
-                Assert.That(items[i].IsCurrentPage,
+                Assert.That(
+                    items[i].Label,
+                    Is.EqualTo(labels[i]));
+
+                Assert.That(
+                    items[i].Url,
+                    Is.EqualTo(urls[i]));
+
+                Assert.That(
+                    items[i].IsCurrentPage,
                     Is.EqualTo(i == items.Length - 1));
             }
         });
@@ -193,22 +227,30 @@ public class BreadCrumbViewComponentTests : BaseWebTest
 
     [TestCaseSource(nameof(RepeatedRootCases))]
     public void Get_RepeatedRootSlashes_ReturnsArticleBreadcrumbs(
-        string path, string? title)
+        string path,
+        string? title)
     {
         var model = GetBreadCrumbQuery.Get(
-            path, title!, false, true);
+            path,
+            title!,
+            false,
+            true);
 
         AssertItems(
             model,
             new[]
             {
-            "The Explorer's Log",
-            string.IsNullOrEmpty(title) ? "Article" : title!
+                "The Explorer's Log",
+                string.IsNullOrEmpty(title) ? "Article" : title!
             },
             new[] { "/articles", "" });
     }
+
     public sealed class ArticleLandingPage { }
+
     public sealed class ArticlePostPage { }
+
     public sealed class ArticleLandingArticlePostPage { }
+
     public sealed class articlepostpage { }
 }

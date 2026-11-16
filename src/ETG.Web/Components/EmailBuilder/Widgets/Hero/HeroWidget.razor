@@ -1,0 +1,74 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.Hero
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Hero Section START HERE ===== -->
+<table bgcolor="#ffffff" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ffffff;">
+    <tbody>
+        <tr>
+            <td align="center" valign="top">
+                <table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+                    <tbody>
+                        <!-- Header-Banner Section -->
+                        @if (!string.IsNullOrWhiteSpace(Model.image))
+                        {
+                            <tr>
+                                <td align="center" valign="top">
+                                    <img class="em_full_img" src="@Model.image" alt="" border="0" width="600" style="max-width:600px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                </td>
+                            </tr>
+                        }
+                        <!-- Content with CTA Section -->
+                        @if (!string.IsNullOrWhiteSpace(Model.heading) || !string.IsNullOrWhiteSpace(Model.copy) || !string.IsNullOrWhiteSpace(Model.ctaCopy))
+                        {
+                            <tr>
+                                <td class="em_pad" align="center" valign="top" style="padding:26px 15px 47px;">
+                                    <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tbody>
+                                            @if (!string.IsNullOrWhiteSpace(Model.heading))
+                                            {
+                                                <tr>
+                                                    <td class="em_defaultlink em_font20" align="center" valign="top" style="font-size: 24px; line-height: 28px; font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; text-transform: uppercase; font-weight:600; padding-bottom:18px;">
+                                                        @Model.heading
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.copy))
+                                            {
+                                                <tr>
+                                                    <td class="em_defaultlink em_font18 em_pbottom" align="center" valign="top" style="font-size:20px; line-height:28px; font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; width:400px; padding-bottom:23px;">
+                                                        @((MarkupString)Model.copy)
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.ctaCopy))
+                                            {
+                                                <tr>
+                                                    <td align="center" valign="top">
+                                                        <table align="center" bgcolor="#ca568e" border="0" cellspacing="0" cellpadding="0" style="background-color:#ca568e; border-radius:30px;">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td align="center" valign="middle" height="42" style="height:42px; font-size:14px; color:#ffffff; font-family:Arial, sans-serif; text-transform:uppercase; padding:0px 55px; font-weight:600; letter-spacing: 0.5px;">
+                                                                        <a href="@(string.IsNullOrWhiteSpace(Model.ctaUrl) ? "#" : Model.ctaUrl)" target="_blank" style="text-decoration:none; color:#ffffff; display:block; line-height:42px;">@Model.ctaCopy</a>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<!-- ===== // Hero Section END HERE ===== -->

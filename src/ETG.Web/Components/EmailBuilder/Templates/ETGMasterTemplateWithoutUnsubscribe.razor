@@ -1,0 +1,714 @@
+@using Kentico.EmailBuilder.Web.Mvc
+@using Kentico.VisualBuilderComponents.Rcl.Components
+@using ETG
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:v="urn:schemas-microsoft-com:vml"
+      xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:AllowPNG/>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+
+    <title>ENTIRE TRAVEL GROUP</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 " />
+    <meta name="format-detection" content="telephone=no" />
+
+    <style type="text/css">
+            body {
+                margin: 0;
+                padding: 0;
+                -webkit-text-size-adjust: 100% !important;
+                -ms-text-size-adjust: 100% !important;
+                -webkit-font-smoothing: antialiased !important;
+            }
+
+            img {
+                border: 0 !important;
+                outline: none !important;
+            }
+
+            p {
+                Margin: 0px !important;
+                Padding: 0px !important;
+            }
+
+            .ExternalClass * {
+                line-height: 100%;
+            }
+
+            .em_defaultlink a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .em_g_img + div {
+                display: none;
+            }
+
+            a[x-apple-data-detectors], u + .em_body a, #MessageViewBody a {
+                color: inherit;
+                text-decoration: none;
+                font-size: inherit;
+                font-family: inherit;
+                font-weight: inherit;
+                line-height: inherit;
+            }
+
+            @@media only screen and (max-width:667px) {
+                .em_main_table {
+                    width: 100% !important;
+                }
+
+                .em_wrapper {
+                    width: 100% !important;
+                }
+
+                .em_hide {
+                    display: none !important;
+                }
+
+                .em_full_img img {
+                    width: 100% !important;
+                    height: auto !important;
+                    max-width: none !important;
+                }
+
+                .em_center {
+                    text-align: center !important;
+                }
+
+                .em_side10 {
+                    width: 10px !important;
+                }
+
+                .em_aside10 {
+                    padding-left: 10px !important;
+                    padding-right: 10px !important;
+                }
+
+                .em_side15 {
+                    width: 15px !important;
+                }
+
+                .em_aside30 {
+                    padding-left: 30px !important;
+                    padding-right: 30px !important;
+                }
+
+                .em_ptop {
+                    padding-top: 20px !important;
+                }
+
+                .em_ptopa {
+                    padding-top: 25px !important;
+                }
+
+                .em_ptopb {
+                    padding-top: 15px !important;
+                }
+
+                .em_pbottom {
+                    padding-bottom: 36px !important;
+                }
+
+                .em_pbottom28 {
+                    padding-bottom: 28px !important;
+                }
+
+                .em_h20 {
+                    height: 20px !important;
+                    font-size: 1px !important;
+                    line-height: 1px !important;
+                }
+
+                .em_pbottom14 {
+                    padding-bottom: 20px !important;
+                }
+
+                .em_h30 {
+                    height: 30px !important;
+                }
+
+                .em_h60 {
+                    height: 60px !important;
+                }
+
+                .em_h70 {
+                    height: 75px !important;
+                }
+
+                .em_h70A {
+                    height: 70px !important;
+                }
+
+                .em_h26 {
+                    height: 26px !important;
+                }
+
+                .em_mob_block {
+                    display: block !important;
+                }
+
+                .em_hauto {
+                    height: auto !important;
+                }
+
+                .em_clear {
+                    clear: both !important;
+                    width: 100% !important;
+                    display: block !important;
+                }
+
+                u + .em_body .em_full_wrap {
+                    width: 100% !important;
+                    width: 100vw !important;
+                }
+
+                .em_aside24 {
+                    padding: 0px 24px !important;
+                }
+
+                .em_pad0 {
+                    padding: 0px !important;
+                }
+
+                .em_side28 {
+                    width: 28px !important;
+                }
+
+                .em_widthA {
+                    width: 163px !important;
+                }
+
+                .em_widthB {
+                    width: 163px !important;
+                }
+
+                .em_aside20 {
+                    padding: 0px 20px !important;
+                }
+
+                .em_hide_desktop {
+                    display: table !important;
+                    float: none !important;
+                    width: 100% !important;
+                    overflow: visible !important;
+                    height: auto !important;
+                }
+
+                .em_w72 img {
+                    width: 72px !important;
+                    height: auto !important;
+                }
+
+                .em_w165 img {
+                    width: 165px !important;
+                    height: auto !important;
+                }
+
+                .em_w67 img {
+                    width: 67px !important;
+                    height: auto !important;
+                }
+
+                .em_side24 {
+                    width: 24px !important;
+                }
+
+                .em_aside24a {
+                    padding: 0px 23px !important;
+                }
+            }
+
+            @@media screen and (max-width: 480px) {
+                .em_side28 {
+                    width: 23px !important;
+                }
+
+                .em_aside20 {
+                    padding: 0px 15px 0px 15px !important;
+                }
+            }
+
+            @@media screen and (max-width: 374px) {
+                .em_aside24 {
+                    padding: 0px 15px !important;
+                }
+
+                .em_f12 {
+                    font-size: 11px !important;
+                    line-height: 21px !important;
+                }
+
+                .em_side28 {
+                    width: 17px !important;
+                }
+
+                .em_widthA {
+                    width: 145px !important;
+                }
+
+                .em_widthB {
+                    width: 145px !important;
+                }
+
+                .em_side24 {
+                    width: 13px !important;
+                }
+
+                .em_f16 {
+                    font-size: 16px !important;
+                    line-height: 23px !important;
+                }
+
+                .em_aside20 {
+                    padding: 0px 15px !important;
+                }
+
+                .em_f26 {
+                    font-size: 26px !important;
+                    line-height: 32px !important;
+                }
+
+                .em_aside30 {
+                    padding-left: 15px !important;
+                    padding-right: 15px !important;
+                }
+
+                .em_aside15A {
+                    padding: 0px 15px !important;
+                }
+            }
+    </style>
+
+    <EmailBuilderStyles />
+</head>
+
+<body class="em_body" style="margin:0px auto; padding:0px;" bgcolor="#ffffff">
+
+    <table width="100%" border="0" cellspacing="0" cellpadding="0"
+           class="em_full_wrap" bgcolor="#ffffff"
+           style="table-layout:fixed; background-color:#ffffff;">
+        <tr>
+            <td align="center" valign="top">
+                <table align="center" width="800" border="0" cellspacing="0"
+                       cellpadding="0" class="em_main_table"
+                       style="width:800px; table-layout:fixed;">
+
+                    <EditableArea AreaIdentifier="widgetsarea" />
+
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ===== Footer Section START HERE ===== -->
+    <table width="100%" border="0" cellspacing="0" cellpadding="0"
+           class="em_full_wrap" bgcolor="#ffffff"
+           style="table-layout:fixed; background-color:#ffffff;">
+        <tr>
+            <td align="center" valign="top">
+                <table align="center" width="800" border="0" cellspacing="0"
+                       cellpadding="0" class="em_main_table"
+                       style="width:800px; table-layout:fixed;">
+
+                    <!-- ===== Black_Footer_Logo_Section START HERE ===== -->
+                    <tr>
+                        <td align="center" valign="top">
+                            <table align="center" width="800" border="0"
+                                   cellspacing="0" cellpadding="0"
+                                   style="width: 800px;" class="em_wrapper"
+                                   bgcolor="#333333">
+                                <tbody>
+                                    <tr>
+                                        <td align="center" valign="top"
+                                            style="padding: 0px 100px;"
+                                            class="em_aside24">
+                                            <table width="100%" border="0"
+                                                   cellspacing="0" cellpadding="0"
+                                                   align="center">
+                                                <tbody>
+                                                    <tr>
+                                                        <td height="78"
+                                                            style="height: 78px; line-height: 0px; font-size: 0px;">
+                                                            &nbsp;
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            style="padding-bottom: 20px;">
+                                                            <a href="https://www.entiretravel.com.au/" target="_blank"
+                                                               style="text-decoration: none;">
+                                                                <img src="https://www.entiretravel.com.au/edm/images2024/footer_logo.png"
+                                                                     width="154" alt="ENTIRE TRAVEL GROUP"
+                                                                     border="0"
+                                                                     style="display: block; max-width: 154px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #ffffff;" />
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            class="em_defaultlink em_pbottom28"
+                                                            style="font-family: Arial,sans-serif; font-size: 23px; line-height:34px; font-weight: 800; color: #ffffff; padding-bottom: 30px; text-transform: uppercase;">
+                                                            WHEN EXPERIENCE MATTERS
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            class="em_defaultlink"
+                                                            style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #ffffff; font-weight: bold; padding-bottom: 20px;">
+                                                            Entire Travel Group is celebrating more than 50 years of passionately delivering <br class="em_hide" />
+                                                            unique and memorable travel&nbsp;experiences.
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            class="em_defaultlink"
+                                                            style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #ffffff; font-weight: 400;">
+                                                            We are an Australian, family owned, award winning business, with a friendly team ready to&nbsp;match your expectations to the perfect holiday package. We’ve got you covered with our&nbsp;Peace of Mind Booking Plan, Exclusive Packages, Freedom of Choice options and Safe&nbsp;Travel protocols for the new travel environment.
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height="79"
+                                                            style="height: 79px; line-height: 0px; font-size: 0px;"
+                                                            class="em_h60">
+                                                            &nbsp;
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top">
+                                                            <table border="0" cellspacing="0"
+                                                                   cellpadding="0" align="center">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td align="center" valign="top"
+                                                                            class="em_w72">
+                                                                            <a href="#" target="_blank"
+                                                                               style="text-decoration: none;">
+                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/logo1.png"
+                                                                                     width="92" alt="afta" border="0"
+                                                                                     style="display: block; max-width: 92px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #ffffff;" />
+                                                                            </a>
+                                                                        </td>
+                                                                        <td width="30" style="width: 30px;" class="em_side24">&nbsp;</td>
+                                                                        <td align="center" valign="top">
+                                                                            <table border="0" cellspacing="0" cellpadding="0" align="center">
+                                                                                <tbody>
+                                                                                    <tr>
+                                                                                        <td align="center" valign="top"
+                                                                                            style="padding-bottom: 25px;"
+                                                                                            class="em_w165">
+                                                                                            <a href="#" target="_blank" style="text-decoration: none;">
+                                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/logo2.png"
+                                                                                                     width="210" alt="ATIA | ATAS" border="0"
+                                                                                                     style="display: block; max-width: 210px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #ffffff;" />
+                                                                                            </a>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                        <td align="center" valign="top">
+                                                                                            <table align="center" border="0" cellspacing="0" cellpadding="0">
+                                                                                                <tbody>
+                                                                                                    <tr>
+                                                                                                        <td align="center" valign="middle" class="em_w67">
+                                                                                                            <a href="#" target="_blank" style="text-decoration: none;">
+                                                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/logo3.png"
+                                                                                                                     width="86" alt="CATO" border="0"
+                                                                                                                     style="display: block; max-width: 86px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #ffffff;" />
+                                                                                                            </a>
+                                                                                                        </td>
+                                                                                                        <td width="30" style="width: 30px;" class="em_side24">&nbsp;</td>
+                                                                                                        <td align="center" valign="top" class="em_w72">
+                                                                                                            <a href="#" target="_blank" style="text-decoration: none;">
+                                                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/logo4.png"
+                                                                                                                     width="93" alt="TRAVEL DAILY" border="0"
+                                                                                                                     style="display: block; max-width:93px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #ffffff;" />
+                                                                                                            </a>
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                </tbody>
+                                                                                            </table>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height="74"
+                                                            style="height: 74px; line-height: 0px; font-size: 0px;">
+                                                            &nbsp;
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- ===== // Black_Footer_Logo_Section END HERE ===== -->
+                    <!-- ===== Pink_Footer_Section START HERE ===== -->
+                    <tr>
+                        <td align="center" valign="top">
+                            <table align="center" width="800" border="0" cellspacing="0"
+                                   cellpadding="0" style="width: 800px;"
+                                   class="em_wrapper" bgcolor="#CA568E">
+                                <tbody>
+                                    <tr>
+                                        <td height="43" style="height: 43px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td align="center" valign="top"
+                                            style="padding: 0px 98px;" class="em_aside24">
+                                            <table width="100%" border="0" cellspacing="0"
+                                                   cellpadding="0" align="center">
+                                                <tbody>
+                                                    <tr>
+                                                        <th align="center" valign="top" class="em_clear">
+                                                            <table align="left" style="width: 290px;"
+                                                                   class="em_wrapper" width="290"
+                                                                   border="0" cellspacing="0" cellpadding="0">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td align="left" valign="top"
+                                                                            class="em_defaultlink"
+                                                                            style="font-family: Arial,sans-serif; font-size: 20px; line-height:25px; font-weight: bold; color: #ffffff; text-transform: uppercase;">
+                                                                            OUR FRIENDLY TEAM&nbsp;<br />
+                                                                            WOULD LOVE TO&nbsp;HELP!
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </th>
+                                                        <th width="24" style="width: 24px; line-height: 0px; font-size: 0px;"
+                                                            class="em_clear em_h30">&nbsp;</th>
+                                                        <th align="center" valign="top" class="em_clear em_pad0"
+                                                            style="padding-top: 5px;">
+                                                            <table width="290" border="0" cellspacing="0"
+                                                                   cellpadding="0" align="center"
+                                                                   style="width: 290px;" class="em_wrapper">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td align="left" valign="top" style="padding-bottom:11px;">
+                                                                            <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                                                <tbody>
+                                                                                    <tr>
+                                                                                        <td align="center" valign="middle"
+                                                                                            style="line-height: 0px; font-size: 0px; padding-right: 6px;">
+                                                                                            <img src="https://www.entiretravel.com.au/edm/images2024/img19.png"
+                                                                                                 width="14" alt="" style="display: block; max-width:14px;" />
+                                                                                        </td>
+                                                                                        <td align="left" valign="top"
+                                                                                            class="em_defaultlink"
+                                                                                            style="font-family: Arial,sans-serif; font-size:14px; line-height:16px; font-weight: 400; color: #ffffff;">
+                                                                                            8am - 6pm, Mon to Fri
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td align="left" valign="top" style="padding-bottom:15px;">
+                                                                            <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                                                <tbody>
+                                                                                    <tr>
+                                                                                        <td align="center" valign="top"
+                                                                                            style="line-height: 0px; font-size: 0px; padding-right: 6px;">
+                                                                                            <a href="tel:+61290943322" style="text-decoration: none; color: #ffffff;">
+                                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/img20.png"
+                                                                                                     width="14" alt="Call" style="display: block; max-width:14px;" />
+                                                                                            </a>
+                                                                                        </td>
+                                                                                        <td align="left" valign="top"
+                                                                                            class="em_defaultlink"
+                                                                                            style="font-family: Arial,sans-serif; font-size:14px; line-height:18px; font-weight: 400; color: #ffffff;">
+                                                                                            Australia:&nbsp;&nbsp;<a href="tel:+61290943322" style="text-decoration: none; color: #ffffff;">+61 2 9094 3322</a><br />
+                                                                                            New Zealand:&nbsp;&nbsp;<a href="tel:+61290943322" style="text-decoration: none; color: #ffffff;">0800 855 045</a>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td align="left" valign="top">
+                                                                            <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                                                <tbody>
+                                                                                    <tr>
+                                                                                        <td align="center" valign="middle"
+                                                                                            style="line-height: 0px; font-size: 0px; padding-right: 6px;">
+                                                                                            <a href="mailto:info@entiretravel.com.au" style="text-decoration: none; color: #ffffff;">
+                                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/img21.png"
+                                                                                                     width="14" alt="Mail" style="display: block; max-width:14px;" />
+                                                                                            </a>
+                                                                                        </td>
+                                                                                        <td align="left" valign="top"
+                                                                                            class="em_defaultlink"
+                                                                                            style="font-family: Arial,sans-serif; font-size:14px; line-height:16px; font-weight: 400; color: #ffffff;">
+                                                                                            <a href="mailto:info@entiretravel.com.au" style="text-decoration: none; color: #ffffff;">info@entiretravel.com.au</a>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </th>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td height="46" style="height: 46px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- ===== // Pink_Footer_Section END HERE ===== -->
+                    <!-- ===== Social_Icons_Footer_Section START HERE ===== -->
+                    <tr>
+                        <td align="center" valign="top">
+                            <table align="center" width="800" border="0" cellspacing="0"
+                                   cellpadding="0" style="width: 800px;"
+                                   class="em_wrapper" bgcolor="#ededed">
+                                <tbody>
+                                    <tr>
+                                        <td align="center" valign="top"
+                                            style="padding: 0px 130px;" class="em_aside24">
+                                            <table width="100%" border="0" cellspacing="0"
+                                                   cellpadding="0" align="center">
+                                                <tbody>
+                                                    <tr>
+                                                        <td height="52"
+                                                            style="height: 52px; line-height: 0px; font-size: 0px;"
+                                                            class="em_h26">
+                                                            &nbsp;
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            style="padding-bottom: 23px;"
+                                                            class="em_pbottom14">
+                                                            <table align="center" border="0" cellspacing="0" cellpadding="0">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td align="center" valign="top"
+                                                                            style="line-height: 0px; font-size: 0px;">
+                                                                            <a href="https://www.facebook.com/entiretravelgroup/" target="_blank" style="text-decoration: none;">
+                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/icon1.png"
+                                                                                     width="11" alt="fb" border="0"
+                                                                                     style="display: block; max-width: 11px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                            </a>
+                                                                        </td>
+                                                                        <td width="20" style="width: 20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                        <td align="center" valign="middle" style="line-height: 0px; font-size: 0px;">
+                                                                            <a href="https://instagram.com/entiretravelgroup/" target="_blank" style="text-decoration: none;">
+                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/icon2.png"
+                                                                                     width="18" alt="insta" border="0"
+                                                                                     style="display: block; max-width: 18px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                            </a>
+                                                                        </td>
+                                                                        <td width="20" style="width: 20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                        <td align="center" valign="middle" style="line-height: 0px; font-size: 0px;">
+                                                                            <a href="https://au.linkedin.com/company/entire-travel-group" target="_blank" style="text-decoration: none;">
+                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/icon3.png"
+                                                                                     width="18" alt="in" border="0"
+                                                                                     style="display: block; max-width: 18px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                            </a>
+                                                                        </td>
+                                                                        <td width="20" style="width: 20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                        <td align="center" valign="middle" style="line-height: 0px; font-size: 0px;">
+                                                                            <a href="https://www.youtube.com/channel/UCN9WAuajgbA1GNtLfoZ7Xzg" target="_blank" style="text-decoration: none;">
+                                                                                <img src="https://www.entiretravel.com.au/edm/images2024/icon4.png"
+                                                                                     width="23" alt="youtube" border="0"
+                                                                                     style="display: block; max-width: 23px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000;" />
+                                                                            </a>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- Original unsubscribe content was commented out in K13 and is intentionally omitted. -->
+
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            class="em_defaultlink"
+                                                            style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #333333; font-weight: 400; padding-bottom: 10px;">
+                                                            <a href="https://www.entiretravel.com.au/about-us" style="text-decoration: none; color: #CA568E;" target="_blank">Who we are</a>&nbsp;&nbsp;
+                                                            <span style="color: #929497;">|</span>&nbsp;&nbsp;
+                                                            <a href="https://www.entiretravel.com.au/contact-us" style="text-decoration: none; color: #CA568E;" target="_blank">Contact us</a>
+                                                            <span style="color: #929497;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+                                                            <a href="https://www.entiretravel.com.au/legals/privacy-policy" style="text-decoration: none; color: #CA568E;" target="_blank">Privacy policy</a>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            class="em_defaultlink"
+                                                            style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #333333; font-weight: 400; padding-bottom: 7px;">
+                                                            To ensure that you receive your Entire Travel Group emails, please add
+                                                            <a href="mailto:marketing@entiretravel.com.au" style="text-decoration: none; color: #CA568E;">marketing@entiretravel.com.au</a>
+                                                            to your&nbsp;address&nbsp;book.
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td align="center" valign="top"
+                                                            class="em_defaultlink"
+                                                            style="font-family: Arial,sans-serif; font-size: 14px; line-height: 30px; color: #333333; font-weight: 400;">
+                                                            <span style="color: #929497;">
+                                                                Entire Travel Group&nbsp;&nbsp;|&nbsp;&nbsp;PO Box 465, North Sydney&nbsp;NSW&nbsp;&nbsp;|&nbsp;&nbsp;ABN: 60 625 410 755<br />
+                                                                © 2024 Entire Travel Group, Pty. All&nbsp;rights&nbsp;reserved.
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td height="34" style="height: 34px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- ===== // Social_Icons_Footer_Section END HERE ===== -->
+
+                    <tr>
+                        <td class="em_hide"
+                            style="line-height:1px;min-width:800px;background-color:#ededed;">
+                            <img alt="" src="https://www.entiretravel.com.au/edm/images2024/spacer.gif"
+                                 height="1" width="800"
+                                 style="max-height:1px; min-height:1px; display:block; width:800px; min-width:800px;"
+                                 border="0" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <!-- ===== // Footer Section END HERE ===== -->
+
+    <EmailBuilderScripts />
+</body>
+</html>

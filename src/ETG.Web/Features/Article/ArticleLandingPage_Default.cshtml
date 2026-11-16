@@ -52,12 +52,13 @@
                         <!-- Featured Blog Left -->
                         @if (featuredLeft != null)
                         {
-                            var leftImg = featuredLeft.HeroImage?.LegacyMediaFileAsset?.Url;
+                            var leftImg = featuredLeft.HeroImage.Imgixify(640, 360);
+                            var leftSrcset = featuredLeft.HeroImage.ImgixSrcset(640, 360, null);
                             <div class="col-12 col-lg-6">
                                 <div class="blog-list-card h-100 p-0 d-flex flex-column overflow-hidden bg-lightgray">
                                     @if (!string.IsNullOrWhiteSpace(leftImg))
                                     {
-                                        <img src="@leftImg" class="blog-list-img m-0" style="aspect-ratio: 16/9; object-fit: cover; width: 100%; border-radius: 0;" alt="@featuredLeft.Title">
+                                        <img src="@leftImg" srcset="@leftSrcset" width="640" height="360" loading="lazy" class="blog-list-img m-0" style="aspect-ratio: 16/9; object-fit: cover; width: 100%; border-radius: 0;" alt="@featuredLeft.Title">
                                     }
                                     else
                                     {
@@ -70,8 +71,8 @@
                                         {
                                             <span class="blog-list-tag text-pink d-block mb-2" style="font-size: 10px; font-weight: 800; text-transform: uppercase;">@featuredLeft.Categories</span>
                                         }
-                                        <h3 class="blog-list-title fs-4 mb-2 mt-1 fw-bold text-dark">@featuredLeft.Title</h3>
-                                        <p class="text-muted small mb-3" style="line-height: 1.6;">@featuredLeft.Summary</p>
+                                        <h3 class="blog-list-title fs-4 mb-2 mt-1 fw-bold text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">@featuredLeft.Title</h3>
+                                        <p class="text-muted small mb-3" style="line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">@featuredLeft.Summary</p>
                                         <a href="@featuredLeft.LinkPath" class="text-pink fw-bold text-decoration-none mt-auto" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Read full article &rarr;</a>
                                     </div>
                                 </div>
@@ -84,13 +85,14 @@
                             <!-- Top Horizontal Card -->
                             @if (featuredRightTop != null)
                             {
-                                var topImg = featuredRightTop.HeroImage?.LegacyMediaFileAsset?.Url;
-                                <div class="blog-list-card p-0 overflow-hidden">
+                                var topImg = featuredRightTop.HeroImage.Imgixify(300, 200);
+                                var topSrcset = featuredRightTop.HeroImage.ImgixSrcset(300, 200, null);
+                                <div class="blog-list-card p-0 overflow-hidden" style="flex: 1 1 0; min-height: 0;">
                                     <div class="row g-0 h-100">
                                         <div class="col-12 col-md-5">
                                             @if (!string.IsNullOrWhiteSpace(topImg))
                                             {
-                                                <img src="@topImg" class="blog-list-img w-100 h-100 m-0" style="object-fit: cover; border-radius: 0;" alt="@featuredRightTop.Title">
+                                                <img src="@topImg" srcset="@topSrcset" width="300" height="200" loading="lazy" class="blog-list-img w-100 h-100 m-0" style="object-fit: cover; border-radius: 0;" alt="@featuredRightTop.Title">
                                             }
                                             else
                                             {
@@ -104,7 +106,7 @@
                                             {
                                                 <span class="blog-list-tag text-pink d-block mb-2" style="font-size: 10px; font-weight: 800; text-transform: uppercase;">@featuredRightTop.Categories</span>
                                             }
-                                            <h3 class="blog-list-title fs-5 fw-bold text-dark mt-1 mb-2">@featuredRightTop.Title</h3>
+                                            <h3 class="blog-list-title fs-5 fw-bold text-dark mt-1 mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">@featuredRightTop.Title</h3>
                                             <p class="text-muted small mb-3" style="line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">@featuredRightTop.Summary</p>
                                             <a href="@featuredRightTop.LinkPath" class="text-pink fw-bold text-decoration-none mt-auto" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Read full article &rarr;</a>
                                         </div>
@@ -115,13 +117,14 @@
                             <!-- Bottom Horizontal Card -->
                             @if (featuredRightBottom != null)
                             {
-                                var botImg = featuredRightBottom.HeroImage?.LegacyMediaFileAsset?.Url;
-                                <div class="blog-list-card p-0 overflow-hidden">
+                                var botImg = featuredRightBottom.HeroImage.Imgixify(300, 200);
+                                var botSrcset = featuredRightBottom.HeroImage.ImgixSrcset(300, 200, null);
+                                <div class="blog-list-card p-0 overflow-hidden" style="flex: 1 1 0; min-height: 0;">
                                     <div class="row g-0 h-100">
                                         <div class="col-12 col-md-5">
                                             @if (!string.IsNullOrWhiteSpace(botImg))
                                             {
-                                                <img src="@botImg" class="blog-list-img w-100 h-100 m-0" style="object-fit: cover; border-radius: 0;" alt="@featuredRightBottom.Title">
+                                                <img src="@botImg" srcset="@botSrcset" width="300" height="200" loading="lazy" class="blog-list-img w-100 h-100 m-0" style="object-fit: cover; border-radius: 0;" alt="@featuredRightBottom.Title">
                                             }
                                             else
                                             {
@@ -135,7 +138,7 @@
                                             {
                                                 <span class="blog-list-tag text-pink d-block mb-2" style="font-size: 10px; font-weight: 800; text-transform: uppercase;">@featuredRightBottom.Categories</span>
                                             }
-                                            <h3 class="blog-list-title fs-5 fw-bold text-dark mt-1 mb-2">@featuredRightBottom.Title</h3>
+                                            <h3 class="blog-list-title fs-5 fw-bold text-dark mt-1 mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">@featuredRightBottom.Title</h3>
                                             <p class="text-muted small mb-3" style="line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">@featuredRightBottom.Summary</p>
                                             <a href="@featuredRightBottom.LinkPath" class="text-pink fw-bold text-decoration-none mt-auto" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;">Read full article &rarr;</a>
                                         </div>
@@ -235,4 +238,4 @@
 <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script>
 
-<script src="~/algolia/article-landing.js" asp-append-version="true"></script>
+<script src="~/minified/js/article-landing.min.js" asp-append-version="true"></script>

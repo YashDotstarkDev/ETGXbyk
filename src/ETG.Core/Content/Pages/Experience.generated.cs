@@ -171,5 +171,40 @@ namespace ETG.Core.Content
         /// MetaDataSchema__ExcludeFromSitemap.
         /// </summary>
         public bool MetaDataSchema__ExcludeFromSitemap { get; set; }
+
+        /// <summary>
+        /// DisplaySticky.
+        /// </summary>
+        public bool DisplaySticky { get; set; }
+
+
+        /// <summary>
+        /// CampaignDetail1.
+        /// </summary>
+        public string CampaignDetail1 { get; set; }
+
+
+        /// <summary>
+        /// CampaignDetail2.
+        /// </summary>
+        public string CampaignDetail2 { get; set; }
+
+
+        /// <summary>
+        /// CampaignDetail3.
+        /// </summary>
+        public string CampaignDetail3 { get; set; }
+
+
+        /// <summary>
+        /// CountdownLabel.
+        /// </summary>
+        public string CountdownLabel { get; set; }
+
+
+        /// <summary>
+        /// EndOfCampaign.
+        /// </summary>
+        public DateTime EndOfCampaign { get; set; }
     }
 }

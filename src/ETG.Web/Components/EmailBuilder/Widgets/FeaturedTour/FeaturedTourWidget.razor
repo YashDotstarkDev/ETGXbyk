@@ -1,0 +1,89 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.FeaturedTour
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- == Featured_Tour Section == -->
+<table bgcolor="#333333" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#333333;">
+  <tr>
+    <td align="center" valign="top"><table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+        <tr>
+          <td class="em_pad" align="left" valign="top" style="padding:47px 0px 11px; font-size:20px; line-height:28px;  font-family: Arial, sans-serif; color:#ffffff; letter-spacing: 0.5px; text-transform:uppercase; font-weight:600;">@Model.heading</td>
+        </tr>
+        <tr>
+          <td class="em_pbottom" align="left" valign="top" style="padding-bottom:25px;"><img class="em_full_img" src="@Model.image" alt="@Model.title" border="0" width="600" height="345" style="max-width:600px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#ffffff; font-family:Arial,sans-serif;"/></td>
+        </tr>
+        <tr>
+          <td class="em_defaultlink em_aside15" align="left" valign="top" style="font-size:20px; line-height:28px;  font-family: Arial, sans-serif; color:#ffffff; letter-spacing: 0.5px; font-weight:500; padding-bottom:7px;">@Model.title</td>
+        </tr>
+        <tr>
+          <td class="em_defaultlink em_aside15 em_pbottom" align="left" valign="top" style=" font-size:14px; line-height:25px;  font-family: Arial, sans-serif; color:#ffffff; padding-bottom:18px;">@Model.copy</td>
+        </tr>
+        <tr>
+          <td align="center" valign="top"><table align="left" width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                                @{
+                                    // Split the comma-separated text field into clean, case-insensitive values
+                                    var selected = new HashSet<string>(
+                                        (Model.inclusions?.ToString() ?? "")
+                                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                            .Select(x => x.Trim()),
+                                        StringComparer.OrdinalIgnoreCase);
+
+                                    // Accepted values, their icons and widths (shown in this fixed order)
+                                    var icons = new[]
+                                    {
+                                        new { Name = "Flights",       File = "icon1.png", Width = 15 },
+                                        new { Name = "Accommodation", File = "icon2.png", Width = 16 },
+                                        new { Name = "Meals",         File = "icon3.png", Width = 11 },
+                                        new { Name = "Transfer",      File = "icon4.png", Width = 13 }
+                                    };
+                                }
+                                <td align="left" valign="top" class="em_p1" style="padding-bottom:8px;">
+                                    <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td align="left" valign="middle" style="font-size:14px; line-height:17px; font-family: Arial, sans-serif; color:#ffffff;">@Model.nights nights</td>
+                                            <td align="left" valign="top" width="9" style="width:9px; font-size:0px; line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                            <td align="left" valign="top" style="font-size:14px; line-height:17px; font-family: Arial, sans-serif; color:#ffffff;">|</td>
+                                            @foreach (var icon in icons)
+                                            {
+                                                if (selected.Contains(icon.Name))
+                                                {
+                                                    <td align="left" valign="top" width="9" style="width:9px; font-size:0px; line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                                    <td align="center" valign="middle" style="font-size:0px; line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/@icon.File" alt="@icon.Name" border="0" width="@icon.Width" style="max-width:@(icon.Width)px; display:block;" /></td>
+                                                }
+                                            }
+                                        </tr>
+                                    </table>
+                                </td>
+              </tr>
+            </table></td>
+        </tr>
+        <tr>
+          <td class="em_defaultlink em_aside15" align="left" valign="top" style="font-size:14px; line-height:25px;  font-family: Arial, sans-serif; color:#929497;">From <span style="color:#ffffff; font-weight:bold;">$@Model.price per person</span></td>
+        </tr>
+        <tr>
+          <td class="em_defaultlink em_pbottom em_aside15" align="left" valign="top" style="font-size:14px; line-height:25px;  font-family: Arial, sans-serif; color:#929497; padding-bottom:25px;">@Model.departure</td>
+        </tr>
+        <tr>
+          <td class="em_pbottom" align="left" valign="top" style="padding-bottom:44px;"><table align="left" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                                @if (!string.IsNullOrEmpty(Model.ctaUrl))   
+                                {
+                                    <td align="center" valign="top">
+                                        <table align="center" bgcolor="#ca568e" border="0" cellspacing="0" cellpadding="0" style="background-color:#ca568e; border-radius:30px;">
+                                            <tr>
+                                                <td align="center" valign="middle" height="42" style="height:42px; font-size:14px; color:#ffffff; font-family:Arial, sans-serif; text-transform:uppercase; padding:0px 29px; font-weight:600; letter-spacing: 0.5px;"><a href="@Model.ctaUrl" target="_blank" style="text-decoration:none; color:#ffffff; display:block; line-height:42px;">@Model.ctaCopy</a></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                }
+                            </tr>
+            </table></td>
+        </tr>
+      </table></td>
+  </tr>
+</table>
+<!-- == //Featured_Tour Section == -->

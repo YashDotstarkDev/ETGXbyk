@@ -1,0 +1,55 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.LogoAreaAlt
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Logo Area (ALT) Section START HERE ===== -->
+<!-- == Header Section == -->
+    <table bgcolor="#ffffff" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ffffff;">
+      <tr>
+        <td align="center" valign="top">
+          <table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+            
+            <!-- == Header-Logo Section == -->
+            <tr>
+              <td class="em_pad" align="center" valign="top" style="padding:30px 0px 30px;"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="left" valign="top">
+                    @if (!string.IsNullOrWhiteSpace(Model.Logo))
+                    {
+                      <table align="left" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td align="center" valign="top"><a href="https://www.entiretravel.com.au/" target="_blank" style="text-decoration:none;"><img src="@Model.Logo" alt="ENTIRE TRAVEL GROUP" border="0" width="121" style="max-width:121px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;"/></a></td>
+                        </tr>
+                      </table>
+                    }
+                    
+                    <!--[if gte mso 9]>
+</td>
+<td valign="top">
+<![endif]-->
+                  
+                    @if (!string.IsNullOrWhiteSpace(Model.copy))
+                    {
+                      <table align="right" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td class="em_defaultlink" align="center" valign="top" style="padding-top:15px; font-family: Arial, sans-serif; font-size: 16px; line-height:20px; color:#333333; letter-spacing: 0.5px; text-transform: uppercase; font-weight:600;">@Model.copy</td>
+                        </tr>
+                      </table>
+                    }
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- == //Header-Logo Section == --> 
+          
+          <!-- == //Content_with_Cta Section == -->
+          </table>
+        </td>
+      </tr>
+    </table>
+    <!-- == //Header Section == --> 
+<!-- ===== // Logo Area (ALT) Section END HERE ===== -->

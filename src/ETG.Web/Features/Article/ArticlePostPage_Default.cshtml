@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Features.Article
+@using ETG.Web.Features.Article
 @using Kentico.PageBuilder.Web.Mvc
 @model ArticlePostPageViewModel
 
@@ -15,7 +15,7 @@
     "headline": "@post.Title",
     "url": "https://www.entiretravel.com.au@(Context.Request.Path.Value)",
     "description": "@post.Summary",
-    "image": "@post.HeroImageUrl",
+    "image": "@post.HeroImageUrl.Imgixify()",
     "datePublished": "@post.PublishDateIso",
     "dateModified": "@post.ModifiedDateIso", 
     "mainEntityOfPage": {

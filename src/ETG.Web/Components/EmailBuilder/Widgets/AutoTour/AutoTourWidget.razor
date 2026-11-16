@@ -1,0 +1,220 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.AutoTour
+@using Microsoft.AspNetCore.Components
+@using ETG.Web.Components.PageBuilder.Widgets.Products
+
+<!-- ===== Auto Tour Section START HERE ===== -->
+@if (Model.Tour is { } tour)
+{
+    <table align="center" width="100%" border="0"
+           cellspacing="0" cellpadding="0" bgcolor="#ffffff">
+        <tbody>
+            <tr>
+                <td align="center" valign="top" style="padding:20px;">
+                    <table align="center" width="600" border="0"
+                           cellspacing="0" cellpadding="0"
+                           class="em_wrapper"
+                           style="width:600px;max-width:600px;margin:0 auto;">
+                        <tbody>
+                            <!-- Tour title -->
+                            <tr>
+                                <td align="left"
+                                    style="font-family:Arial,sans-serif;font-size:20px;line-height:26px;color:#CA568E;padding-bottom:8px;">
+                                    @tour.Name
+                                    <span style="font-size:11px;">
+                                        (@tour.TourCode)
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- Nights and inclusions -->
+                            @if (Model.Nights > 0 ||
+                                 tour.InclusionIcons is { Count: > 0 })
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:20px;color:#333333;padding-bottom:6px;">
+                                        @if (Model.Nights > 0)
+                                        {
+                                            <span>@Model.Nights nights</span>
+                                        }
+
+                                        @if (tour.InclusionIcons is { Count: > 0 })
+                                        {
+                                            <span style="color:#CA568E;padding:0 10px;">|</span>
+
+                                            @foreach (var icon in tour.InclusionIcons)
+                                            {
+                                                @if (icon is not null)
+                                                {
+                                                    <span style="padding-right:8px;">
+                                                        @icon.Label
+                                                    </span>
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Price -->
+                            @if (!string.IsNullOrWhiteSpace(tour.CurrentPrice))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:20px;color:#777777;padding-bottom:6px;">
+                                        From
+                                        <strong style="color:#333333;">
+                                            @tour.CurrencySymbol@tour.CurrentPrice
+                                            @tour.PriceTypeLabel
+                                        </strong>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Travel period -->
+                            @if (!string.IsNullOrWhiteSpace(Model.TravelPeriod))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:20px;color:#777777;padding-bottom:16px;">
+                                        Travel Period: @Model.TravelPeriod
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Image and details -->
+                            <tr>
+                                <td style="padding-top:4px;">
+                                    <table width="100%" border="0"
+                                           cellspacing="0" cellpadding="0">
+                                        <tbody>
+                                            <tr>
+                                                <td width="290" align="center" valign="top"
+                                                    class="em_clear"
+                                                    style="width:290px;">
+                                                    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                                                    {
+                                                        <a href="@Model.EnquiryUrl"
+                                                           target="_blank"
+                                                           style="text-decoration:none;">
+                                                            <img src="@(Model.ImageUrl.Imgixify(580, 300))"
+                                                                 alt="@Model.ImageAlt"
+                                                                 width="290" border="0"
+                                                                 style="display:block;width:100%;max-width:290px;height:auto;margin:0 auto;" />
+                                                        </a>
+                                                    }
+                                                </td>
+
+                                                <td width="20" class="em_hide"
+                                                    style="width:20px;font-size:0;line-height:0;">
+                                                    &nbsp;
+                                                </td>
+
+                                                <td width="290" align="left" valign="top"
+                                                    class="em_clear"
+                                                    style="width:290px;">
+                                                    <table width="100%" border="0"
+                                                           cellspacing="0" cellpadding="0">
+                                                        <tbody>
+                                                            @if (!string.IsNullOrWhiteSpace(tour.Description))
+                                                            {
+                                                                <tr>
+                                                                    <td align="left"
+                                                                        style="font-family:Arial,sans-serif;font-size:14px;line-height:23px;color:#333333;padding-bottom:24px;">
+                                                                        @tour.Description
+                                                                    </td>
+                                                                </tr>
+                                                            }
+
+                                                            @foreach (var section in new[]
+                                                            {
+                                                                (Title: "Experience", Items: Model.Experiences),
+                                                                (Title: "Travel style", Items: Model.TravelStyles)
+                                                            })
+                                                            {
+                                                                @if (section.Items is { Count: > 0 })
+                                                                {
+                                                                    <tr>
+                                                                        <td align="left"
+                                                                            style="font-family:Arial,sans-serif;font-size:14px;line-height:21px;font-weight:bold;color:#333333;padding-bottom:10px;">
+                                                                            @section.Title
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td align="left" style="padding-bottom:20px;">
+                                                                            <table align="left" border="0"
+                                                                                   cellspacing="0" cellpadding="0">
+                                                                                <tbody>
+                                                                                    @foreach (var item in section.Items)
+                                                                                    {
+                                                                                        <tr>
+                                                                                            <td width="24" align="left" valign="middle"
+                                                                                                style="width:24px;padding-bottom:6px;">
+                                                                                                @if (!string.IsNullOrWhiteSpace(item.IconUrl))
+                                                                                                {
+                                                                                                    <img src="@(item.IconUrl.Imgixify(16, 16))"
+                                                                                                         alt=""
+                                                                                                         width="16" height="16" border="0"
+                                                                                                         style="display:block;width:16px;height:16px;" />
+                                                                                                }
+                                                                                                else
+                                                                                                {
+                                                                                                    <span>&nbsp;</span>
+                                                                                                }
+                                                                                            </td>
+                                                                                            <td align="left" valign="middle"
+                                                                                                style="font-family:Arial,sans-serif;font-size:13px;line-height:20px;color:#333333;padding-bottom:6px;">
+                                                                                                @item.Name
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    }
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+
+                                                            <!-- Enquiry button -->
+                                                            <tr>
+                                                                <td align="left">
+                                                                    <table align="left" border="0"
+                                                                           cellspacing="0" cellpadding="0">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td align="center"
+                                                                                    style="border:1px solid #CA568E;border-radius:24px;padding:10px 30px;">
+                                                                                    <a href="@Model.EnquiryUrl"
+                                                                                       target="_blank"
+                                                                                       style="font-family:Arial,sans-serif;font-size:13px;line-height:18px;font-weight:bold;color:#CA568E;text-decoration:none;">
+                                                                                        ENQUIRE
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td height="30"
+                                    style="height:30px;font-size:0;line-height:0;">
+                                    &nbsp;
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
+<!-- ===== // Auto Tour Section END HERE ===== -->

@@ -1,12 +1,17 @@
-﻿@using CMS.Websites
+ @using CMS.Websites
 @using ETG.Core.Content
 @using ETG.Web.Features.TourPackage
 @using Kentico.Content.Web.Mvc.PageBuilder
 @model TourPageTemplateController.TourPageTemplateViewModel
-
+@if (!Context.Kentico().PageBuilder().EditMode)
+{
+    <link href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu" rel="stylesheet" />
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.icomoon.io/39161/ETGP0001EntireTravelGroup/style.css?c3unwu" />
+    </noscript>
+}
 @{
     var pageData  = Model;
-
 
     if (pageData == null)
     {
@@ -33,12 +38,24 @@
         ?? Enumerable.Empty<dynamic>();
     var destination = destinations.FirstOrDefault();
 
-    var reviews = Model.Reviews;
-    double averageRating = reviews?.Totals.AverageRating ?? 0;
-    int reviewCount = reviews?.Totals.ReviewCount ?? 0;
-    int fullStars = (int)Math.Floor(averageRating);
-    bool halfStar = (averageRating - fullStars) >= 0.5;
-    int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+var reviews = Model.Reviews;
+double averageRating = Math.Clamp(reviews?.Totals.AverageRating ?? 0, 0, 5);
+int reviewCount = reviews?.Totals.ReviewCount ?? 0;
+
+int fullStars = (int)Math.Floor(averageRating);
+double fraction = averageRating - fullStars;
+bool halfStar = false;
+
+if (fraction > 0.5)
+{
+    fullStars++;          // e.g. 4.9 -> 5 full stars
+}
+else if (fraction > 0)
+{
+    halfStar = true;      // e.g. 4.1 - 4.5 -> 4 full + half
+}
+
+int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 }
 
 <vc:bread-crumb/>
@@ -101,7 +118,7 @@
          "name": "@(tour.TourName)",
          "url": "https://www.entiretravel.com.au/@currentUrl",
          "description": "@(@tour.TourSummary)",
-         "image": "@(tourHeroImage?.LegacyMediaFileAsset?.Url ?? "")",
+         "image": "@(tourHeroImage.Imgixify(1200, 630))",
          "sku":"@(tour.TourCode)",
          "Mpn":"@(tour.TourCode)",
          "offers": {
@@ -114,7 +131,7 @@
     }
 </script>
 <!-- FAQ schema -->
-@if (tour?.TourFAQFolder != null && tour.TourFAQFolder.Any())
+@if (Model.FAQs != null && Model.FAQs.Any())
 {
     <!-- FAQ schema -->
     <script type="application/ld+json">
@@ -123,26 +140,28 @@
             "@@type": "FAQPage",
             "mainEntity": [
             @{
-              var faqSchemaIndex = 0;
+                    var faqSchemaIndex = 0;
             }
 
-            @foreach (var faq in tour.TourFAQFolder)
+            @foreach (var faq in Model.FAQs)
             {
-                 if (faqSchemaIndex > 0)
-                 {
-                   @:,
-                 }
-                 <text>
-                     {
-                         "@@type": "Question",
-                         "name": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(faq.FAQQuestion)),
-                         "acceptedAnswer": {
-                         "@@type": "Answer",
-                         "text": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(faq.FAQAnswer))
-                         }
-                     }
-                 </text>
-                  faqSchemaIndex++;
+                    if (faqSchemaIndex > 0)
+                    {
+                            @:,
+                    }
+
+                    <text>
+                            {
+                                "@@type": "Question",
+                                "name": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(faq.FAQQuestion)),
+                                "acceptedAnswer": {
+                                    "@@type": "Answer",
+                                    "text": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(faq.FAQAnswer))
+                                }
+                            }
+                    </text>
+
+                    faqSchemaIndex++;
             }
             ]
         }
@@ -152,14 +171,23 @@
 <partial name="~/Views/Shared/Partial/Tour/_TourHeroImageWithSlider.cshtml"
          model="tour" />
 
-@if (!string.IsNullOrWhiteSpace(destination?.DestinationName)
-    || !string.IsNullOrWhiteSpace(tour?.TourPriceCurrency))
+@if (!string.IsNullOrWhiteSpace(destination?.DestinationName))
 {
 
     <div class="pkg-header-wrapper border-top border-info border-2" style="background-color: #fff9fb;">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center py-3 pkg-header-row">
-                <h2 class="pkg-title m-0">@(destination?.DestinationName ?? tour?.TourPriceCurrency ?? "") | Tour Code: <span class="text-pink">@(tour?.TourCode ?? "")</span></h2>
+                <h2 class="pkg-title m-0">@(destination?.DestinationName ?? "") | Tour Code: <span class="text-pink">@(tour?.TourCode ?? "")</span></h2>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="pkg-header-wrapper border-top border-info border-2" style="background-color: #fff9fb;">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-3 pkg-header-row">
+                <h2 class="pkg-title m-0">Tour Code: <span class="text-pink">@(tour?.TourCode ?? "")</span></h2>
             </div>
         </div>
     </div>
@@ -250,7 +278,7 @@
                                     <a class="nav-link" href="#pkg-excluded">Excluded</a>
                                 </li>
                             }
-                            @if (tour.TourFAQFolder != null && tour.TourFAQFolder.Any())
+                            @if (Model.FAQs != null && Model.FAQs.Any())
                             {
                                 <li class="nav-item" data-label="faqs">
                                     <a class="nav-link" href="#pkg-faqs">FAQs</a>
@@ -307,7 +335,7 @@
                                     {
                                         <a href="#pkg-excluded" data-label="excluded" data-always-more="true">Excluded</a>
                                     }
-                                    @if (tour.TourFAQFolder != null && tour.TourFAQFolder.Any())
+                                    @if (Model.FAQs != null && Model.FAQs.Any())
                                     {
                                         <a href="#pkg-faqs" data-label="faqs">FAQs</a>
                                     }
@@ -401,8 +429,9 @@
                             <p class="pkg-body-text pkg-body-text-styled">@Html.Raw(tour.TourDetails)</p>
                             @if (tourMapImage?.LegacyMediaFileAsset?.Url != null)
                             {                                
-                                <img src="@(tourMapImage?.LegacyMediaFileAsset?.Url ?? "")"
+                                <img src="@tourMapImage.Imgixify(800, 0, "max", "format,compress")" srcset="@tourMapImage.ImgixSrcset(800, 0, null, "max", "format,compress")" width="800"
                                      alt="Tour Map"
+                                     loading="lazy"
                                      class="pkg-overview-image">
                             }
                         </div>
@@ -442,9 +471,8 @@
                             </ul>
                             </div>
                         }
-                    }
-
-                    <hr class="pkgd-section-divider">
+                        <hr class="pkgd-section-divider">
+                    }                    
 
                     @if (tour.SelectedTourHighlightFolders != null && tour.SelectedTourHighlightFolders.Any())
                     {
@@ -478,8 +506,9 @@
                                     }
                                 </ul>
                             </div>
+                            <hr class="pkgd-section-divider">
                         }
-                        <hr class="pkgd-section-divider">
+                        
                     }
 
                    
@@ -517,6 +546,17 @@
                                         }
                                     }
                                 }
+                                @if (tour?.TourHasFreedomOfChoice != null)
+                                {
+                                    <li class="inclusion-item">
+                                        <span class="inclusion-icon-wrapper">
+                                            <span class="icon fal fa-tag"></span>
+                                        </span>
+                                        <span class="inclusion-text">
+                                            Freedom of Choice Days
+                                        </span>
+                                    </li>
+                                }                                
 
                             </ul>
                         </div>
@@ -656,14 +696,19 @@
                                                 {
                                                     var itineraryImage = itinerary.TourItineraryImage.OfType<MediaFile>().FirstOrDefault();
 
-                                                    var imageUrl = itineraryImage?.LegacyMediaFileAsset?.Url;
+                                                    var imageUrl = itineraryImage.Imgixify(800, 450);
+                                                    var itinerarySrcset = itineraryImage.ImgixSrcset(800, 450, null);
                                                     if (itineraryImage != null)
                                                     {
                                                       <div class="inner-content">
                                                             <div class="image mt-4">
 
                                                                 <img class="lazyload"
-                                                                     src="@Url.Content(imageUrl)"
+                                                                     src="@imageUrl"
+                                                                     srcset="@itinerarySrcset"
+                                                                     width="800"
+                                                                     height="450"
+                                                                     loading="lazy"
                                                                      alt="@itinerary.TourItineraryTitle" />
 
                                                                 <div class="grad"></div>
@@ -793,7 +838,7 @@
                                                                         if (image != null)
                                                                         {
                                                                             <div class="image">
-                                                                                <img class="ls-is-cached lazyloaded" src="@image.LegacyMediaFileAsset?.Url" alt="@hotel.HotelName">
+                                                                            <img class="ls-is-cached lazyloaded" src="@image.Imgixify(600, 400)" srcset="@image.ImgixSrcset(600, 400, null)" width="600" height="400" alt="@hotel.HotelName" loading="lazy">
                                                                             </div>
                                                                         }
                                                                     }
@@ -834,7 +879,7 @@
                                                                                 if (image != null)
                                                                                 {
                                                                                     <div class="image">
-                                                                                        <img class="ls-is-cached lazyloaded" src="@image.LegacyMediaFileAsset?.Url" alt="@roomUpgrade.RoomUpgradeTitle">
+                                                                                    <img class="ls-is-cached lazyloaded" src="@image.Imgixify(600, 400)" srcset="@image.ImgixSrcset(600, 400, null)" width="600" height="400" alt="@roomUpgrade.RoomUpgradeTitle" loading="lazy">
                                                                                     </div>
                                                                                 }
                                                                             }
@@ -913,7 +958,7 @@
                                                             if (image != null)
                                                             {
                                                                 <div class="image">
-                                                                    <img class="ls-is-cached lazyloaded" src="@image.LegacyMediaFileAsset?.Url" alt="@optionalExtras.OptionalExtrasImageCaption">
+                                                                    <img class="ls-is-cached lazyloaded" src="@image.Imgixify(600, 400)" srcset="@image.ImgixSrcset(600, 400, null)" width="600" height="400" alt="@optionalExtras.OptionalExtrasImageCaption" loading="lazy">
                                                                 </div>
                                                             }
                                                         }
@@ -977,20 +1022,23 @@
                         <!-- Section: Additional Information -->
                         <div id="pkg-additional" class="pkg-section mb-5">
                             <h3 class="pkg-section-title mb-3">Additional Information</h3>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="additional-info-box">
-                                        <div class="info-label text-uppercase small text-white opacity-75">OFFICIAL LANGUAGE</div>
-                                        <div class="info-val text-white fw-medium">@(destination?.DestinationOfficialLanguages ?? "")</div>
+                            @if (!string.IsNullOrWhiteSpace(destination?.DestinationName))
+                            {
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="additional-info-box">
+                                            <div class="info-label text-uppercase small text-white opacity-75">OFFICIAL LANGUAGE</div>
+                                            <div class="info-val text-white fw-medium">@(destination?.DestinationOfficialLanguages ?? "")</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="additional-info-box">
+                                            <div class="info-label text-uppercase small text-white opacity-75">LOCAL CURRENCY</div>
+                                            <div class="info-val text-white fw-medium">@(destination?.DestinationCurrency ?? "")</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="additional-info-box">
-                                        <div class="info-label text-uppercase small text-white opacity-75">LOCAL CURRENCY</div>
-                                        <div class="info-val text-white fw-medium">@(destination?.DestinationCurrency ?? "")</div>
-                                    </div>
-                                </div>
-                            </div>
+                            }
                             <br />
                             @Html.Raw(tour.TourImportantNote)
                             @Html.Raw(tour.TourSmallprint)
@@ -1008,7 +1056,7 @@
                 </div>
 
                 <!-- ============ Tour Page (FAQ) ============ -->
-                @if (tour.TourFAQFolder != null && tour.TourFAQFolder.Any())
+                @if (Model.FAQs != null && Model.FAQs.Any())
                 {
                     <section class="section-pad pkg-section" aria-labelledby="faq-title" id="pkg-faqs">
                         <div class="container">
@@ -1020,18 +1068,17 @@
                             </div>                           
 
                             <div class="accordion" id="faqAccordion">
-                                @if (tour?.TourFAQFolder != null && tour.TourFAQFolder.Any())
+                                @if (Model.FAQs != null && Model.FAQs.Any())
                                 {
                                     <div class="accordion" id="faqAccordion">
-                                        @{
-                                            var faqIndex = 1;
-                                        }
-                                        @foreach (var faq in tour.TourFAQFolder)
+
+                                        @foreach (var faq in Model.FAQs.Select((item, index) => new { item, index }))
                                         {
-                                            var faqId = $"faq{faqIndex}";
-                                            var headingId = $"heading{faqIndex}";
+                                            var faqId = $"faq{faq.index + 1}";
+                                            var headingId = $"heading{faq.index + 1}";
 
                                             <div class="accordion-item">
+
                                                 <h3 class="accordion-header" id="@headingId">
                                                     <button class="accordion-button collapsed"
                                                             type="button"
@@ -1039,20 +1086,23 @@
                                                             data-bs-target="#@faqId"
                                                             aria-expanded="false"
                                                             aria-controls="@faqId">
-                                                        @faq.FAQQuestion
+                                                        @faq.item.FAQQuestion
                                                     </button>
                                                 </h3>
+
                                                 <div id="@faqId"
                                                      class="accordion-collapse collapse"
                                                      aria-labelledby="@headingId"
                                                      data-bs-parent="#faqAccordion">
+
                                                     <div class="accordion-body">
-                                                        @Html.Raw(faq.FAQAnswer)
+                                                        @Html.Raw(faq.item.FAQAnswer)
                                                     </div>
+
                                                 </div>
                                             </div>
-                                            faqIndex++;
                                         }
+
                                     </div>
                                 }
                             </div>
@@ -1092,7 +1142,12 @@
                                            @if (image?.LegacyMediaFileAsset?.Url != null)
                                            {
                                                <div class="partnership-logo-wrapper">
-                                                   <img src="@image.LegacyMediaFileAsset.Url" alt="@partner.CTAImageImageAltText" class="partnership-logo">
+                                                    <img src="@image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress")"
+                                                         srcset="@image.ImgixSrcset(130, 0, null, "clip", "format,compress")"
+                                                         width="130"
+                                                         alt="@partner.CTAImageImageAltText" 
+                                                         class="partnership-logo" 
+                                                         loading="lazy" />
                                                </div>
                                            }
                                         }
@@ -1171,6 +1226,7 @@
                                rel="noopener noreferrer">
                                 <img src="/images/google-review-logo.png"
                                      alt="Google"
+                                     loading="lazy"
                                      class="google-logo" />
                             </a>
                             <div class="google-content">
@@ -1178,15 +1234,15 @@
                                      aria-label="@averageRating out of 5 stars">
                                     @for (int i = 0; i < fullStars; i++)
                                     {
-                                        <span aria-hidden="true">&#9733;</span>
+                                     <span aria-hidden="true"><i class="bi bi-star-fill"></i></span>
                                     }
                                     @if (halfStar)
                                     {
-                                        <span aria-hidden="true">&#11242;</span>
+                                    <span aria-hidden="true"><i class="bi bi-star-half"></i></span>
                                     }
                                     @for (int i = 0; i < emptyStars; i++)
                                     {
-                                        <span aria-hidden="true">&#9734;</span>
+                                     <span aria-hidden="true"><i class="bi bi-star"></i></span>
                                     }
                                 </div>
                                 <div class="reviews">

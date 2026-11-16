@@ -70,7 +70,7 @@ public class TravelTypeLandingPageQueryHandler(
         var travelTypeDetails = (
      await Executor.GetMappedWebPageResult<TravelTypeDetail>(
          travelTypeDetailsQuery,
-         new ContentQueryExecutionOptions { ForPreview = false }, 
+         DefaultQueryOptions,
          cancellationToken
      )
  ).ToList();

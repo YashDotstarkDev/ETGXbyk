@@ -1,4 +1,12 @@
-﻿@using ETG.Web.Features.AgentIncentive
+@section Styles
+{
+    @if (!string.IsNullOrWhiteSpace(Model.HeroImageUrl))
+    {
+        <link rel="preload" fetchpriority="high" as="image" href="@Model.HeroImageUrl.Imgixify(1920, 600)" media="(min-width: 768px)" />
+        <link rel="preload" fetchpriority="high" as="image" href="@Model.HeroImageUrl.Imgixify(768, 960)" media="(max-width: 767px)" />
+    }
+}
+@using ETG.Web.Features.AgentIncentive
 
 @using Kentico.Content.Web.Mvc.PageBuilder
 
@@ -21,8 +29,18 @@
         {
 
             <picture>
-                <img src="@Model.HeroImageUrl"
+                <source media="(max-width: 767px)"
+                        srcset="@Model.HeroImageUrl.ImgixSrcset(768, 960, null)"
+                        width="768"
+                        height="960" />
+                <img src="@Model.HeroImageUrl.Imgixify(1920, 600)"
+                     srcset="@Model.HeroImageUrl.ImgixSrcset(1920, 600, new[] { 1 })"
                      alt="@Model.HeroImageAlt"
+                     width="1920"
+                     height="600"
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async"
                      class="hero-bg" />
             </picture>
         }

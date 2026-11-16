@@ -469,13 +469,9 @@
                     {
                         <article class="blog-post-card">
                             <div class="blog-card-image-wrapper">
-                                @if (post.TeaserImage.LegacyMediaFileAsset != null)
+                                @if (post.TeaserImage?.LegacyMediaFileAsset != null)
                                 {
-                                    <img src="@post.TeaserImage.LegacyMediaFileAsset.Url" alt="@post.Title" class="blog-card-image" loading="lazy">
-                                }
-                                else if (post.TeaserImage.LegacyMediaFileAsset != null)
-                                {
-                                    <img src="@post.TeaserImage.LegacyMediaFileAsset.Url" alt="@post.Title" class="blog-card-image" loading="lazy">
+                                    <img src="@post.TeaserImage.Imgixify(400, 250)" alt="@post.Title" class="blog-card-image" loading="lazy">
                                 }
                                 else
                                 {

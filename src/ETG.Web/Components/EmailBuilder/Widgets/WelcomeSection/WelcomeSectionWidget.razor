@@ -1,0 +1,105 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.WelcomeSection
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Welcome Section Section START HERE ===== -->
+        <!-- ===== Welcome_Section START HERE ===== -->
+        <tr>
+          <td align="center" valign="top"><table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+              <tbody>
+                <tr>
+                  <td align="center" valign="top" style="padding: 0px 100px;" class="em_aside24"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                      <tbody>
+                         @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(Image)){  %} *@
+                        <tr>
+                          <td align="center" valign="top" class="em_full_img"><img src="@Model.Image" width="600" alt="@Model.Heading" border="0" style="display: block; max-width: 600px; font-family: Arial,sans-serif; font-size: 15px; line-height: 17px; color: #000000; border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"/></td>
+                        </tr>
+                        <tr>
+                          <td height="40" style="height: 40px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                          
+                        <tr>
+                          <td align="center" valign="top" style="padding: 0px 30px;" class="em_pad0"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tbody>
+                                 @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(Heading)){  %} *@
+                                <tr>
+                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 30px; line-height: 35px; font-weight: 800; color: #333333; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 20px;">@Model.Heading</td>
+                                </tr>
+                                
+                                @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(Intro)){  %} *@
+                                <tr>
+                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px; line-height: 26px; color: #333333; padding-bottom: 20px;">@((MarkupString)Model.Intro)</td>
+                                </tr>
+                                
+                                @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(Copy)){  %} *@
+                                <tr>
+                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #333333; padding-bottom: 20px;">@((MarkupString)Model.Copy)</td>
+                                </tr>
+                                
+                                @if ((!string.IsNullOrWhiteSpace(Model.PrimaryCTALabel) && !string.IsNullOrWhiteSpace(Model.PrimaryCTAUrl)) || (!string.IsNullOrWhiteSpace(Model.SecondaryCTALabel) && !string.IsNullOrWhiteSpace(Model.SecondaryCTAUrl)))
+                                {
+                                <tr>
+                                  <td align="left" valign="top">
+                                    <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                        <tr>
+                                          @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(PrimaryCTALabel) && !string.IsNullOrWhiteSpace(PrimaryCTAUrl) ){  %} *@
+                                          @if (!string.IsNullOrWhiteSpace(Model.PrimaryCTALabel) && !string.IsNullOrWhiteSpace(Model.PrimaryCTAUrl))
+                                          {
+                                          <td align="center" valign="top">
+                                            <table align="center" bgcolor="#CA568E" border="0" cellspacing="0" cellpadding="0" style="background-color:#CA568E; border-radius:30px;">
+                                              <tr>
+                                                <td class="em_defaultlink" align="center" valign="middle" height="48" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #ffffff; height:48px; text-transform: uppercase; padding: 0 20px;" >
+                                                  <a href="@Model.PrimaryCTAUrl" target="_blank" style="text-decoration:none; color:#ffffff; line-height:48px; display:block;">@Model.PrimaryCTALabel</a></td>
+                                              </tr>
+                                            </table></td>
+                                          }
+                                          @if (!string.IsNullOrWhiteSpace(Model.PrimaryCTALabel) && !string.IsNullOrWhiteSpace(Model.PrimaryCTAUrl) && !string.IsNullOrWhiteSpace(Model.SecondaryCTALabel) && !string.IsNullOrWhiteSpace(Model.SecondaryCTAUrl))
+                                          {
+                                          <td width="9" style="width: 9px; line-height: 0px; font-size: 0px;"></td>
+                                          }
+                                          
+                                          @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(SecondaryCTALabel) && !string.IsNullOrWhiteSpace(SecondaryCTAUrl) ){  %} *@
+                                          @if (!string.IsNullOrWhiteSpace(Model.SecondaryCTALabel) && !string.IsNullOrWhiteSpace(Model.SecondaryCTAUrl))
+                                          {
+                                          <td align="center" valign="top"><table align="center" border="0" cellspacing="0" cellpadding="0">
+                                              <tr>
+                                                <td align="center" valign="top" style="border: 2px solid #CA568E; border-radius: 30px;"><table  border="0" cellspacing="0" cellpadding="0" >
+                                                    <tbody>
+                                                      <tr>
+                                                        <td class="em_defult em_dm_txt_white" align="center" valign="middle" height="44" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #CA568E; height:44px; text-transform: uppercase; padding: 0 20px;" ><a href="@Model.SecondaryCTAUrl" target="_blank" style="text-decoration:none; color:#CA568E; line-height:44px; display:block;">@Model.SecondaryCTALabel</a></td>
+                                                      </tr>
+                                                    </tbody>
+                                                  </table></td>
+                                          
+                                            
+                                          
+                                          
+                                              </tr>
+                                            </table></td>
+                                          }
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                </tr>
+                                }
+                                 @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(Heading) || !string.IsNullOrWhiteSpace(Intro) || !string.IsNullOrWhiteSpace(Copy) || !string.IsNullOrWhiteSpace(SecondaryCTALabel) || !string.IsNullOrWhiteSpace(SecondaryCTAUrl) || !string.IsNullOrWhiteSpace(SecondaryCTALabel) || !string.IsNullOrWhiteSpace(SecondaryCTAUrl)){  %} *@
+                                <tr>
+                                  <td height="80" style="height: 80px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                
+                              </tbody>
+                            </table></td>
+                        </tr>
+                      </tbody>
+                    </table></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
+        <!-- ===== // Welcome_Section END HERE ===== --> 
+<!-- ===== // Welcome Section Section END HERE ===== -->

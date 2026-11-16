@@ -11,6 +11,7 @@ using ETG.Core.Models;
 using ETG.Core.Models.Tour;
 using ETG.Web.Components.ViewComponents.SubscribeNow;
 using ETG.Web.Infrastructure;
+using ETG.Web.Services.Email;
 using ETG.Web.Services.Storage;
 using ETG.Web.Services.Tour;
 using ETG.Web.Services.Utm;
@@ -26,10 +27,13 @@ public class FormController : Controller
     private readonly IContentQueryExecutionOptionsCreator _queryOptionsCreator;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ReCaptchaSettings _captchaOptions;
+
+    private readonly CaptchaValidator _captchaValidator;
     private readonly ILogger<FormController> logger;
     private readonly IUtmService _utmService;
     private readonly IShareLinksService _shareLinksService;
     private readonly IBlobStorageService _blobStorageService;
+    private readonly IFormEmailService _formEmailService;
 
     public FormController(
         IContentQueryExecutor executor,
@@ -39,7 +43,9 @@ public class FormController : Controller
         IUtmService utmService,
         IShareLinksService shareLinksService,
         IBlobStorageService blobStorageService,
-        IOptions<ReCaptchaSettings> captchaOptions)
+        IOptions<ReCaptchaSettings> captchaOptions,
+        IFormEmailService formEmailService,
+        CaptchaValidator captchaValidator)
     {
         _executor = executor;
         _utmService = utmService;
@@ -48,21 +54,23 @@ public class FormController : Controller
         _queryOptionsCreator = queryOptionsCreator;
         _httpContextAccessor = httpContextAccessor;
         _captchaOptions = captchaOptions.Value;
+        _formEmailService = formEmailService;
+        _captchaValidator = captchaValidator;
         this.logger = logger;
     }
 
     #region[Competition/Subscribe now VC]
     [HttpPost("~/api/competition/subscribe")]
     [ValidateAntiForgeryToken]
-    public IActionResult SubscribeNow([FromForm] SubscribeNowViewModel model)
+    public async Task<IActionResult> SubscribeNow([FromForm] SubscribeNowViewModel model)
     {
         if (!ModelState.IsValid)
         {
             var error = ModelState[nameof(model.EmailAddress)]?.Errors
-                            .FirstOrDefault()?.ErrorMessage
-                        ?? ModelState[nameof(model.IsTravelAgent)]?.Errors
-                            .FirstOrDefault()?.ErrorMessage
-                        ?? "Please check your details.";
+                             .FirstOrDefault()?.ErrorMessage
+                         ?? ModelState[nameof(model.IsTravelAgent)]?.Errors
+                             .FirstOrDefault()?.ErrorMessage
+                         ?? "Please check your details.";
 
             return BadRequest(new
             {
@@ -87,7 +95,7 @@ public class FormController : Controller
             model.EmailAddress = model.EmailAddress.Trim();
             model.IsTravelAgent = agentSelection;
 
-            var saved = GetSubscribeNowQuery.Save(model);
+            var saved = await GetSubscribeNowQuery.SaveAsync(model, _formEmailService, logger);
 
             if (!saved)
             {
@@ -137,6 +145,7 @@ public class FormController : Controller
     #region Tour Enquiry
 
     [HttpPost("~/enquire/submit")]
+    [ActionName("TourEnquire")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Submit(TourEnquireViewModel model)
     {
@@ -144,49 +153,92 @@ public class FormController : Controller
         {
             return BadRequest();
         }
-        // Validate reCAPTCHA
-        if (!ValidateRecaptcha(
-        "tour_enquire_submit",
-        out var recaptchaError))
 
-            if (string.IsNullOrWhiteSpace(model.Form.FirstName))
-            {
-                model.Form.ErrorMessage = "Please enter your first name.";
-                return await ReturnEnquireView(model);
-            }
+        // 1. Validate reCAPTCHA
+        var (isCaptchaValid, captchaError) = await ValidateRecaptcha("tour_enquire_submit");
+        if (!isCaptchaValid)
+        {
+            logger.LogWarning("Tour enquiry failed reCAPTCHA validation: {Error}", captchaError);
+            model.Form.ErrorMessage = captchaError;
+            return await ReturnEnquireView(model);
+        }
 
+        // 2. Validate First Name
+        if (string.IsNullOrWhiteSpace(model.Form.FirstName))
+        {
+            model.Form.ErrorMessage = "Please enter your first name.";
+            return await ReturnEnquireView(model);
+        }
+
+        if (model.Form.FirstName.Any(char.IsDigit))
+        {
+            model.Form.ErrorMessage = "First name cannot contain numbers.";
+            return await ReturnEnquireView(model);
+        }
+
+        // 3. Validate Last Name
         if (string.IsNullOrWhiteSpace(model.Form.LastName))
         {
             model.Form.ErrorMessage = "Please enter your last name.";
             return await ReturnEnquireView(model);
         }
 
-        if (string.IsNullOrWhiteSpace(model.Form.Email) && string.Equals(model.Form.PreferredContactMethod, "Email",
-                StringComparison.OrdinalIgnoreCase))
+        if (model.Form.LastName.Any(char.IsDigit))
         {
-            model.Form.ErrorMessage = "Please enter your email address.";
+            model.Form.ErrorMessage = "Last name cannot contain numbers.";
             return await ReturnEnquireView(model);
         }
 
-        if (string.IsNullOrWhiteSpace(model.Form.Phone) &&
-            string.Equals(model.Form.PreferredContactMethod, "Phone", StringComparison.OrdinalIgnoreCase))
-        {
-            model.Form.ErrorMessage = "Please enter your phone number.";
-            return await ReturnEnquireView(model);
-        }
-
+        // 4. Anti-Spam checks on Names
         if (string.Equals(model.Form.FirstName.Trim(), model.Form.LastName.Trim(), StringComparison.OrdinalIgnoreCase))
         {
             model.Form.ErrorMessage = "First and last name cannot be the same.";
             return await ReturnEnquireView(model);
         }
 
-        if (model.Form.FirstName.Contains("http", StringComparison.OrdinalIgnoreCase) || model.Form.LastName.Contains("http", StringComparison.OrdinalIgnoreCase))
+        if (model.Form.FirstName.Contains("http", StringComparison.OrdinalIgnoreCase) ||
+            model.Form.LastName.Contains("http", StringComparison.OrdinalIgnoreCase))
         {
             model.Form.ErrorMessage = "Please enter valid values.";
             return await ReturnEnquireView(model);
         }
 
+        // 5. Validate Preferred Contact Method & Field formats
+        var isEmailPreferred = string.Equals(model.Form.PreferredContactMethod, "Email", StringComparison.OrdinalIgnoreCase);
+        var isPhonePreferred = string.Equals(model.Form.PreferredContactMethod, "Phone", StringComparison.OrdinalIgnoreCase);
+
+        if (isEmailPreferred)
+        {
+            if (string.IsNullOrWhiteSpace(model.Form.Email) || !new EmailAddressAttribute().IsValid(model.Form.Email))
+            {
+                model.Form.ErrorMessage = "Please enter a valid email address.";
+                return await ReturnEnquireView(model);
+            }
+        }
+        else if (isPhonePreferred)
+        {
+            if (string.IsNullOrWhiteSpace(model.Form.Phone))
+            {
+                model.Form.ErrorMessage = "Please enter your phone number.";
+                return await ReturnEnquireView(model);
+            }
+        }
+        else
+        {
+            // Default fallback: email is mandatory
+            if (string.IsNullOrWhiteSpace(model.Form.Email) || !new EmailAddressAttribute().IsValid(model.Form.Email))
+            {
+                model.Form.ErrorMessage = "Please enter a valid email address.";
+                return await ReturnEnquireView(model);
+            }
+        }
+
+        // 6. Validate Message
+        if (string.IsNullOrWhiteSpace(model.Form.Message))
+        {
+            model.Form.ErrorMessage = "Please enter your questions or comments.";
+            return await ReturnEnquireView(model);
+        }
         var enquireItem = new EnquireItem
         {
             Firstname = model.Form.FirstName.Trim(),
@@ -233,6 +285,47 @@ public class FormController : Controller
         }
 
         BizFormItemProvider.SetItem(enquireItem);
+
+        var formData = new Dictionary<string, string?>
+        {
+            ["Firstname"] = enquireItem.Firstname,
+            ["Lastname"] = enquireItem.Lastname,
+            ["Email"] = enquireItem.Email,
+            ["Phone"] = enquireItem.Phone,
+            ["PreferredContactMethod"] = enquireItem.PreferredContactMethod,
+            ["TourCode"] = enquireItem.TourCode,
+            ["TourName"] = enquireItem.TourName,
+            ["TourClass"] = enquireItem.TourClass,
+            ["TourDepartureCity"] = enquireItem.TourDepartureCity,
+            ["TourQuotedPrice"] = enquireItem.TourQuotedPrice.ToString(),
+            ["PriceCurrency"] = enquireItem.PriceCurrency,
+            ["PreferredDestination"] = enquireItem.PreferredDestination,
+            ["TourDiscountText"] = enquireItem.TourDiscountText,
+            ["TourDate"] = enquireItem.TourDate?.ToString(),
+            ["DepartureDate"] = enquireItem.DepartureDate?.ToString(),
+            ["ReturnDate"] = enquireItem.ReturnDate?.ToString(),
+            ["SubscribeToNewsletter"] =
+enquireItem.SubscribeToNewsletter.ToString(),
+            ["Message"] = enquireItem.Message
+        };
+        try
+        {
+            await _formEmailService.SendCustomerConfirmationAsync(
+    FormEmailNames.Enquire,
+    enquireItem.Email,
+    formData);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Enquire confirmation email failed. ItemID: {ItemID}",
+                enquireItem.ItemID);
+        }
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Json(new { success = true, redirectUrl = "/enquire/thank-you" });
+        }
         return Redirect("/enquire/thank-you");
     }
 
@@ -279,10 +372,9 @@ public class FormController : Controller
     #endregion
 
     #region Main Enquiry
-
-    [HttpPost("~/api/enquire/submit")]
+    [HttpPost("~/form/enquire")]
     [ValidateAntiForgeryToken]
-    public IActionResult GenericEnquire(EnquireFormPageViewModel model)
+    public async Task<IActionResult> GenericEnquire(EnquireFormPageViewModel model)
     {
         if (model?.Form == null)
         {
@@ -338,13 +430,10 @@ public class FormController : Controller
         }
 
         // reCAPTCHA
-        if (!ValidateRecaptcha("generic_enquire_submit", out var recaptchaError))
+        var (isCaptchaValid, captchaError) = await ValidateRecaptcha("generic_enquire_submit");
+        if (!isCaptchaValid)
         {
-            return Json(new
-            {
-                success = false,
-                message = recaptchaError
-            });
+            return Json(new { success = false, message = captchaError });
         }
 
         if (string.Equals(model.Form.FirstName.Trim(), model.Form.LastName.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -439,21 +528,55 @@ public class FormController : Controller
         }
 
         BizFormItemProvider.SetItem(enquireItem);
-
-        return Json(new
+        var formData = new Dictionary<string, string?>
         {
-            success = true,
-            redirectUrl = "/enquire/thank-you"
-        });
+            ["Firstname"] = enquireItem.Firstname,
+            ["Lastname"] = enquireItem.Lastname,
+            ["Email"] = enquireItem.Email,
+            ["Phone"] = enquireItem.Phone,
+            ["PreferredContactMethod"] = enquireItem.PreferredContactMethod,
+            ["TourCode"] = enquireItem.TourCode,
+            ["TourName"] = enquireItem.TourName,
+            ["TourClass"] = enquireItem.TourClass,
+            ["TourDepartureCity"] = enquireItem.TourDepartureCity,
+            ["TourQuotedPrice"] = enquireItem.TourQuotedPrice.ToString(),
+            ["PriceCurrency"] = enquireItem.PriceCurrency,
+            ["PreferredDestination"] = enquireItem.PreferredDestination,
+            ["TourDiscountText"] = enquireItem.TourDiscountText,
+            ["TourDate"] = enquireItem.TourDate?.ToString(),
+            ["DepartureDate"] = enquireItem.DepartureDate?.ToString(),
+            ["ReturnDate"] = enquireItem.ReturnDate?.ToString(),
+            ["SubscribeToNewsletter"] =
+        enquireItem.SubscribeToNewsletter.ToString(),
+            ["Message"] = enquireItem.Message
+        };
+        try
+        {
+            await _formEmailService.SendCustomerConfirmationAsync(
+    FormEmailNames.Enquire,
+    enquireItem.Email,
+    formData);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Enquire confirmation email failed. ItemID: {ItemID}",
+                enquireItem.ItemID);
+        }
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Json(new { success = true, redirectUrl = "/enquire/thank-you" });
+        }
+        return Redirect("/enquire/thank-you");
     }
     #endregion
 
-
     #region Contact Us Enquiry
 
-    [HttpPost("~/api/contact-us/submit")]
+    [HttpPost("~/form/contact")]
     [ValidateAntiForgeryToken]
-    public IActionResult ContactEnquire(ContactUsPageViewModel model)
+    public async Task<IActionResult> ContactEnquire(ContactUsPageViewModel model)
     {
         if (model?.Form == null)
         {
@@ -470,18 +593,11 @@ public class FormController : Controller
 
         try
         {
-            if (!ValidateRecaptcha(
-                    "contact_us_submit",
-                    out var recaptchaError))
+            var (isCaptchaValid, captchaError) = await ValidateRecaptcha("contact_us_submit");
+            if (!isCaptchaValid)
             {
-                logger.LogWarning(
-                    "Contact Us enquiry failed reCAPTCHA validation.");
-
-                return Json(new
-                {
-                    success = false,
-                    message = recaptchaError
-                });
+                logger.LogWarning("Contact Us enquiry failed reCAPTCHA validation: {Error}", captchaError);
+                return Json(new { success = false, message = captchaError });
             }
 
             var errors = new Dictionary<string, string>();
@@ -612,12 +728,47 @@ public class FormController : Controller
             logger.LogInformation(
                 "Contact Us enquiry saved successfully. Enquire Item ID: {ItemID}",
                 enquireItem.ItemID);
-
-            return Json(new
+            var formData = new Dictionary<string, string?>
             {
-                success = true,
-                redirectUrl = "/contact-us/thank-you"
-            });
+                ["Firstname"] = enquireItem.Firstname,
+                ["Lastname"] = enquireItem.Lastname,
+                ["Email"] = enquireItem.Email,
+                ["Phone"] = enquireItem.Phone,
+                ["PreferredContactMethod"] = enquireItem.PreferredContactMethod,
+                ["TourCode"] = enquireItem.TourCode,
+                ["TourName"] = enquireItem.TourName,
+                ["TourClass"] = enquireItem.TourClass,
+                ["TourDepartureCity"] = enquireItem.TourDepartureCity,
+                ["TourQuotedPrice"] = enquireItem.TourQuotedPrice.ToString(),
+                ["PriceCurrency"] = enquireItem.PriceCurrency,
+                ["PreferredDestination"] = enquireItem.PreferredDestination,
+                ["TourDiscountText"] = enquireItem.TourDiscountText,
+                ["TourDate"] = enquireItem.TourDate?.ToString(),
+                ["DepartureDate"] = enquireItem.DepartureDate?.ToString(),
+                ["ReturnDate"] = enquireItem.ReturnDate?.ToString(),
+                ["SubscribeToNewsletter"] =
+        enquireItem.SubscribeToNewsletter.ToString(),
+                ["Message"] = enquireItem.Message
+            };
+            try
+            {
+                await _formEmailService.SendCustomerConfirmationAsync(
+        FormEmailNames.Enquire,
+        enquireItem.Email,
+        formData);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Enquire confirmation email failed. ItemID: {ItemID}",
+                    enquireItem.ItemID);
+            }
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, redirectUrl = "/contact-us/thank-you" });
+            }
+            return Redirect("/contact-us/thank-you");
         }
         catch (Exception ex)
         {
@@ -634,6 +785,7 @@ public class FormController : Controller
     }
 
     #endregion
+
     #region Career Application Form
 
     [HttpPost("career-apply")]
@@ -648,32 +800,53 @@ public class FormController : Controller
 
         try
         {
-            if (!ValidateRecaptcha("career_apply_submit", out var recaptchaError))
+            var (isCaptchaValid, captchaError) = await ValidateRecaptcha("career_apply_submit");
+            if (!isCaptchaValid)
             {
-                return Json(new { success = false, message = recaptchaError });
+                return Json(new { success = false, message = captchaError });
             }
 
             var errors = new Dictionary<string, string>();
 
-            if (string.IsNullOrWhiteSpace(form.FirstName))
+            if (string.IsNullOrWhiteSpace(form.FirstName) || !HasVowel(form.FirstName))
                 errors["firstName"] = "Please enter a valid first name";
 
-            if (string.IsNullOrWhiteSpace(form.LastName))
+            if (string.IsNullOrWhiteSpace(form.LastName) || !HasVowel(form.LastName))
                 errors["lastName"] = "Please enter a valid last name";
 
             if (string.IsNullOrWhiteSpace(form.Email) || !new EmailAddressAttribute().IsValid(form.Email))
                 errors["email"] = "Please enter a valid email address";
 
             if (string.IsNullOrWhiteSpace(form.Phone))
-                errors["phone"] = "Please enter a valid phone number";
+                errors["phone"] = "Please enter a valid value";
 
             if (form.CVFile == null || form.CVFile.Length == 0)
-                errors["cvFile"] = "Please upload your CV/Resume";
-
-            // K13 Spam Filter: Candidate names must contain at least one vowel
-            if (!HasVowel(form.FirstName) || !HasVowel(form.LastName))
             {
-                return Json(new { success = false, message = "Please enter a valid first and last name." });
+                errors["cvFile"] = "Please choose a file";
+            }
+            else
+            {
+                // SECURITY FIX: File size limit (10 MB)
+                const long MaxFileSizeBytes = 10 * 1024 * 1024;
+                if (form.CVFile.Length > MaxFileSizeBytes)
+                {
+                    errors["cvFile"] = "File size must not exceed 10 MB";
+                }
+                else
+                {
+                    // SECURITY FIX: Enhanced file validation
+                    var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+                    var extension = Path.GetExtension(form.CVFile.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        errors["cvFile"] = "Only PDF, DOC, and DOCX files are allowed.";
+                    }
+                    else if (!IsValidFileContent(form.CVFile, extension))
+                    {
+                        logger.LogWarning("Invalid file content detected for extension {Extension}", extension);
+                        errors["cvFile"] = "File content does not match the file type. Please upload a valid document.";
+                    }
+                }
             }
 
             // Honeypot check
@@ -687,15 +860,8 @@ public class FormController : Controller
                 return Json(new { success = false, errors });
             }
 
-            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
-            var extension = Path.GetExtension(form.CVFile!.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
-            {
-                return Json(new { success = false, message = "Only PDF, DOC, and DOCX files are allowed." });
-            }
-
-            // Upload to Azure Blob Storage (or local fallback) and get /getfile download link
-            var cvRelativePath = await _blobStorageService.UploadCvAsync(form.CVFile, "jobs");
+            // SECURITY FIX: Upload to private storage with secure path
+            var cvRelativePath = await _blobStorageService.UploadCvAsync(form.CVFile!, "jobs");
 
             var applicationItem = new ETG.Core.Content.Forms.CareerRoleApplicationItem
             {
@@ -710,7 +876,31 @@ public class FormController : Controller
             };
 
             BizFormItemProvider.SetItem(applicationItem);
-
+            var formData = new Dictionary<string, string?>
+            {
+                ["Firstname"] = applicationItem.FirstName,
+                ["Lastname"] = applicationItem.LastName,
+                ["Email"] = applicationItem.Email,
+                ["Phone"] = applicationItem.Phone,
+                ["CVFilePath"] = applicationItem.CVFilePath,
+                ["Role"] = applicationItem.CVFilePath,
+                ["PreferredContactMethod"] = applicationItem.PreferredContactMethod,
+                ["Message"] = applicationItem.Comments
+            };
+            try
+            {
+                await _formEmailService.SendCustomerConfirmationAsync(
+        FormEmailNames.CareerRoleApplication,
+        applicationItem.Email,
+        formData);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Enquire confirmation email failed. ItemID: {ItemID}",
+                    applicationItem.ItemID);
+            }
             if (applicationItem.ItemID <= 0)
             {
                 logger.LogError("Career application could not be saved to BizForm.CareerRoleApplication.");
@@ -734,102 +924,62 @@ public class FormController : Controller
 
 
 
-    private bool ValidateRecaptcha(
-        string expectedAction,
-        out string errorMessage)
+    private async Task<(bool IsValid, string ErrorMessage)> ValidateRecaptcha(string expectedAction)
     {
-        errorMessage = string.Empty;
-
-        if (_captchaOptions.IsValidationDisabled)
-        {
-            return true;
-        }
-
-        if (string.IsNullOrWhiteSpace(_captchaOptions.SiteKey) ||
-            string.IsNullOrWhiteSpace(_captchaOptions.SecretKey))
-        {
-            errorMessage = "reCAPTCHA is not configured.";
-            return false;
-        }
-
         var httpContext = _httpContextAccessor.HttpContext;
-
         if (httpContext == null)
         {
-            errorMessage = "Unable to validate reCAPTCHA.";
-            return false;
+            return (false, "Unable to validate reCAPTCHA.");
         }
 
-        var responseToken =
-            httpContext.Request.Form["g-recaptcha-response"]
-                .FirstOrDefault();
+        var responseToken = httpContext.Request.Form["g-recaptcha-response"].FirstOrDefault();
+        var result = await _captchaValidator.ValidateCaptcha(responseToken, expectedAction);
 
-        if (string.IsNullOrWhiteSpace(responseToken))
-        {
-            errorMessage =
-                "Please complete the reCAPTCHA verification.";
-
-            return false;
-        }
-
-        var action =
-            httpContext.Request.Form["g-recaptcha-action"]
-                .FirstOrDefault();
-
-        if (string.IsNullOrWhiteSpace(action))
-        {
-            errorMessage = "Invalid reCAPTCHA action.";
-            return false;
-        }
-
-        if (!string.Equals(
-                action,
-                expectedAction,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            errorMessage = "Invalid reCAPTCHA action.";
-            return false;
-        }
-
-        var validator = new RecaptchaValidator
-        {
-            PrivateKey = _captchaOptions.SecretKey,
-            RemoteIP = RequestContext.UserHostAddress,
-            Response = responseToken
-        };
-
-        var validationResult = validator.Validate().Result;
-
-        if (validationResult == null)
-        {
-            errorMessage = "Unable to validate reCAPTCHA.";
-            return false;
-        }
-
-        if (!string.IsNullOrEmpty(validationResult.ErrorMessage))
-        {
-            errorMessage = "reCAPTCHA validation failed.";
-            return false;
-        }
-
-        if (validationResult.Score < _captchaOptions.ScoreThredhold)
-        {
-            errorMessage = "reCAPTCHA verification failed.";
-            return false;
-        }
-
-        if (!string.Equals(
-                validationResult.Action,
-                expectedAction,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            errorMessage = "Invalid reCAPTCHA action.";
-            return false;
-        }
-
-        return true;
+        return (result.IsSuccess, result.ErrorMessage ?? string.Empty);
     }
-
     private static bool HasVowel(string? input) =>
         !string.IsNullOrWhiteSpace(input) && input.Any(c => "aeiouyAEIOUY".Contains(c));
+
+    /// <summary>
+    /// SECURITY FIX: Validates file content by checking magic bytes/file signatures
+    /// Prevents malicious files disguised with safe extensions
+    /// </summary>
+    private static bool IsValidFileContent(IFormFile file, string extension)
+    {
+        const int SignatureSize = 8;
+        var buffer = new byte[SignatureSize];
+        
+        using (var stream = file.OpenReadStream())
+        {
+            var bytesRead = stream.Read(buffer, 0, SignatureSize);
+            if (bytesRead < 4)
+            {
+                return false; // File too small
+            }
+        }
+
+        // PDF signature: %PDF (25 50 44 46)
+        if (extension == ".pdf")
+        {
+            return buffer[0] == 0x25 && buffer[1] == 0x50 && 
+                   buffer[2] == 0x44 && buffer[3] == 0x46;
+        }
+
+        // DOC signature: D0 CF 11 E0 A1 B1 1A E1 (MS Office compound file)
+        // DOCX signature: 50 4B 03 04 or 50 4B 05 06 (ZIP format)
+        if (extension == ".doc" || extension == ".docx")
+        {
+            // DOC (old format)
+            bool isDoc = buffer[0] == 0xD0 && buffer[1] == 0xCF && 
+                        buffer[2] == 0x11 && buffer[3] == 0xE0;
+            
+            // DOCX (ZIP format - PK signature)
+            bool isDocx = buffer[0] == 0x50 && buffer[1] == 0x4B &&
+                         (buffer[2] == 0x03 || buffer[2] == 0x05);
+            
+            return isDoc || isDocx;
+        }
+
+        return false;
+    }
 }

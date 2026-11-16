@@ -1,4 +1,4 @@
-﻿@using ETG.Core.Models
+@using ETG.Core.Models
 @model ETG.Core.Models.ContactUsPageViewModel
 
 @if (Model?.Page == null)
@@ -46,8 +46,13 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
                 </h1>
 
 
-                <form id="contactusForm" class="contact-form needs-validation" method="post" action="@Url.Action("ContactEnquire", "Form")" novalidate>
+                <form id="contactusForm" class="contact-form needs-validation" method="post" action="/form/contact" novalidate>
                     @Html.AntiForgeryToken()
+
+                   <!-- Honeypot -->
+                    <div style="display:none;" aria-hidden="true">
+                        <input asp-for="Form.Friend" tabindex="-1" autocomplete="off" />
+                    </div>
 
                     <div id="formErrorMessage" class="alert alert-danger d-none mb-4" role="alert"> </div>
 
@@ -119,9 +124,6 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
                                    id="phone"
                                    pattern="[0-9\s\+\-]*"
                                    autocomplete="tel" />
-                            <div class="invalid-feedback">
-                                Please enter a valid numeric phone number.
-                            </div>
                         </div>
 
                     </div>
@@ -167,16 +169,13 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
 
                     <div class="mb-4">
                         <label asp-for="Form.Message"
-                               class="form-label">
+                                class="form-label">
                             Questions or comments
                         </label>
                         <textarea asp-for="Form.Message"
                                   class="form-control contact-input"
                                   id="comments"
                                   rows="5"></textarea>
-                        <div class="invalid-feedback">
-                            Please enter your questions or comments.
-                        </div>
                     </div>
 
                     <div class="mb-4 form-check mt-3">
@@ -194,14 +193,9 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
                         </label>
                     </div>
                     
-                    <input type="hidden"
-                           id="recaptchaToken"
-                           name="g-recaptcha-response" />
-
-                    <input type="hidden"
-                           id="recaptchaAction"
-                           name="g-recaptcha-action"
-                           value="contact_us_submit" />
+                    <!-- reCAPTCHA v3 Partial View -->
+                    <partial name="~/Components/FormBuilder/ReCaptcha/ReCaptcha.cshtml"
+                             view-data='@new ViewDataDictionary(ViewData) { { "ActionName", "contact_us_submit" } }' />
 
                     <button type="submit" class="btn btn-pink contact-submit-btn">
                         SUBMIT
@@ -280,57 +274,86 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
             }
         }
 
-        function validateForm() {
+        const phone = document.getElementById("phone");
+        const methodPhone = document.getElementById("methodPhone");
 
+        function isValidPhone(value) {
+            return /^[0-9\s\+\-\(\)]{6,20}$/.test(value);
+        }
+
+        function validateForm() {
             let isValid = true;
 
             clearFieldError(firstName);
             clearFieldError(lastName);
             clearFieldError(email);
+            if (phone) clearFieldError(phone);
 
-            if (!firstName.value.trim()) {
-
-                showFieldError(
-                    firstName,
-                    "Please enter a valid first name"
-                );
-
+            const fnValue = firstName.value.trim();
+            if (!fnValue) {
+                showFieldError(firstName, "Please enter a valid first name");
+                isValid = false;
+            } else if (/\d/.test(fnValue)) {
+                showFieldError(firstName, "First name cannot contain numbers.");
+                isValid = false;
+            } else if (/http/i.test(fnValue)) {
+                showFieldError(firstName, "Please enter a valid first name");
                 isValid = false;
             }
 
-            if (!lastName.value.trim()) {
-
-                showFieldError(
-                    lastName,
-                    "Please enter a valid last name"
-                );
-
+            const lnValue = lastName.value.trim();
+            if (!lnValue) {
+                showFieldError(lastName, "Please enter a valid last name");
+                isValid = false;
+            } else if (/\d/.test(lnValue)) {
+                showFieldError(lastName, "Last name cannot contain numbers.");
+                isValid = false;
+            } else if (/http/i.test(lnValue)) {
+                showFieldError(lastName, "Please enter a valid last name");
+                isValid = false;
+            } else if (fnValue && fnValue.toLowerCase() === lnValue.toLowerCase()) {
+                showFieldError(lastName, "First and last name cannot be the same.");
                 isValid = false;
             }
 
             const emailValue = email.value.trim();
+            const phoneValue = phone ? phone.value.trim() : "";
+            const isPhonePreferred = methodPhone && methodPhone.checked;
 
-            if (!emailValue) {
-
-                showFieldError(
-                    email,
-                    "Email must be a valid e-mail"
-                );
-
-                isValid = false;
-
+            if (isPhonePreferred) {
+                if (!phoneValue) {
+                    showFieldError(phone, "Please enter a valid numeric phone number.");
+                    isValid = false;
+                } else if (!isValidPhone(phoneValue)) {
+                    showFieldError(phone, "Please enter a valid numeric phone number.");
+                    isValid = false;
+                }
+                if (emailValue && !isValidEmail(emailValue)) {
+                    showFieldError(email, "Email must be a valid e-mail");
+                    isValid = false;
+                }
+            } else {
+                if (!emailValue) {
+                    showFieldError(email, "Email must be a valid e-mail");
+                    isValid = false;
+                } else if (!isValidEmail(emailValue)) {
+                    showFieldError(email, "Email must be a valid e-mail");
+                    isValid = false;
+                }
+                if (phoneValue && !isValidPhone(phoneValue)) {
+                    showFieldError(phone, "Please enter a valid numeric phone number.");
+                    isValid = false;
+                }
             }
-            else if (!isValidEmail(emailValue)) {
 
-                showFieldError(
-                    email,
-                    "Email must be a valid e-mail"
-                );
-
-                isValid = false;
-            }
             return isValid;
         }
+
+        phone?.addEventListener("input", function () {
+            if (isValidPhone(this.value.trim())) {
+                clearFieldError(this);
+            }
+        });
 
         firstName.addEventListener("input", function () {
 
@@ -374,6 +397,13 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
             }
 
             try {
+                // Fetch token using recaptcha.js
+                const { validateCaptcha } = await import('@Url.Content("~/js/recaptcha.js")');
+                const token = await validateCaptcha("contact_us_submit");
+                const tokenInput = document.getElementById("recaptchaToken");
+                if (tokenInput && token) {
+                    tokenInput.value = token;
+                }
                 const formData = new FormData(form);
 
                 const response = await fetch(

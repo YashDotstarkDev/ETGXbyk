@@ -11,12 +11,24 @@
 }
 
 @{
-    var reviews = Model.Reviews;
-    double averageRating = reviews?.Totals.AverageRating ?? 0;
-    int reviewCount = reviews?.Totals.ReviewCount ?? 0;
-    int fullStars = (int)Math.Floor(averageRating);
-    bool halfStar = (averageRating - fullStars) >= 0.5;
-    int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+var reviews = Model.Reviews;
+double averageRating = Math.Clamp(reviews?.Totals.AverageRating ?? 0, 0, 5);
+int reviewCount = reviews?.Totals.ReviewCount ?? 0;
+
+int fullStars = (int)Math.Floor(averageRating);
+double fraction = averageRating - fullStars;
+bool halfStar = false;
+
+if (fraction > 0.5)
+{
+    fullStars++;          // e.g. 4.9 -> 5 full stars
+}
+else if (fraction > 0)
+{
+    halfStar = true;      // e.g. 4.1 - 4.5 -> 4 full + half
+}
+
+int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 }
 
 <div class="connect-bar text-center">

@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using CSharpFunctionalExtensions;
@@ -17,13 +17,11 @@ public record GetNavigationHierarchyQuery(string RootPath, int MaxDepth = 10)
 
 public class GetNavigationHierarchyQueryHandler(
     ContentItemQueryTools tools,
-    IMediator mediator,
     IWebPageUrlRetriever urlRetriever,
     IPreferredLanguageRetriever languageRetriever)
     : ContentItemQueryHandler<GetNavigationHierarchyQuery, Maybe<NavigationViewModel>>(tools)
 {
     private readonly ContentItemQueryTools tools = tools;
-    private readonly IMediator mediator = mediator;
     private readonly IWebPageUrlRetriever urlRetriever = urlRetriever;
     private readonly IPreferredLanguageRetriever languageRetriever = languageRetriever;
 
@@ -53,9 +51,6 @@ public class GetNavigationHierarchyQueryHandler(
             {
                 viewModel.RootItems.Add(BuildNavigationItemViewModel(rootItem, 0, request.MaxDepth, allItems, urlMap));
             }
-
-            var layoutResult = await mediator.Send(new ETG.Web.Components.ViewComponents.Shared.GetWebsiteLayoutContentQuery(), cancellationToken);
-            viewModel.Layout = layoutResult.HasValue ? layoutResult.Value : null;
 
             return viewModel;
         }
@@ -134,6 +129,7 @@ public class GetNavigationHierarchyQueryHandler(
             Level = currentDepth,
             ViewAllCaption = linkItem.LinkCommonCaption,
              ViewAllUrl = ResolveFirst(linkItem.LinkCommonUrl, urlMap),
+             QueryParameter= !string.IsNullOrWhiteSpace(linkItem.QueryParameter) ? linkItem.QueryParameter :""
         };
 
         if (currentDepth >= maxDepth - 1)

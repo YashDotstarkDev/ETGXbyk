@@ -30,9 +30,9 @@
 
             @if (!string.IsNullOrWhiteSpace(tour.TourPriceTypeLabel))
             {
-                <div style="font-size: 10px;">
+                <div class="bkn-side-text">
                     @Html.Raw(
-                        tour.TourPriceTypeLabel.Replace(",", "<br>"))
+                        tour.TourPriceTypeLabel.Replace(",", ""))
                 </div>
             }
         </div>
@@ -44,7 +44,7 @@
 
             <div class="js-offer-countdown"
                  data-end="@promotion.PromotionToDate.ToString("yyyy-MM-ddTHH:mm:ss")"
-                 style="display: flex; align-items: center; gap: 3px; white-space:nowrap;">
+                 style="display: flex; align-items: center; gap: 1px; white-space:nowrap;">
 
                 <i class="bi bi-clock" style="margin-right: 5px;"></i>
 
@@ -98,10 +98,10 @@ else if (discount != null)
             FROM @priceInfo.CurrencyCode <del>@priceInfo.OriginalPrice</del>
         </div>
     }
-    else
+    @if (priceInfo.CurrentPrice > 0)
     {
         <div class="widget-price-from">
-            FROM 
+            FROM
         </div>
     }
 
@@ -158,7 +158,7 @@ else if (discount != null)
     @if (!string.IsNullOrWhiteSpace(tour.TourCode))
     {
         <!-- Button -->
-        <a href="/enquires/@tour.TourCode" class="btn btn-pink widget-enquiry-btn">ENQUIRE NOW</a>
+        <a href="/enquire/@tour.TourCode" class="btn btn-pink widget-enquiry-btn">ENQUIRE NOW</a>
     }
 
     @if (!string.IsNullOrWhiteSpace(tour.TourCode))

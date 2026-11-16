@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.FourColumnIconCardGrid
+@using ETG.Web.Components.PageBuilder.Widgets.FourColumnIconCardGrid
 
 @model FourColumnIconCardGridWidgetViewModel
 
@@ -35,7 +35,7 @@
                             @if (imageAsset is not null)
                             {
                                 <div class="expertise-icon-wrap mb-3 mx-auto">
-                                    <img kxp-img="@imageAsset" width="20px" alt="@alttext" srcset="" />
+                                    <img src="@imageAsset.Url.Imgixify(width: 40, height: 40, fit: "clip")" width="20" height="20" alt="@alttext" loading="lazy" />
                                 </div>
                             }
 

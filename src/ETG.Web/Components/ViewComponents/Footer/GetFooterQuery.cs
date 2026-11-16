@@ -10,7 +10,7 @@ namespace ETG.Web.Components.ViewComponents.Footer;
 
 public record GetFooterQuery : IQuery<Maybe<FooterViewModel>>;
 
-public class GetFooterQueryHandler(ContentItemQueryTools tools, IMediator mediator, IWebPageUrlRetriever urlRetriever,
+public class GetFooterQueryHandler(ContentItemQueryTools tools, IWebPageUrlRetriever urlRetriever,
     IPreferredLanguageRetriever languageRetriever)
     : ContentItemQueryHandler<GetFooterQuery, Maybe<FooterViewModel>>(tools)
 {
@@ -72,14 +72,12 @@ public class GetFooterQueryHandler(ContentItemQueryTools tools, IMediator mediat
 
         var columns = BuildTopColumns(topLinks, urlMap);
         var bottomLinksResult = BuildBottomLinks(bottomLinks, urlMap);
-        var layoutResult = await mediator.Send(new ETG.Web.Components.ViewComponents.Shared.GetWebsiteLayoutContentQuery(), cancellationToken);
 
         return new FooterViewModel
         {
             Columns = columns,
             BottomLinks = bottomLinksResult,
-            Contact = contact,
-            Layout = layoutResult.HasValue ? layoutResult.Value : null
+            Contact = contact
         };
     }
 

@@ -47,15 +47,9 @@ namespace ETG.Core.Content
 
 
 		/// <summary>
-		/// BrandLogo.
+		/// WebsiteGlobalContentLogoImageContent.
 		/// </summary>
-		public string BrandLogo { get; set; }
-
-
-		/// <summary>
-		/// FooterLogo.
-		/// </summary>
-		public IEnumerable<MediaFile> FooterLogo { get; set; }
+		public IEnumerable<MediaFile> WebsiteGlobalContentLogoImageContent { get; set; }
 
 
 		/// <summary>
@@ -71,14 +65,170 @@ namespace ETG.Core.Content
 
 
 		/// <summary>
+		/// GoogleVerificationCode.
+		/// </summary>
+		public string GoogleVerificationCode { get; set; }
+
+
+		/// <summary>
 		/// WextractorAuthToken.
 		/// </summary>
 		public string WextractorAuthToken { get; set; }
 
 
 		/// <summary>
-		/// GoogleVerificationCode.
+		/// CurrencyBaseCurrency.
 		/// </summary>
-		public string GoogleVerificationCode { get; set; }
+		public string CurrencyBaseCurrency { get; set; }
+
+
+		/// <summary>
+		/// CurrencySupported.
+		/// </summary>
+		public string CurrencySupported { get; set; }
+
+
+		/// <summary>
+		/// CurrencyFixerApiKey.
+		/// </summary>
+		public string CurrencyFixerApiKey { get; set; }
+
+
+		/// <summary>
+		/// TravelPayEnvironment.
+		/// </summary>
+		public string TravelPayEnvironment { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxBaseUrl.
+		/// </summary>
+		public string TravelPaySandboxBaseUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxPluginBaseUrl.
+		/// </summary>
+		public string TravelPaySandboxPluginBaseUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxApiBaseUrl.
+		/// </summary>
+		public string TravelPaySandboxApiBaseUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxApiKey.
+		/// </summary>
+		public string TravelPaySandboxApiKey { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxApiUsername.
+		/// </summary>
+		public string TravelPaySandboxApiUsername { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxApiPassword.
+		/// </summary>
+		public string TravelPaySandboxApiPassword { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySandboxMerchantCode.
+		/// </summary>
+		public string TravelPaySandboxMerchantCode { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionBaseUrl.
+		/// </summary>
+		public string TravelPayProductionBaseUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionPluginBaseUrl.
+		/// </summary>
+		public string TravelPayProductionPluginBaseUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionApiBaseUrl.
+		/// </summary>
+		public string TravelPayProductionApiBaseUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionApiKey.
+		/// </summary>
+		public string TravelPayProductionApiKey { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionApiUsername.
+		/// </summary>
+		public string TravelPayProductionApiUsername { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionApiPassword.
+		/// </summary>
+		public string TravelPayProductionApiPassword { get; set; }
+
+
+		/// <summary>
+		/// TravelPayProductionMerchantCode.
+		/// </summary>
+		public string TravelPayProductionMerchantCode { get; set; }
+
+
+		/// <summary>
+		/// TravelPayCSSLink.
+		/// </summary>
+		public string TravelPayCSSLink { get; set; }
+
+
+		/// <summary>
+		/// TravelPayJSLink.
+		/// </summary>
+		public string TravelPayJSLink { get; set; }
+
+
+		/// <summary>
+		/// TravelPayBS5JSLink.
+		/// </summary>
+		public string TravelPayBS5JSLink { get; set; }
+
+
+		/// <summary>
+		/// TravelPayResultUrl.
+		/// </summary>
+		public string TravelPayResultUrl { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySenderDisplayName.
+		/// </summary>
+		public string TravelPaySenderDisplayName { get; set; }
+
+
+		/// <summary>
+		/// TravelPaySenderEmail.
+		/// </summary>
+		public string TravelPaySenderEmail { get; set; }
+
+
+		/// <summary>
+		/// TravelPayMerchantEmail.
+		/// </summary>
+		public string TravelPayMerchantEmail { get; set; }
+
+
+		/// <summary>
+		/// PaymentEventLogging.
+		/// </summary>
+		public bool PaymentEventLogging { get; set; }
 	}
 }

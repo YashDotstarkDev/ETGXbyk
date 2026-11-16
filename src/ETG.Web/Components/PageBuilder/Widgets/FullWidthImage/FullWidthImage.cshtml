@@ -1,13 +1,17 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.FullWidthImage
+@using ETG.Web.Components.PageBuilder.Widgets.FullWidthImage
 @model FullWidthImageWidgetViewModel
 
 <div class="widget full-width-image" data-widget="full-width-image">
     <div class="image">
         @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
         {
-            <img src="@Model.Image.LegacyMediaFileAsset.Url"
-                 class="lazyload"
-                 data-src="@Model.Image.LegacyMediaFileAsset.Url"
+            <img src="@Model.Image.Imgixify(1920, 600)"
+                 srcset="@Model.Image.ImgixSrcset(1920, 600, new[] { 1 })"
+                 sizes="100vw"
+                 width="1920"
+                 height="600"
+                 class="lazyload w-100 img-fluid"
+                 loading="lazy" 
                  alt="@(string.IsNullOrEmpty(Model.Caption) ? (Model.Image.LegacyMediaFileTitle ?? "Full Width Image") : Model.Caption)" />
         }
     </div>

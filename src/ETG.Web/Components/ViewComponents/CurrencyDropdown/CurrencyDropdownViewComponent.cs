@@ -1,4 +1,4 @@
-﻿// Components/ViewComponents/CurrencyDropdown/CurrencyDropdownViewComponent.cs
+// Components/ViewComponents/CurrencyDropdown/CurrencyDropdownViewComponent.cs
 using ETG.Web.Services.Currency;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +15,13 @@ public class CurrencyDropdownViewComponent(
     {
         try
         {
+            var currencies = currencyService.GetSupportedCurrencies();
+
             var model = new CurrencyDropdownViewModel
             {
-                Currencies = currencyService.GetSupportedCurrencies()
-                .OrderBy(c => c)
-                .ToList(),
+                Currencies = currencies
+                    .OrderBy(c => c)
+                    .ToList(),
                 CurrentCurrency = pricing.CurrentCurrency,
                 CurrentCurrencySymbol = pricing.CurrentCurrencySymbol,
                 ConversionRate = pricing.ConversionRate,

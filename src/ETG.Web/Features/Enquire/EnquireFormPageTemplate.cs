@@ -90,13 +90,14 @@ public sealed class EnquireFormPageTemplateController : Controller
         var destinationQuery = new ContentItemQueryBuilder()
             .ForContentType(
                 Destination.CONTENT_TYPE_NAME,
-                config =>
-                {
-                    config
-                        .ForWebsite(websiteChannelContext.WebsiteChannelName);
-                });
+                config => config
+                    .ForWebsite(
+                        websiteChannelContext.WebsiteChannelName,
+                        PathMatch.Children("/destinations", nestingLevel: 1))
+                    .Where(where => where.WhereNotEmpty(nameof(Destination.DestinationName)))
+                    .OrderBy(nameof(Destination.DestinationName)));
 
-        var destinationQueryOptions = new ContentQueryExecutionOptions
+        var publishedOnlyOptions = new ContentQueryExecutionOptions
         {
             ForPreview = false
         };
@@ -104,12 +105,10 @@ public sealed class EnquireFormPageTemplateController : Controller
         var destinations =
             await contentQueryExecutor.GetMappedWebPageResult<Destination>(
                 destinationQuery,
-                destinationQueryOptions,
+                publishedOnlyOptions,
                 cancellationToken: HttpContext.RequestAborted);
 
         var destinationItems = destinations
-            .Where(x => !string.IsNullOrWhiteSpace(x.DestinationName) && GetTreeLevel(x.SystemFields.WebPageItemTreePath) == 2)
-            .OrderBy(x => x.DestinationName)
             .Select(x => new SelectListItem
             {
                 Text = x.DestinationName,
@@ -120,46 +119,63 @@ public sealed class EnquireFormPageTemplateController : Controller
         var experienceQuery = new ContentItemQueryBuilder()
             .ForContentType(
                 ETG.Core.Content.Experience.CONTENT_TYPE_NAME,
-                config =>
-                {
-                    config
-                        .ForWebsite(websiteChannelContext.WebsiteChannelName);
-                });
-
-        var experienceQueryOptions = new ContentQueryExecutionOptions
-        {
-            ForPreview = false
-        };
+                config => config
+                    .ForWebsite(websiteChannelContext.WebsiteChannelName)
+                    .Where(where => where.WhereNotEmpty(nameof(ETG.Core.Content.Experience.ExperienceName)))
+                    .OrderBy(nameof(ETG.Core.Content.Experience.ExperienceName)));
 
         var experiences =
             await contentQueryExecutor.GetMappedWebPageResult<ETG.Core.Content.Experience>(
                 experienceQuery,
-                experienceQueryOptions,
+                publishedOnlyOptions,
                 cancellationToken: HttpContext.RequestAborted);
 
         var experienceItems = experiences
-            .Where(x => !string.IsNullOrWhiteSpace(x.ExperienceName))
-            .OrderBy(x => x.ExperienceName)
-            .Select(x => new SelectListItem
-            {
-                Text = x.ExperienceName,
-                Value = x.ExperienceName
-            })
-            .ToList();
+    .Where(x => !string.IsNullOrWhiteSpace(x.ExperienceName))
+    .OrderBy(x => x.ExperienceName)
+    .Select(x => new SelectListItem
+    {
+        Text = x.ExperienceName,
+        Value = "/" + (x.SystemFields.WebPageItemTreePath ?? string.Empty)
+            .Trim('/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault()
+    })
+    .ToList();
 
         var selectedDestination =
     GetSelectedValue(
         Request.Query["destination"].ToString(),
         destinationItems);
 
-        var selectedExperience =
-            GetSelectedValue(
-                Request.Query["experience"].ToString(),
-                experienceItems);
+        var selectedExperience = GetSelectedValue(
+    Request.Query["experience"].ToString(),
+    experienceItems);
+
+        // Find Experience using the last segment of WebPageItemTreePath.
+        var selectedExperiencePage = string.IsNullOrWhiteSpace(selectedExperience)
+            ? null
+            : experiences.FirstOrDefault(x =>
+                string.Equals(
+                    "/" + (x.SystemFields.WebPageItemTreePath ?? string.Empty)
+                        .Trim('/')
+                        .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                        .LastOrDefault(),
+                    selectedExperience,
+                    StringComparison.OrdinalIgnoreCase));
+
+        var experienceHeading = selectedExperiencePage?.ExperienceHeading;
+
+        var formHeading = !string.IsNullOrWhiteSpace(experienceHeading)
+            ? experienceHeading.Trim()
+            : !string.IsNullOrWhiteSpace(page.ContainerFormTitle)
+                ? page.ContainerFormTitle.Trim()
+                : "Enquire Now";
 
         var viewModel = new EnquireFormPageViewModel
         {
             Page = page,
+            FormHeading = formHeading,
 
             Form = new EnquireFormViewModel
             {
@@ -193,16 +209,5 @@ public sealed class EnquireFormPageTemplateController : Controller
 
         return selected?.Value ?? string.Empty;
     }
-    private static int GetTreeLevel(string treePath)
-    {
-        if (string.IsNullOrWhiteSpace(treePath))
-        {
-            return 0;
-        }
 
-        return treePath
-            .Trim('/')
-            .Split('/', StringSplitOptions.RemoveEmptyEntries)
-            .Length;
-    }
 }

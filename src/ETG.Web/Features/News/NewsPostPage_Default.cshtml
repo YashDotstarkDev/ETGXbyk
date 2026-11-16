@@ -440,7 +440,7 @@
             <!-- Featured Image -->
             @if (post.Image != null)
             {
-                <img src="@post.Image.LegacyMediaFileAsset.Url" alt="@post.Title" class="news-image" loading="lazy">
+                <img src="@post.Image.Imgixify(800, 450)" srcset="@post.Image.ImgixSrcset(800, 450, null)" width="800" height="450" alt="@post.Title" class="news-image" loading="lazy">
             }
 
             <!-- Article Content -->
@@ -455,7 +455,7 @@
                     <div class="news-author-header">
                         @if (post.Author.Photo != null)
                         {
-                            <img src="@post.Author.Photo.LegacyMediaFileAsset.Url" alt="@post.Author.FullName" class="news-author-photo">
+                            <img src="@post.Author.Photo.Imgixify(120, 120)" srcset="@post.Author.Photo.ImgixSrcset(120, 120, null)" width="120" height="120" alt="@post.Author.FullName" class="news-author-photo" loading="lazy">
                         }
                         <div class="news-author-info">
                             <h4>About the Author</h4>
@@ -482,7 +482,7 @@
                        title="Share on LinkedIn">
                         <i class="fa-brands fa-linkedin-in"></i>
                     </a>
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(post.AbsoluteURL)"
+                    <a href="https://facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(post.AbsoluteURL)"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="share-btn share-btn-facebook"
@@ -510,7 +510,10 @@
                             <article class="news-related-card">
                                 @if (relatedNews.Image != null)
                                 {
-                                    <img src="@relatedNews.Image.LegacyMediaFileAsset.Url"
+                                    <img src="@relatedNews.Image.Imgixify(400, 250)"
+                                         srcset="@relatedNews.Image.ImgixSrcset(400, 250, null)"
+                                         width="400"
+                                         height="250"
                                          alt="@relatedNews.Title"
                                          class="news-related-card-image"
                                          loading="lazy">

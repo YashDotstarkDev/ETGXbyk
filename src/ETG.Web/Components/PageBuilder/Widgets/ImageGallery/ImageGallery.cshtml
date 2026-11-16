@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.ImageGallery
+@using ETG.Web.Components.PageBuilder.Widgets.ImageGallery
 @model ImageGalleryWidgetViewModel
 
 @{
@@ -15,7 +15,11 @@
                     @if (images.Count > 0)
                     {
                         <img loading="lazy"
-                             src="@images[0].LegacyMediaFileAsset.Url"
+                             src="@images[0].Imgixify(895, 501)"
+                             srcset="@images[0].ImgixSrcset(895, 501, null)"
+                             sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                             width="895"
+                             height="501"
                              alt="@images[0].LegacyMediaFileTitle"
                              class="gj-mosaic-img">
                     }
@@ -24,7 +28,11 @@
                     @if (images.Count > 3)
                     {
                         <img loading="lazy"
-                             src="@images[3].LegacyMediaFileAsset.Url"
+                             src="@images[3].Imgixify(895, 501)"
+                             srcset="@images[3].ImgixSrcset(895, 501, null)"
+                             sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                             width="895"
+                             height="501"
                              alt="@images[3].LegacyMediaFileTitle"
                              class="gj-mosaic-img">
                     }
@@ -37,7 +45,11 @@
                     @if (images.Count > 1)
                     {
                         <img loading="lazy"
-                             src="@images[1].LegacyMediaFileAsset.Url"
+                             src="@images[1].Imgixify(895, 501)"
+                             srcset="@images[1].ImgixSrcset(895, 501, null)"
+                             sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                             width="895"
+                             height="501"
                              alt="@images[1].LegacyMediaFileTitle"
                              class="gj-mosaic-img">
                     }
@@ -46,7 +58,11 @@
                     @if (images.Count > 4)
                     {
                         <img loading="lazy"
-                             src="@images[4].LegacyMediaFileAsset.Url"
+                             src="@images[4].Imgixify(895, 501)"
+                             srcset="@images[4].ImgixSrcset(895, 501, null)"
+                             sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                             width="895"
+                             height="501"
                              alt="@images[4].LegacyMediaFileTitle"
                              class="gj-mosaic-img">
                     }
@@ -59,7 +75,11 @@
                     @if (images.Count > 2)
                     {
                         <img loading="lazy"
-                             src="@images[2].LegacyMediaFileAsset.Url"
+                             src="@images[2].Imgixify(895, 501)"
+                             srcset="@images[2].ImgixSrcset(895, 501, null)"
+                             sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                             width="895"
+                             height="501"
                              alt="@images[2].LegacyMediaFileTitle"
                              class="gj-mosaic-img">
                     }
@@ -69,7 +89,11 @@
                         @if (images.Count > 5)
                         {
                             <img loading="lazy"
-                                 src="@images[5].LegacyMediaFileAsset.Url"
+                                 src="@images[5].Imgixify(895, 501)"
+                                 srcset="@images[5].ImgixSrcset(895, 501, null)"
+                                 sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                                 width="895"
+                                 height="501"
                                  alt="@images[5].LegacyMediaFileTitle"
                                  class="gj-mosaic-img">
                         }
@@ -78,7 +102,11 @@
                         @if (images.Count > 6)
                         {
                             <img loading="lazy"
-                                 src="@images[6].LegacyMediaFileAsset.Url"
+                                 src="@images[6].Imgixify(895, 501)"
+                                 srcset="@images[6].ImgixSrcset(895, 501, null)"
+                                 sizes="(max-width: 480px) 340px, (max-width: 768px) 859px, 895px"
+                                 width="895"
+                                 height="501"
                                  alt="@images[6].LegacyMediaFileTitle"
                                  class="gj-mosaic-img">
                         }

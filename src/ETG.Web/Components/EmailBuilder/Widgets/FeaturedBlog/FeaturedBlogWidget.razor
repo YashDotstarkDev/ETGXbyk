@@ -1,0 +1,69 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.FeaturedBlog
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Featured Blog Section START HERE ===== -->
+        <!-- ===== Travel_Blogs_And_Guides_Section START HERE ===== -->
+        <tr>
+          <td align="center" valign="top"><table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+              <tbody>
+                <tr>
+                  <td align="center" valign="top" style="padding: 0px 130px;" class="em_aside24"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                      <tbody>
+                        <tr>
+                          <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 23px; line-height:25px; font-weight: 800; color: #333333; text-transform: uppercase; padding-bottom: 27px;">@Model.MainHeading</td>
+                        </tr>
+                        <tr>
+                          <td align="center" valign="top" class="em_full_img"><img src="@Model.Image" width="540" alt="" border="0" style="display: block; max-width: 540px;"/></td>
+                        </tr>
+                        <tr>
+                          <td align="center" valign="top" bgcolor="#ffffff" style="border-left: 1px solid #E4E4E4; border-right:1px solid #E4E4E4; padding: 0px 20px; border-bottom: 1px solid #E4E4E4; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tbody>
+                                <tr>
+                                  <td height="20" style="height: 20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="middle" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 12px; text-transform: uppercase; line-height: 24px; color: #333333; padding-bottom: 6px; font-weight: 400; letter-spacing: 0.1px;"><span style="font-weight: bold; ">@Model.SubTitle</span></td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px; line-height: 26px; font-weight: bold; color: #CA568E; padding-bottom:20px;">@Model.Title</td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 14px; line-height: 24px; color: #333333; padding-bottom: 19px;">@Model.Description</td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top"><table align="left" width="127" border="0" cellspacing="0" cellpadding="0" style="width: 127px;">
+                                      <tr>
+                                      @if (!string.IsNullOrEmpty(Model.CTALabel)){
+                                    <td align="center" valign="top" style="border: 2px solid #CA568E; border-radius: 30px;">
+                                      <table border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                           <tr>
+                                              <td class="em_defult em_dm_txt_white" align="center" valign="middle" height="45" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #CA568E; height:45px; text-transform: uppercase;"><a href="@Model.CTAUrl" target="_blank" style="text-decoration:none; color:#CA568E; line-height:45px; display:block;">@Model.CTALabel</a></td>
+                                            </tr>
+                                      </tbody>
+                                      </table>
+                                              </td> }
+                                      </tr>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td height="40" style="height: 40px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                              </tbody>
+                            </table></td>
+                        </tr>
+                        <tr>
+                          <td height="20" style="height:20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                      </tbody>
+                    </table></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
+        <!-- ===== // Travel_Blogs_And_Guides_Section END HERE ===== --> 
+<!-- ===== // Featured Blog Section END HERE ===== -->

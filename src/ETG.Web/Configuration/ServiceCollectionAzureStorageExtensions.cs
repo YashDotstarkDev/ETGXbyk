@@ -28,12 +28,26 @@ public static class ServiceCollectionAzureStorageExtensions
         IConfiguration config,
         IWebHostEnvironment env)
     {
-        var isEnabled = config.GetValue<bool>("AzureStorage:Enabled");
+        var azureSection = config.GetSection("AzureStorage");
+        var isEnabled = azureSection.GetValue<bool>("Enabled", false);
 
         if (!isEnabled)
         {
             return services;
         }
+
+        // Bridge nested AzureStorage section to Kentico's expected CMSAzure keys in IConfiguration
+        var accountName = azureSection["AccountName"] ?? azureSection["CMSAzureAccountName"];
+        var sharedKey = azureSection["SharedKey"] ?? azureSection["CMSAzureSharedKey"];
+        var blobEndPoint = azureSection["BlobEndPoint"] ?? azureSection["CMSAzureBlobEndPoint"];
+        var containerName = azureSection["ContainerName"] ?? azureSection["CMSAzureContainerName"] ?? "etgfilescontainer";
+        var publicContainer = azureSection["PublicContainer"] ?? azureSection["CMSAzurePublicContainer"];
+
+        if (!string.IsNullOrEmpty(accountName)) config["CMSAzureAccountName"] = accountName;
+        if (!string.IsNullOrEmpty(sharedKey)) config["CMSAzureSharedKey"] = sharedKey;
+        if (!string.IsNullOrEmpty(blobEndPoint)) config["CMSAzureBlobEndPoint"] = blobEndPoint;
+        if (!string.IsNullOrEmpty(containerName)) config["CMSAzureContainerName"] = containerName;
+        if (!string.IsNullOrEmpty(publicContainer)) config["CMSAzurePublicContainer"] = publicContainer;
 
         // Register Azure Blob Storage path mapping for Kentico Xperience
         // This maps ALL CMS storage paths (including Content Item Assets) to Azure Blob Storage
@@ -41,7 +55,7 @@ public static class ServiceCollectionAzureStorageExtensions
         services.AddAppServiceStoragePathMapping(options =>
         {
             options.IsMappingEnabled = true;
-            options.ContainerName = config["CMSAzureContainerName"] ?? "etgfilescontainer";
+            options.ContainerName = containerName;
         });
 
         // Sets the cleanup threshold to 10 GB to prevent disk bloating (Kentico XbyK official standard)

@@ -1,4 +1,6 @@
-﻿namespace ETG.Web.Components.ViewComponents.BreadCrumb;
+﻿using System.Collections.Generic;
+
+namespace ETG.Web.Components.ViewComponents.BreadCrumb;
 
 public class BreadCrumbViewModel
 {

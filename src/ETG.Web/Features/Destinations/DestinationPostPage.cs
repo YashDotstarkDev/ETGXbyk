@@ -8,6 +8,7 @@ using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Core.Models;
 using ETG.Core.Models.GoogleReviews;
+using ETG.Web.Features.Destinations.Operations;
 using ETG.Web.Infrastructure;
 using ETG.Web.Rendering;
 using ETG.Web.Services.GoogleReviews;
@@ -140,27 +141,11 @@ public sealed class DestinationPostPageTemplateController : Controller
             }
         }
 
-        var articlesQuery = new ContentItemQueryBuilder()
-            .ForContentType(
-                ArticleContent.CONTENT_TYPE_NAME,
-                query =>
-                {
-                    query.ForWebsite(
-                        websiteChannelContext.WebsiteChannelName);
-
-                    query.WithLinkedItems(4);
-                });
-
-         var articleCandidates = await contentQueryExecutor
-            .GetMappedWebPageResult<ArticleContent>(articlesQuery);
-
-        var relatedArticles = articleCandidates
-            .Where(article =>
-            article.ArticleDestinations?.Any(reference =>
-            destinationGuids.Contains(reference.WebPageGuid))
-            == true)
-            .OrderByDescending(article => article.ArticleDate)
-            .ToArray();
+        var relatedArticles = await mediator.Send(
+            new GetDestinationArticlesQuery(
+                websiteChannelContext.WebsiteChannelName,
+                destinationGuids),
+            HttpContext.RequestAborted);
 
         var relatedArticleViewModels = await Task.WhenAll(
             relatedArticles.Select(article =>
@@ -239,7 +224,7 @@ public sealed class DestinationPostPageTemplateController : Controller
                 destination.DestinationWhenToVisit ?? string.Empty,
 
             DestinationStickyModel =
-                CreateDestinationStickyModel(destination),
+                CreateDestinationStickyModel(destination, contactUs, reviews),
 
             SelectedAccordionItemFolders =
                 destination.SelectedAccordionItemFolders
@@ -256,7 +241,8 @@ public sealed class DestinationPostPageTemplateController : Controller
             RelatedArticles = relatedArticleViewModels,
             DestinationRelatedArticlesHeader = destination.DestinationRelatedArticlesHeader ?? string.Empty,
             // Added: contact/enquiry model.
-            CTA = contactUs
+            CTA = contactUs,
+            Reviews = reviews
         };
 
         return View(
@@ -264,10 +250,12 @@ public sealed class DestinationPostPageTemplateController : Controller
             viewModel);
     }
 
-    private static DestinationStickyModel CreateDestinationStickyModel(
-        Destination destination)
+    private static CampaignStickyBarViewModel CreateDestinationStickyModel(
+        Destination destination,
+        ContactUsViewModel contactUs,
+        ReviewListingResponse? reviews)
     {
-        return new DestinationStickyModel
+        return new CampaignStickyBarViewModel
         {
             DisplaySticky = destination.DisplaySticky,
 
@@ -280,7 +268,10 @@ public sealed class DestinationPostPageTemplateController : Controller
                 ? string.Empty
                 : destination.EndOfCampaign.ToString(
                     "yyyy-MM-ddTHH:mm:ss",
-                    System.Globalization.CultureInfo.InvariantCulture)
+                    System.Globalization.CultureInfo.InvariantCulture),
+
+            CTA = contactUs,
+            Reviews = reviews
         };
     }
 }
@@ -304,7 +295,7 @@ public sealed class DestinationPostPageViewModel
     public string DestinationSummary { get; init; } = string.Empty;
     public string DestinationDetail { get; init; } = string.Empty;
     public string DestinationWhenToVisit { get; init; } = string.Empty;
-    public DestinationStickyModel DestinationStickyModel { get; init; } = new();
+    public CampaignStickyBarViewModel DestinationStickyModel { get; init; } = new();
     public IEnumerable<AccordionItemFolder> SelectedAccordionItemFolders { get; init; } = [];
     public IEnumerable<ImageFolder> SelectedImageFolders { get; init; } = [];
     public IEnumerable<ImageTileCtaFolder> SelectedImageTileCtaFolders { get; init; } = [];
@@ -313,14 +304,4 @@ public sealed class DestinationPostPageViewModel
     public ContactUsViewModel CTA { get; init; } = new();
 
     public ReviewListingResponse? Reviews { get; init; }
-}
-
-public sealed class DestinationStickyModel
-{
-    public bool DisplaySticky { get; init; }
-    public string CampaignDetail1 { get; init; } = string.Empty;
-    public string CampaignDetail2 { get; init; } = string.Empty;
-    public string CampaignDetail3 { get; init; } = string.Empty;
-    public string CountdownLabel { get; init; } = string.Empty;
-    public string EndOfCampaign { get; init; } = string.Empty;
 }

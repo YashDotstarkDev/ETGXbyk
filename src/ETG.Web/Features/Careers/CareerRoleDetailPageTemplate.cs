@@ -82,9 +82,11 @@ public class CareerRoleDetailPageTemplateController(
             Address = role.CareerRoleAddress ?? "",
             State = role.CareerRoleState ?? "",
             PageAlias = pageAlias,
-            ApplyUrl = !string.IsNullOrWhiteSpace(title)
-                ? $"/careers/apply?role={Uri.EscapeDataString(title)}"
-                : "/careers/apply"
+            ApplyUrl = !string.IsNullOrWhiteSpace(pageAlias)
+                ? $"/careers/{pageAlias}/apply"
+                : (!string.IsNullOrWhiteSpace(title)
+                    ? $"/careers/apply?role={Uri.EscapeDataString(title)}"
+                    : "/careers/apply")
         };
 
         if (role is IMetaDataSchema metaFields)

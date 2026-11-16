@@ -1,4 +1,4 @@
-﻿@using ETG.Core.Content
+@using ETG.Core.Content
 @model ETG.Core.Models.Tour.TourEnquireViewModel
 
 @{
@@ -6,7 +6,7 @@
     var form = Model.Form;
     var shareLinks = Model.ShareLinks;
 }
-
+<vc:bread-crumb />
 <partial name="~/Views/Shared/Partial/Tour/_TourHeroImageWithSlider.cshtml"
          model="tour" 
          view-data='new ViewDataDictionary(ViewData)
@@ -47,45 +47,48 @@
                     <input asp-for="Form.TourDiscountText" type="hidden" />
                     <input asp-for="Form.PreferredDestination" type="hidden" />
 
-                    <div class="row g-3 mb-3">
+                     <div id="tourFormErrorMessage" class="alert alert-danger d-none mb-4" role="alert"></div>
+
+                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label asp-for="Form.FirstName" class="form-label"> First name </label>
+                            <label asp-for="Form.FirstName" class="form-label">First name <span class="text-pink">*</span></label>
                             <input asp-for="Form.FirstName"
+                                   id="tourFirstName"
                                    class="form-control contact-input"
                                    autocomplete="given-name"
                                    required />
-                            <span asp-validation-for="Form.FirstName" class="text-danger"></span>
+                            <div class="invalid-feedback">Please enter a valid first name.</div>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="Form.LastName" class="form-label"> Last name</label>
+                            <label asp-for="Form.LastName" class="form-label">Last name <span class="text-pink">*</span></label>
                             <input asp-for="Form.LastName"
+                                   id="tourLastName"
                                    class="form-control contact-input"
                                    autocomplete="family-name"
                                    required />
-                            <span asp-validation-for="Form.LastName" class="text-danger"></span>
+                            <div class="invalid-feedback">Please enter a valid last name.</div>
                         </div>
                     </div>
-
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label asp-for="Form.Email" class="form-label">Email</label>
+                            <label asp-for="Form.Email" class="form-label">Email <span id="emailRequiredMarker" class="text-pink">*</span></label>
                             <input asp-for="Form.Email"
+                                   id="tourEmail"
                                    type="email"
                                    class="form-control contact-input"
                                    autocomplete="email" />
-                            <span asp-validation-for="Form.Email" class="text-danger"></span>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="Form.Phone"class="form-label">Phone</label>
+                            <label asp-for="Form.Phone" class="form-label">Phone <span id="phoneRequiredMarker" class="text-pink d-none">*</span></label>
                             <input asp-for="Form.Phone"
+                                   id="tourPhone"
                                    type="tel"
                                    class="form-control contact-input"
-                                   autocomplete="tel"
-                                   pattern="[0-9\s\+\-\(\)]*" />
-                            <span asp-validation-for="Form.Phone"class="text-danger"></span>
+                                   autocomplete="tel" />
+                            <div class="invalid-feedback">Please enter a valid phone number.</div>
                         </div>
                     </div>
-
                     <div class="mb-4 mt-4">
                         <label class="form-label d-block">Preferred contact method</label>
                         <div class="form-check form-check-inline mt-1">
@@ -93,29 +96,27 @@
                                    class="form-check-input"
                                    type="radio"
                                    value="Email"
-                                   id="methodEmail" />
-                            <label class="form-check-label"for="methodEmail">Email</label>
+                                   id="tourMethodEmail"
+                                   checked />
+                            <label class="form-check-label" for="tourMethodEmail">Email</label>
                         </div>
-
                         <div class="form-check form-check-inline mt-1">
                             <input asp-for="Form.PreferredContactMethod"
                                    class="form-check-input"
                                    type="radio"
                                    value="Phone"
-                                   id="methodPhone" />
-                            <label class="form-check-label"for="methodPhone">Phone</label>
+                                   id="tourMethodPhone" />
+                            <label class="form-check-label" for="tourMethodPhone">Phone</label>
                         </div>
-                        <span asp-validation-for="Form.PreferredContactMethod"
-                              class="text-danger"></span>
                     </div>
-
                     <div class="mb-4">
-                        <label asp-for="Form.Message"class="form-label">Questions or comments</label>
+                        <label asp-for="Form.Message" class="form-label">Questions or comments <span class="text-pink">*</span></label>
                         <textarea asp-for="Form.Message"
+                                  id="tourMessage"
                                   class="form-control contact-input"
                                   rows="5"
                                   required></textarea>
-                        <span asp-validation-for="Form.Message"class="text-danger"></span>
+                        <div class="invalid-feedback">Please enter your questions or comments.</div>
                     </div>
 
                     <div class="mb-4 form-check mt-3">
@@ -127,16 +128,9 @@
                             Subscribe to our newsletter for special deals.
                         </label>
                     </div>
-                    <!-- reCAPTCHA -->
-                    <input type="hidden"
-                           id="recaptchaToken"
-                           name="g-recaptcha-response"
-                           value="" />
-
-                    <input type="hidden"
-                           id="recaptchaAction"
-                           name="g-recaptcha-action"
-                           value="tour_enquire_submit" />
+                    <!-- reCAPTCHA v3 Partial View -->
+                    <partial name="~/Components/FormBuilder/ReCaptcha/ReCaptcha.cshtml"
+                             view-data='@new ViewDataDictionary(ViewData) { { "ActionName", "tour_enquire_submit" } }' />
 
                     <button type="submit" class="btn btn-pink contact-submit-btn"> SUBMIT </button>
                 </form>
@@ -148,20 +142,163 @@
 </div>
 </div>
 
-<script type="module">
-    asyncReady(async () => {
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("tourEnquireForm");
+        if (!form) return;
 
-        const recaptcha = await import('@Url.Content("~/js/recaptcha.js")');
+        const firstName = document.getElementById("tourFirstName");
+        const lastName = document.getElementById("tourLastName");
+        const email = document.getElementById("tourEmail");
+        const phone = document.getElementById("tourPhone");
+        const methodEmail = document.getElementById("tourMethodEmail");
+        const methodPhone = document.getElementById("tourMethodPhone");
+        const message = document.getElementById("tourMessage");
+        const errorMessage = document.getElementById("tourFormErrorMessage");
+        const submitButton = form.querySelector(".contact-submit-btn");
 
-        recaptcha.initCaptcha({
-            fieldElemID: 'recaptchaToken',
-            fieldName: 'g-recaptcha-response',
-            actionName: 'tour_enquire_submit',
+        function showFieldError(field, msg) {
+            if (!field) return;
+            field.classList.add("is-invalid");
+            field.setAttribute("aria-invalid", "true");
+            const feedback = field.parentElement.querySelector(".invalid-feedback");
+            if (feedback) feedback.textContent = msg;
+        }
 
-            onSubmit: function(event) {
-                document.getElementById('tourEnquireForm').submit();
+        function clearFieldError(field) {
+            if (!field) return;
+            field.classList.remove("is-invalid");
+            field.removeAttribute("aria-invalid");
+        }
+
+        function isValidEmail(val) {
+            return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val);
+        }
+
+        function isValidPhone(val) {
+            return /^[0-9\s\+\-\(\)]{6,20}$/.test(val);
+        }
+
+        // Toggle required marker dynamically
+        function updateMethodMarkers() {
+            const emailMarker = document.getElementById("emailRequiredMarker");
+            const phoneMarker = document.getElementById("phoneRequiredMarker");
+            if (methodPhone && methodPhone.checked) {
+                phoneMarker?.classList.remove("d-none");
+                emailMarker?.classList.add("d-none");
+            } else {
+                emailMarker?.classList.remove("d-none");
+                phoneMarker?.classList.add("d-none");
             }
+        }
+
+        methodEmail?.addEventListener("change", updateMethodMarkers);
+        methodPhone?.addEventListener("change", updateMethodMarkers);
+
+        [firstName, lastName, email, phone, message].forEach(input => {
+            input?.addEventListener("input", () => clearFieldError(input));
         });
 
+        function validateForm() {
+            let isValid = true;
+            [firstName, lastName, email, phone, message].forEach(clearFieldError);
+            if (errorMessage) {
+                errorMessage.classList.add("d-none");
+                errorMessage.textContent = "";
+            }
+
+            // 1. First Name
+            const fnVal = firstName.value.trim();
+            if (!fnVal) {
+                showFieldError(firstName, "Please enter your first name.");
+                isValid = false;
+            } else if (/\d/.test(fnVal)) {
+                showFieldError(firstName, "First name cannot contain numbers.");
+                isValid = false;
+            } else if (/http/i.test(fnVal)) {
+                showFieldError(firstName, "Please enter a valid first name.");
+                isValid = false;
+            }
+
+            // 2. Last Name
+            const lnVal = lastName.value.trim();
+            if (!lnVal) {
+                showFieldError(lastName, "Please enter your last name.");
+                isValid = false;
+            } else if (/\d/.test(lnVal)) {
+                showFieldError(lastName, "Last name cannot contain numbers.");
+                isValid = false;
+            } else if (/http/i.test(lnVal)) {
+                showFieldError(lastName, "Please enter a valid last name.");
+                isValid = false;
+            } else if (fnVal && fnVal.toLowerCase() === lnVal.toLowerCase()) {
+                showFieldError(lastName, "First and last name cannot be the same.");
+                isValid = false;
+            }
+
+            // 3. Email & Phone conditional validation
+            const emailVal = email.value.trim();
+            const phoneVal = phone.value.trim();
+            const isPhonePreferred = methodPhone && methodPhone.checked;
+
+            if (isPhonePreferred) {
+                if (!phoneVal) {
+                    showFieldError(phone, "Please enter your phone number.");
+                    isValid = false;
+                } else if (!isValidPhone(phoneVal)) {
+                    showFieldError(phone, "Please enter a valid phone number.");
+                    isValid = false;
+                }
+                if (emailVal && !isValidEmail(emailVal)) {
+                    showFieldError(email, "Please enter a valid email address.");
+                    isValid = false;
+                }
+            } else {
+                if (!emailVal) {
+                    showFieldError(email, "Please enter your email address.");
+                    isValid = false;
+                } else if (!isValidEmail(emailVal)) {
+                    showFieldError(email, "Please enter a valid email address.");
+                    isValid = false;
+                }
+                if (phoneVal && !isValidPhone(phoneVal)) {
+                    showFieldError(phone, "Please enter a valid phone number.");
+                    isValid = false;
+                }
+            }
+
+            // 4. Message
+            if (!message.value.trim()) {
+                showFieldError(message, "Please enter your questions or comments.");
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                const firstInvalid = form.querySelector(".is-invalid");
+                if (firstInvalid) firstInvalid.focus();
+                return;
+            }
+
+            if (submitButton) submitButton.disabled = true;
+
+            try {
+                const { validateCaptcha } = await import('@Url.Content("~/js/recaptcha.js")');
+                const token = await validateCaptcha("tour_enquire_submit");
+                const tokenInput = document.getElementById("recaptchaToken");
+                if (tokenInput && token) {
+                    tokenInput.value = token;
+                }
+                HTMLFormElement.prototype.submit.call(form);
+            } catch (err) {
+                if (submitButton) submitButton.disabled = false;
+                HTMLFormElement.prototype.submit.call(form);
+            }
+        });
     });
 </script>

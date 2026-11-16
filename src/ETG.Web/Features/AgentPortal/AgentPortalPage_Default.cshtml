@@ -1,4 +1,4 @@
-﻿@using System
+@using System
 @using System.Linq
 @model ETG.Web.Features.AgentPortal.AgentPortalPageViewModel
 
@@ -198,7 +198,7 @@
                         @if (!string.IsNullOrWhiteSpace(toolkit.ImageUrl))
                         {
                             <img class="agent-card-image"
-                                 src="@toolkit.ImageUrl"
+                                 src="@toolkit.ImageUrl.Imgixify(400, 250)"
                                  alt="@toolkit.Name"
                                  loading="lazy" />
                         }
@@ -242,7 +242,7 @@
                         @if (!string.IsNullOrWhiteSpace(incentive.ImageUrl))
                         {
                             <img class="agent-incentive-card__image"
-                                 src="@incentive.ImageUrl"
+                                 src="@incentive.ImageUrl.Imgixify(400, 250)"
                                  alt="@incentive.Name"
                                  loading="lazy" />
                         }
@@ -292,7 +292,7 @@
                         @if (!string.IsNullOrWhiteSpace(webinar.ImageUrl))
                         {
                             <img class="agent-card-image"
-                                 src="@webinar.ImageUrl"
+                                 src="@webinar.ImageUrl.Imgixify(400, 250)"
                                  alt="@webinar.Name"
                                  loading="lazy" />
                         }

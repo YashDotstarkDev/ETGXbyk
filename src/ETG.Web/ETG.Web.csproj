@@ -16,18 +16,27 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="ABCpdf" Version="12.1.1" />
+		<PackageReference Include="BuildBundlerMinifierPlus" Version="5.3.0" />
 		<PackageReference Include="kentico.xperience.admin" Version="31.7.2" />
 		<PackageReference Include="Kentico.Xperience.Algolia" Version="7.0.1" />
 		<PackageReference Include="kentico.xperience.azurestorage" Version="31.7.2" />
 		<PackageReference Include="kentico.xperience.imageprocessing" Version="31.7.2" />
 		<PackageReference Include="Kentico.Xperience.TagManager" Version="6.1.0" />
 		<PackageReference Include="kentico.xperience.webapp" Version="31.7.2" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
+		<PackageReference Include="Kentico.Xperience.Zapier" Version="3.0.0" />
 		<PackageReference Include="Sidio.Sitemap.AspNetCore" Version="3.1.1" />
 		<PackageReference Include="Slugify.Core" Version="5.1.1" />
+		<PackageReference Include="XperienceCommunity.ContactsImporter" Version="1.0.0" />
 		<PackageReference Include="XperienceCommunity.KenticoComponentIcons" Version="1.0.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\ETG.Admin\ETG.Admin.csproj" />
 		<ProjectReference Include="..\ETG.Core\ETG.Core.csproj" />
 	</ItemGroup>
+
+
+	<Target Name="BundleMinifyBeforeStaticWebAssets" BeforeTargets="ResolveProjectStaticWebAssets;AssignTargetPaths;BeforeBuild" Condition="'$(RunBundleMinify)' != 'False'">
+		<CallTarget Targets="BundleMinify" />
+	</Target>
 </Project>

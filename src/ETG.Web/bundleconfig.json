@@ -1,0 +1,64 @@
+[
+  {
+    "outputFileName": "wwwroot/minified/css/style.min.css",
+    "inputFiles": [
+      "wwwroot/css/style.css"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/minified/css/pdf-generation.min.css",
+    "inputFiles": [
+      "wwwroot/css/pdf-generation.css"
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/minified/js/script.min.js",
+    "inputFiles": [
+      "wwwroot/js/script.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/minified/js/utmscripts.min.js",
+    "inputFiles": [
+      "wwwroot/js/utmscripts.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/minified/js/homepagescript.min.js",
+    "inputFiles": [
+      "wwwroot/algolia/homepagescript.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/minified/js/tourlandingscript.min.js",
+    "inputFiles": [
+      "wwwroot/algolia/tourlandingscript.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/minified/js/article-landing.min.js",
+    "inputFiles": [
+      "wwwroot/algolia/article-landing.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  }
+]

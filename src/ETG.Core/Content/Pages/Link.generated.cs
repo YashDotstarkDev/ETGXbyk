@@ -77,10 +77,13 @@ namespace ETG.Core.Content
 		public IEnumerable<WebPageRelatedItem> LinkCommonUrl { get; set; }
 
 
-		/// <summary>
-		/// DocumentName.
-		/// </summary>
-		public string DocumentName { get; set; }
+        /// <summary>
+        /// DocumentName.
+        /// </summary>
+        public string DocumentName { get; set; }
+
+        public string QueryParameter { get; set; }
+
 
 
 		/// <summary>
@@ -105,5 +108,6 @@ namespace ETG.Core.Content
         /// MetaDataSchema__ExcludeFromSitemap.
         /// </summary>
         public bool MetaDataSchema__ExcludeFromSitemap { get; set; }
+
     }
 }

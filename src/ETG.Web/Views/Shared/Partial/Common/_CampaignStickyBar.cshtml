@@ -1,7 +1,7 @@
-﻿@model ETG.Web.Features.DestinationPostPage.DestinationPostPageViewModel
+﻿@model ETG.Core.Models.CampaignStickyBarViewModel
 
 @{
-    var sticky = Model.DestinationStickyModel;
+    var sticky = Model;
     var reviews = Model.Reviews;
 
     double averageRating = reviews?.Totals?.AverageRating ?? 0;
@@ -10,7 +10,18 @@
     averageRating = Math.Clamp(averageRating, 0, 5);
 
     int fullStars = (int)Math.Floor(averageRating);
-    bool halfStar = (averageRating - fullStars) >= 0.5;
+    double fraction = averageRating - fullStars;
+    bool halfStar = false;
+
+    if (fraction > 0.5)
+    {
+        fullStars++;          // e.g. 4.9 -> 5 full stars
+    }
+    else if (fraction > 0)
+    {
+        halfStar = true;      // e.g. 4.1 - 4.5 -> 4 full + half
+    }
+
     int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 }
 
@@ -62,17 +73,17 @@
                                      aria-label="@averageRating out of 5 stars">
                                     @for (int i = 0; i < fullStars; i++)
                                     {
-                                        <span aria-hidden="true">&#9733;</span>
+                                        <span aria-hidden="true"><i class="bi bi-star-fill"></i></span>
                                     }
 
                                     @if (halfStar)
                                     {
-                                        <span aria-hidden="true">&#9734;</span>
+                                        <span aria-hidden="true"><i class="bi bi-star-half"></i></span>
                                     }
 
                                     @for (int i = 0; i < emptyStars; i++)
                                     {
-                                        <span aria-hidden="true">&#9734;</span>
+                                        <span aria-hidden="true"><i class="bi bi-star"></i></span>
                                     }
                                 </div>
 

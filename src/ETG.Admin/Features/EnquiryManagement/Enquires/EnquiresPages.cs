@@ -1,4 +1,5 @@
 using CMS.Core;
+using Kentico.Xperience.Admin.Base.Authentication;
 using CMS.DataEngine;
 using CMS.Helpers;
 using CMS.Membership;
@@ -13,6 +14,8 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CMS;
+using ETG.Core.Modules;
 
 [assembly: UIPage(
     parentType: typeof(
@@ -40,6 +43,9 @@ using System.Threading.Tasks;
     templateName: "@website/web-admin/EnquiryEdit",
     order: UIPageOrder.NoOrder)]
 
+[assembly: RegisterImplementation(typeof(ETG.Admin.Features.EnquiryManagement.Enquires.IEnquiryWorkflow),
+    typeof(ETG.Admin.Features.EnquiryManagement.Enquires.EnquiryWorkflow))]
+
 namespace ETG.Admin.Features.EnquiryManagement.Enquires;
 
 [UIEvaluatePermission(SystemPermissions.VIEW)]
@@ -48,13 +54,116 @@ public class EnquiresPage : Page
     private readonly IEventLogService eventLogService;
     private readonly IUserInfoProvider users;
     private readonly IPageLinkGenerator pageLinkGenerator;
+    private readonly IAuthenticatedUserAccessor userAccessor;
+    protected readonly IEnquiryWorkflow workflow;
+    protected UserInfo CurrentUser { get; private set; } = null!;
 
-    public EnquiresPage(IEventLogService eventLogService, IUserInfoProvider users, IPageLinkGenerator pageLinkGenerator)
+    public override async Task ConfigurePage()
     {
+        await base.ConfigurePage();
+        CurrentUser = await userAccessor.Get();
+    }
+
+    protected EnquireItem? GetAccessibleEnquiry(int id) => id <= 0 ? null
+        : workflow.ApplyAccess(BizFormItemProvider.GetItems<EnquireItem>(), CurrentUser)
+            .WhereEquals(GetIdColumn(), id).FirstOrDefault();
+
+
+    public EnquiresPage(
+        IEventLogService eventLogService,
+        IUserInfoProvider users,
+        IPageLinkGenerator pageLinkGenerator,
+        IAuthenticatedUserAccessor userAccessor,
+        IEnquiryWorkflow workflow)
+    {
+        this.userAccessor = userAccessor;
+        this.workflow = workflow;
         this.users = users;
         this.pageLinkGenerator = pageLinkGenerator;
         this.eventLogService = eventLogService
             ?? throw new ArgumentNullException(nameof(eventLogService));
+    }
+
+
+    [PageCommand(Permission = SystemPermissions.VIEW)]
+    public Task<ICommandResponse<ManagementOptions>> GetManagementOptions() =>
+        Task.FromResult(ResponseFrom(new ManagementOptions
+        {
+            Statuses = EnquiryStatuses.Values,
+            Consultants = workflow.GetConsultants(""),
+            CanDelete = workflow.CanDelete(CurrentUser),
+            CanViewTracking = workflow.CanViewTracking(CurrentUser)
+        }));
+
+    [PageCommand(Permission = SystemPermissions.UPDATE)]
+    public Task<ICommandResponse<ConsultantChoicesResult>> GetConsultants(ConsultantChoicesArguments arguments)
+    {
+        var item = GetAccessibleEnquiry(arguments.ItemId);
+        if (item is null || !CanUseDestination(arguments.Destination))
+            return Task.FromResult(ResponseFrom(new ConsultantChoicesResult { Success = false }));
+        return Task.FromResult(ResponseFrom(new ConsultantChoicesResult
+        {
+            Success = true,
+            Destination = arguments.Destination,
+            Consultants = workflow.GetConsultants(arguments.Destination)
+        }));
+    }
+
+    private bool CanUseDestination(string destination) => workflow.CanUseDestination(CurrentUser, destination);
+
+    private void ValidateAssignee(string value, Guid previous, string destination)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        if (!Guid.TryParse(value, out var guid)) throw new ArgumentException("Select a valid consultant.");
+        if (guid == previous) return; // Preserve legacy assignments even if a role was subsequently removed.
+        if (!workflow.GetConsultants(destination).Any(x => Guid.Parse(x.Value) == guid))
+            throw new ArgumentException("The selected consultant is not eligible for this destination.");
+    }
+
+    [PageCommand(Permission = SystemPermissions.UPDATE)]
+    public async Task<ICommandResponse<SaveEnquiryResult>> UpdateManagement(ManagementUpdateArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var item = GetAccessibleEnquiry(arguments.ItemId);
+            if (item is null) return await SaveFailure("Enquiry not found or access denied.");
+            Guid previous = ValidationHelper.GetGuid(item.GetValue("AssignedUserGuid"), Guid.Empty);
+            if (arguments.Field == "status")
+            {
+                EnquiryStatuses.Validate(arguments.Value, item.Status, item.BookingReference,
+                    ReadDate(item, "DepartureDate"), ReadDate(item, "ReturnDate"));
+                item.Status = arguments.Value;
+            }
+            else if (arguments.Field == "consultant")
+            {
+                ValidateAssignee(arguments.Value, previous, item.PreferredDestination);
+                item.SetValue("AssignedUserGuid", string.IsNullOrWhiteSpace(arguments.Value) ? null : Guid.Parse(arguments.Value));
+            }
+            else return await SaveFailure("Unsupported enquiry field.");
+            item.Update();
+
+            // Send only when the consultant assignment actually changed.
+            // This custom Admin PageCommand is the real save path for inline updates.
+            await EnquiryAssignmentEventHandler.HandleAssignmentChangedAsync(
+                item,
+                previous,
+                users,
+                Service.Resolve<CMS.EmailEngine.IEmailService>(),
+                Service.Resolve<Microsoft.Extensions.Configuration.IConfiguration>(),
+                eventLogService);
+
+            return ResponseFrom(SaveEnquiryResult.SuccessResult(
+                MapRows([item])[0], updatedField: arguments.Field));
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (ArgumentException ex) { return await SaveFailure(ex.Message); }
+        catch (Exception ex)
+        {
+            eventLogService.LogException(nameof(EnquiresPage), "UPDATEMANAGEMENT", ex);
+            return await SaveFailure("Unable to update enquiry. Check the Event log.");
+        }
     }
 
     // Organization: Website
@@ -67,6 +176,7 @@ public class EnquiresPage : Page
     public Task<INavigateResponse> OpenEnquiry(int id)
     {
         if (id <= 0) throw new ArgumentException("A valid enquiry ID is required.");
+        if (GetAccessibleEnquiry(id) is null) throw new UnauthorizedAccessException("Enquiry not found or access denied.");
         var parameters = new PageParameterValues
         {
             { typeof(EnquiryEditSection), id }
@@ -123,7 +233,7 @@ public class EnquiresPage : Page
     {
         try
         {
-            // Export always includes every enquiry, regardless of the listing search.
+            // Export includes all accessible enquiries, regardless of listing search/filter.
             var exportArguments = new EnquiryListArguments
             {
                 SearchText = string.Empty,
@@ -160,9 +270,9 @@ public class EnquiresPage : Page
         }
     }
 
-    private static ObjectQuery<EnquireItem> BuildQuery(EnquiryListArguments arguments)
+    private ObjectQuery<EnquireItem> BuildQuery(EnquiryListArguments arguments)
     {
-        var query = BizFormItemProvider.GetItems<EnquireItem>();
+        var query = workflow.ApplyAccess(BizFormItemProvider.GetItems<EnquireItem>(), CurrentUser);
         string text = Clean(arguments.SearchText);
         if (text.Length > 200) throw new ArgumentException("Search must be 200 characters or fewer.");
         if (text.Length > 0)
@@ -178,6 +288,12 @@ public class EnquiresPage : Page
                 .WhereContains("TourName", text).Or()
                 .WhereContains("TourCode", text));
         }
+        if (!string.IsNullOrWhiteSpace(arguments.ConsultantGuid))
+        {
+            if (!Guid.TryParse(arguments.ConsultantGuid, out var consultant))
+                throw new ArgumentException("Select a valid consultant filter.");
+            query = query.WhereEquals("AssignedUserGuid", consultant);
+        }
         string id = GetIdColumn();
         string column = GetSortColumn(arguments.SortColumn, id);
         string direction = arguments.SortDescending ? "DESC" : "ASC";
@@ -186,7 +302,7 @@ public class EnquiresPage : Page
             : $"{column} {direction}, {id} DESC");
     }
 
-    private List<EnquiryDto> MapRows(List<EnquireItem> rows)
+    protected List<EnquiryDto> MapRows(List<EnquireItem> rows)
     {
         var ids = rows.Select(x => ValidationHelper.GetGuid(
             x.GetValue("AssignedUserGuid"), Guid.Empty))
@@ -202,6 +318,8 @@ public class EnquiresPage : Page
                 names[user.UserGUID] = name.Length > 0 ? name : user.UserName;
             }
         }
+        var choices = rows.Select(x => x.PreferredDestination).Distinct()
+            .ToDictionary(x => x, x => workflow.GetConsultants(x));
         return rows.Select(row =>
         {
             var dto = MapToDto(row);
@@ -209,11 +327,14 @@ public class EnquiresPage : Page
             dto.ConsultantName = guid == Guid.Empty ? ""
                 : names.TryGetValue(guid, out string? name) ? name
                 : $"Unknown consultant ({guid})";
+            dto.Consultants = choices[row.PreferredDestination];
+            if (!workflow.CanViewTracking(CurrentUser))
+                dto.UTMCampaign = dto.UTMContent = dto.UTMMedium = dto.UTMSource = dto.UTMTerm = "";
             return dto;
         }).ToList();
     }
 
-    private Task<ICommandResponse<SaveEnquiryResult>> SaveEnquiryInternal(
+    private async Task<ICommandResponse<SaveEnquiryResult>> SaveEnquiryInternal(
         SaveEnquiryArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -223,7 +344,7 @@ public class EnquiresPage : Page
 
             if (arguments?.Item is null)
             {
-                return SaveFailure(
+                return await SaveFailure(
                     "Enquiry data was not provided.");
             }
 
@@ -231,7 +352,7 @@ public class EnquiresPage : Page
 
             if (model.ItemId <= 0)
             {
-                return SaveFailure(
+                return await SaveFailure(
                     "A valid enquiry ID is required.");
             }
 
@@ -245,31 +366,50 @@ public class EnquiresPage : Page
                         .AddErrorMessage(
                             "Please correct the enquiry fields.");
 
-                return Task.FromResult(invalidResponse);
+                return invalidResponse;
             }
 
-            EnquireItem? item = GetEnquiry(model.ItemId);
+            EnquireItem? item = GetAccessibleEnquiry(model.ItemId);
 
             if (item is null)
             {
-                return SaveFailure(
+                return await SaveFailure(
                     "The enquiry was not found.");
             }
 
+            string status = string.IsNullOrWhiteSpace(model.Status) ? "New" : model.Status.Trim();
+            EnquiryStatuses.Validate(status, item.Status, model.BookingReference, model.DepartureDate, model.ReturnDate);
+            // Restricted users cannot move an enquiry outside their permitted destinations.
+            if (model.PreferredDestination != item.PreferredDestination && !CanUseDestination(model.PreferredDestination))
+                return await SaveFailure("You cannot move this enquiry to that destination.");
+            Guid previousAssignee = ValidationHelper.GetGuid(item.GetValue("AssignedUserGuid"), Guid.Empty);
+            ValidateAssignee(model.AssignedUserGuid, previousAssignee, model.PreferredDestination);
+            if (!workflow.CanViewTracking(CurrentUser))
+            {
+                model.UTMCampaign = item.UTMCampaign; model.UTMContent = item.UTMContent;
+                model.UTMMedium = item.UTMMedium; model.UTMSource = item.UTMSource; model.UTMTerm = item.UTMTerm;
+            }
             MapToItem(model, item);
 
             cancellationToken.ThrowIfCancellationRequested();
 
             item.Update();
-            string message = "Enquiry updated successfully.";
 
-            ICommandResponse<SaveEnquiryResult> response =
-                ResponseFrom(
-                        SaveEnquiryResult.SuccessResult(
-                            MapToDto(item)))
-                    .AddSuccessMessage(message);
+            // Send only when the consultant assignment actually changed.
+            // This covers the full Edit Enquiry form save command.
+            await EnquiryAssignmentEventHandler.HandleAssignmentChangedAsync(
+                item,
+                previousAssignee,
+                users,
+                Service.Resolve<CMS.EmailEngine.IEmailService>(),
+                Service.Resolve<Microsoft.Extensions.Configuration.IConfiguration>(),
+                eventLogService);
 
-            return Task.FromResult(response);
+            return ResponseFrom(SaveEnquiryResult.SuccessResult(MapRows([item])[0]));
+        }
+        catch (ArgumentException ex)
+        {
+            return await SaveFailure(ex.Message);
         }
         catch (OperationCanceledException)
         {
@@ -282,7 +422,7 @@ public class EnquiresPage : Page
                 "UPDATEENQUIRY",
                 exception);
 
-            return SaveFailure(
+            return await SaveFailure(
                 "Unable to save the enquiry. Check the Event log.");
         }
     }
@@ -302,7 +442,8 @@ public class EnquiresPage : Page
                     "A valid enquiry ID is required.");
             }
 
-            EnquireItem? item = GetEnquiry(arguments.ItemId);
+            if (!workflow.CanDelete(CurrentUser)) return DeleteFailure("Only administrators, managers and team leaders can delete enquiries.");
+            EnquireItem? item = GetAccessibleEnquiry(arguments.ItemId);
 
             if (item is null)
             {
@@ -314,13 +455,7 @@ public class EnquiresPage : Page
 
             item.Delete();
 
-            ICommandResponse<DeleteEnquiryResult> response =
-                ResponseFrom(
-                        DeleteEnquiryResult.SuccessResult())
-                    .AddSuccessMessage(
-                        "Enquiry deleted successfully.");
-
-            return Task.FromResult(response);
+            return Task.FromResult(ResponseFrom(DeleteEnquiryResult.SuccessResult()));
         }
         catch (OperationCanceledException)
         {
@@ -371,10 +506,7 @@ public class EnquiresPage : Page
         return Task.FromResult(response);
     }
 
-    private static EnquireItem? GetEnquiry(int itemId)
-    {
-        return BizFormItemProvider.GetItem<EnquireItem>(itemId);
-    }
+
 
     private static string GetIdColumn()
     {
@@ -590,10 +722,41 @@ public class EnquiresPage : Page
     private static string ReadDate(EnquireItem item, string field)
     {
         object? value = item.GetValue(field);
-        return value is null || value == DBNull.Value
-            ? string.Empty
-            : Convert.ToDateTime(value, CultureInfo.InvariantCulture)
-                .ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        // Kentico may return an empty string for an unset date field.
+        // Convert.ToDateTime("") throws FormatException and prevents the
+        // entire enquiries list from being mapped.
+        if (value is null || value == DBNull.Value)
+        {
+            return string.Empty;
+        }
+
+        if (value is DateTime dateValue)
+        {
+            return dateValue == DateTime.MinValue
+                ? string.Empty
+                : dateValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        }
+
+        string rawValue = Convert.ToString(value, CultureInfo.InvariantCulture)?.Trim()
+            ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        // Be tolerant of legacy values while keeping the API date format stable.
+        if (DateTime.TryParse(rawValue, CultureInfo.InvariantCulture,
+            DateTimeStyles.AllowWhiteSpaces, out DateTime parsedDate))
+        {
+            return parsedDate == DateTime.MinValue
+                ? string.Empty
+                : parsedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        }
+
+        // An invalid optional date should not prevent other enquiries from loading.
+        return string.Empty;
     }
 
     private static DateTime? ParseDate(string? value)
@@ -624,6 +787,7 @@ public sealed class EnquiryListArguments
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 25;
     public string SearchText { get; set; } = string.Empty;
+    public string ConsultantGuid { get; set; } = string.Empty;
     public string SortColumn { get; set; } = "FormInserted";
     public bool SortDescending { get; set; } = true;
 }
@@ -679,12 +843,15 @@ public sealed class SaveEnquiryResult
     public bool Success { get; init; }
     public EnquiryDto? Item { get; init; }
     public IReadOnlyList<string> Errors { get; init; } = [];
-    public static SaveEnquiryResult SuccessResult(EnquiryDto item)
+    public string UpdatedField { get; init; } = string.Empty;
+
+    public static SaveEnquiryResult SuccessResult(EnquiryDto item, string updatedField = "")
     {
         return new SaveEnquiryResult
         {
             Success = true,
-            Item = item
+            Item = item,
+            UpdatedField = updatedField
         };
     }
 
@@ -735,6 +902,7 @@ public sealed class EnquiryDto
 {
     public int ItemId { get; set; }
     public string ConsultantName { get; set; } = string.Empty;
+    public IReadOnlyList<ConsultantOption> Consultants { get; set; } = [];
     public string FormInserted { get; set; } = string.Empty;
     public string FormUpdated { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
@@ -803,9 +971,20 @@ public class EnquiryEditSection : Page
 [UIEvaluatePermission(SystemPermissions.UPDATE)]
 public class EnquiryEditPage : EnquiresPage
 {
-    public EnquiryEditPage(IEventLogService eventLogService,
-        IUserInfoProvider users, IPageLinkGenerator pageLinkGenerator)
-        : base(eventLogService, users, pageLinkGenerator) { }
+    public EnquiryEditPage(
+        IEventLogService eventLogService,
+        IUserInfoProvider users,
+        IPageLinkGenerator pageLinkGenerator,
+        IAuthenticatedUserAccessor userAccessor,
+        IEnquiryWorkflow workflow)
+        : base(
+            eventLogService,
+            users,
+            pageLinkGenerator,
+            userAccessor,
+            workflow)
+    {
+    }
 
     [PageParameter(typeof(IntPageModelBinder), typeof(EnquiryEditSection))]
     public int EnquiryId { get; set; }
@@ -826,11 +1005,10 @@ public class EnquiryEditPage : EnquiresPage
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var item = EnquiryId > 0
-                ? BizFormItemProvider.GetItem<EnquireItem>(EnquiryId) : null;
+            var item = GetAccessibleEnquiry(EnquiryId);
             return Task.FromResult(ResponseFrom(item is null
                 ? SaveEnquiryResult.Failure("The enquiry was not found.")
-                : SaveEnquiryResult.SuccessResult(MapToDto(item))));
+                : SaveEnquiryResult.SuccessResult(MapRows([item])[0])));
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -850,4 +1028,136 @@ public class EnquiryEditPage : EnquiresPage
                 "The enquiry ID does not match the edit page.")));
         return base.UpdateEnquiry(arguments, cancellationToken);
     }
+}
+
+public sealed class ManagementOptions
+{
+    public IReadOnlyList<string> Statuses { get; init; } = [];
+    public IReadOnlyList<ConsultantOption> Consultants { get; init; } = [];
+    public bool CanDelete { get; init; }
+    public bool CanViewTracking { get; init; }
+}
+public sealed class ManagementUpdateArguments
+{
+    public int ItemId { get; set; }
+    public string Field { get; set; } = "";
+    public string Value { get; set; } = "";
+}
+public sealed class ConsultantChoicesArguments
+{
+    public int ItemId { get; set; }
+    public string Destination { get; set; } = "";
+}
+public sealed class ConsultantChoicesResult
+{
+    public bool Success { get; init; }
+    public string Destination { get; init; } = "";
+    public IReadOnlyList<ConsultantOption> Consultants { get; init; } = [];
+}
+
+public static class EnquiryStatuses
+{
+    public static readonly string[] Values = ["New", "1st contact", "2nd contact", "WIP", "Cancelled", "Booked"];
+
+    public static void Validate(string value, string original, string bookingReference,
+        string departureDate, string returnDate)
+    {
+        // Preserve an existing legacy value, including Confirmed, without offering new unsupported values.
+        if (!Values.Contains(value, StringComparer.Ordinal) && value != original)
+            throw new ArgumentException("Select a valid enquiry status.");
+        if (value == "Confirmed" && (string.IsNullOrWhiteSpace(bookingReference)
+            || string.IsNullOrWhiteSpace(departureDate) || string.IsNullOrWhiteSpace(returnDate)))
+            throw new ArgumentException("Booking Reference, Departure date, Return date cannot be null.");
+    }
+}
+
+public interface IEnquiryWorkflow
+{
+    ObjectQuery<EnquireItem> ApplyAccess(ObjectQuery<EnquireItem> query, UserInfo user);
+    bool CanUseDestination(UserInfo user, string destination);
+    bool CanDelete(UserInfo user);
+    bool CanViewTracking(UserInfo user);
+    IReadOnlyList<ConsultantOption> GetConsultants(string destination);
+}
+
+public sealed record ConsultantOption(string Value, string Label);
+
+public sealed class EnquiryWorkflow(
+    IUserInfoProvider users,
+    IRoleInfoProvider roles,
+    IUserRoleInfoProvider userRoles,
+    IInfoProvider<RoleToDestinationLinkInfo> links) : IEnquiryWorkflow
+{
+    private const string GeneralRole = "EnquiryManagementUser";
+    private static bool HasRole(UserInfo user, string role) => user.IsInRole(role);
+
+    public bool CanDelete(UserInfo user) => user.IsAdministrator() || HasRole(user, "Manager") || HasRole(user, "TeamLeader");
+    public bool CanViewTracking(UserInfo user) => user.IsAdministrator() || HasRole(user, "Manager")
+        || HasRole(user, "Marketing") || HasRole(user, GeneralRole);
+
+    public ObjectQuery<EnquireItem> ApplyAccess(ObjectQuery<EnquireItem> query, UserInfo user)
+    {
+        if (user.IsAdministrator() || HasRole(user, "Manager")) return query;
+        if (!HasRole(user, "Consultant") && !HasRole(user, "TeamLeader")) return query;
+        var roleIds = userRoles.Get().WhereEquals("UserID", user.UserID).ToList().Select(x => x.RoleID).ToArray();
+        if (roleIds.Length == 0) return query.Where("1 = 2");
+        var roleGuids = roles.Get().WhereIn("RoleID", roleIds).ToList().Select(x => x.RoleGUID).ToArray();
+        var patterns = links.Get().ToList().Where(x => roleGuids.Contains(x.RoleDestinationRoleGuid))
+            .Select(x => x.RoleDestinationDestinations).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+        if (patterns.Count == 0) return query.Where("1 = 2");
+        var condition = new WhereCondition();
+        bool first = true;
+        foreach (string pattern in patterns)
+        {
+            if (!first) condition.Or();
+            first = false;
+            // K13 uses the complete stored value as a LIKE pattern; do not split or add wildcards.
+            condition.WhereLike("PreferredDestination", pattern);
+        }
+        return query.Where(condition);
+    }
+
+    public bool CanUseDestination(UserInfo user, string destination)
+    {
+        if (user.IsAdministrator() || HasRole(user, "Manager") ||
+            (!HasRole(user, "Consultant") && !HasRole(user, "TeamLeader"))) return true;
+        var roleIds = userRoles.Get().WhereEquals("UserID", user.UserID).ToList().Select(x => x.RoleID).ToArray();
+        if (roleIds.Length == 0) return false;
+        var roleGuids = roles.Get().WhereIn("RoleID", roleIds).ToList().Select(x => x.RoleGUID).ToArray();
+        var patterns = links.Get().ToList().Where(x => roleGuids.Contains(x.RoleDestinationRoleGuid))
+            .Select(x => x.RoleDestinationDestinations).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct();
+        foreach (string pattern in patterns)
+        {
+            var parameters = new QueryDataParameters { { "Destination", destination }, { "Pattern", pattern } };
+            if (ValidationHelper.GetInteger(ConnectionHelper.ExecuteScalar(
+                "SELECT CASE WHEN @Destination LIKE @Pattern THEN 1 ELSE 0 END", parameters, QueryTypeEnum.SQLQuery), 0) == 1)
+                return true;
+        }
+        return false;
+    }
+
+    public IReadOnlyList<ConsultantOption> GetConsultants(string destination)
+    {
+        var allRoles = roles.Get().ToList();
+        var mappedGuids = string.IsNullOrEmpty(destination) ? [] : links.Get().ToList()
+            .Where(x => x.RoleDestinationName == destination).Select(x => x.RoleDestinationRoleGuid).ToArray();
+        var roleIds = allRoles.Where(x => x.RoleName == GeneralRole || mappedGuids.Contains(x.RoleGUID))
+            .Select(x => x.RoleID).ToArray();
+        if (roleIds.Length == 0) return [];
+        var userIds = userRoles.Get().WhereIn("RoleID", roleIds).ToList().Select(x => x.UserID).Distinct().ToArray();
+        if (userIds.Length == 0) return [];
+        return users.Get().WhereIn("UserID", userIds).WhereEquals("UserEnabled", true).ToList()
+            .Where(x => x.UserAdministrationAccess)
+            .Select(x => new ConsultantOption(x.UserGUID.ToString(), DisplayName(x)))
+            .OrderBy(x => x.Label, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    public static string DisplayName(UserInfo user)
+    {
+        string name = ValidationHelper.GetString(user.GetValue("FullName"), "").Trim();
+        if (name.Length == 0) name = $"{user.FirstName} {user.LastName}".Trim();
+        return name.Length == 0 ? user.UserName : name;
+    }
+
+
 }

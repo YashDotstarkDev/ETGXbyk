@@ -8,5 +8,7 @@ public interface ITourSummaryService
 {
     Task<TourSummaryViewModel> MapToViewModelAsync(
         TourContent tour,
-        string path, TourPricingResult? priceInfo);
+        string path,
+        TourPricingResult? priceInfo,
+        string? primaryCountryName = null);
 }

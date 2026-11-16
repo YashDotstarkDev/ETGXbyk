@@ -426,7 +426,7 @@
 @if (post.TeaserImage?.LegacyMediaFileAsset != null)
 {
     <div class="container">
-        <img src="@post.TeaserImage.LegacyMediaFileAsset.Url" alt="@post.TeaserImage.LegacyMediaFileTitle" class="blog-teaser-image" loading="lazy">
+        <img src="@post.TeaserImage.Imgixify(850, 450)" alt="@post.TeaserImage.LegacyMediaFileTitle" class="blog-teaser-image" loading="lazy">
     </div>
 }
 
@@ -444,7 +444,7 @@
                 <div class="blog-author-header">
                     @if (post.Author.Photo != null)
                     {
-                        <img src="@post.Author.Photo.LegacyMediaFileAsset.Url" alt="@post.Author.FullName" class="blog-author-photo">
+                        <img src="@post.Author.Photo.Imgixify(120, 120, fit: "crop")" alt="@post.Author.FullName" class="blog-author-photo">
                     }
                     <div class="blog-author-info">
                         <h4>About the Author</h4>
@@ -503,7 +503,7 @@
                             <div class="blog-post-card">
                                @if (!string.IsNullOrEmpty(relatedPost.TeaserImage?.LegacyMediaFileAsset?.Url))
                                {
-                                   <img src="@relatedPost.TeaserImage.LegacyMediaFileAsset.Url"
+                                   <img src="@relatedPost.TeaserImage.Imgixify(400, 250)"
                                    alt="@relatedPost.TeaserImage.LegacyMediaFileTitle"
                                    class="blog-card-image"
                                    loading="lazy">

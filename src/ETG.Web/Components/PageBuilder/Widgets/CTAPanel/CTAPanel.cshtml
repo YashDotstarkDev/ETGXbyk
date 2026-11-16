@@ -1,16 +1,74 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.CTAPanel
+@using ETG.Web.Components.PageBuilder.Widgets.CTAPanel
 @model CTAPanelWidgetViewModel
+
+@{
+    var headingDocument = new AngleSharp.Html.Parser.HtmlParser()
+        .ParseDocument(Model.Heading ?? string.Empty);
+
+    var headingBody = headingDocument.Body;
+
+    if (headingBody is not null)
+    {
+        var lastTextNode = GetHeadingTextNodes(headingBody)
+            .LastOrDefault(node =>
+                !string.IsNullOrWhiteSpace(node.TextContent));
+
+        if (lastTextNode?.Parent is { } parent)
+        {
+            var text = lastTextNode.TextContent;
+
+            var match = System.Text.RegularExpressions.Regex.Match(
+                text,
+                @"\S+(?=\s*$)");
+
+            if (match.Success)
+            {
+                var nextSibling = lastTextNode.NextSibling;
+
+                lastTextNode.TextContent = text[..match.Index];
+
+                var pinkWord = headingDocument.CreateElement("span");
+                pinkWord.ClassName = "text-pink";
+                pinkWord.SetAttribute(
+                    "style",
+                    "color:#CA568E !important;");
+                pinkWord.TextContent = match.Value;
+
+                parent.InsertBefore(pinkWord, nextSibling);
+
+                var trailingText = text[
+                    (match.Index + match.Length)..];
+
+                if (trailingText.Length > 0)
+                {
+                    parent.InsertBefore(
+                        headingDocument.CreateTextNode(trailingText),
+                        nextSibling);
+                }
+            }
+        }
+    }
+
+    var headingHtml = headingBody?.InnerHtml ?? string.Empty;
+
+    var headingPlainText =
+        headingBody?.TextContent.Trim() ?? string.Empty;
+}
 
 @if (Model.DisplayType == "DestinationCta")
 {
     <!-- ============ DESTINATION CTA ============ -->
     <section class="cta-section cta-horizontal"
-             aria-label="@Model.Heading">
+             aria-label="@headingPlainText">
 
         @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
         {
             <img loading="lazy"
-                 src="@Model.Image.LegacyMediaFileAsset.Url"
+                 src="@Model.Image.Imgixify(1296, 420)"
+                 srcset="@Model.Image.ImgixSrcset(1296, 420, null)"
+                 sizes="100vw"
+                 width="1296"
+                 height="420"
                  alt="@(Model.Image.LegacyMediaFileTitle ?? "CTA Background")"
                  class="cta-bg" />
         }
@@ -24,9 +82,9 @@
                 <div class="cta-h-left">
                     @if (!string.IsNullOrWhiteSpace(Model.Heading))
                     {
-                        <h2 class="cta-heading fw-bold">
-                            @Model.HeadingBeforeLastWord <span class="text-pink">@Model.HeadingLastWord</span>
-                        </h2>
+                        <div class="cta-heading fw-bold">
+                            @Html.Raw(headingHtml)
+                        </div>
                     }
 
                     <div class="cta-phones d-flex flex-column gap-2 mt-3">
@@ -97,19 +155,25 @@ else
         @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
         {
             <img loading="lazy"
-                 src="@Model.Image.LegacyMediaFileAsset.Url"
-                 alt="@(string.IsNullOrEmpty(Model.Heading) ? (Model.Image.LegacyMediaFileTitle ?? "CTA Background") : Model.Heading)"
+                 src="@Model.Image.Imgixify(1296, 420)"
+                 srcset="@Model.Image.ImgixSrcset(1296, 420, null)"
+                 sizes="100vw"
+                 width="1296"
+                 height="420"
+                 alt="@(string.IsNullOrEmpty(headingPlainText)
+                     ? (Model.Image.LegacyMediaFileTitle ?? "CTA Background")
+                     : headingPlainText)"
                  class="cta-bg" />
         }
 
         <div class="cta-overlay"></div>
 
         <div class="container text-center text-white cta-content">
-            @if (!string.IsNullOrEmpty(Model.Heading))
+            @if (!string.IsNullOrWhiteSpace(Model.Heading))
             {
-                <h2 class="display-5 fw-bold">
-                    @Model.HeadingBeforeLastWord <span class="text-pink">@Model.HeadingLastWord</span>
-                </h2>
+                <div class="display-5 fw-bold">
+                    @Html.Raw(headingHtml)
+                </div>
             }
 
             @if (!string.IsNullOrEmpty(Model.TextContent))
@@ -122,16 +186,49 @@ else
                      !string.IsNullOrEmpty(Model.CTALabel2))
                 {
                     <a href="@Model.Path2"
-                       class="btn btn-outline-light btn-lg outline-button">@Model.CTALabel2</a>
+                       class="btn btn-outline-light btn-lg outline-button">
+                        <i class="bi bi-telephone"></i>
+                        @Model.CTALabel2
+                    </a>
                 }
 
                 @if (!string.IsNullOrEmpty(Model.Path) &&
                      !string.IsNullOrEmpty(Model.CTALabel))
                 {
                     <a href="@Model.Path"
-                       class="btn btn-pink btn-lg">@Model.CTALabel</a>
+                       class="btn btn-pink btn-lg">
+                        @Model.CTALabel
+                    </a>
                 }
             </div>
         </div>
     </section>
+}
+
+@functions {
+    private static IEnumerable<AngleSharp.Dom.INode> GetHeadingTextNodes(
+        AngleSharp.Dom.INode node)
+    {
+        foreach (var child in node.ChildNodes)
+        {
+            if (child.NodeType == AngleSharp.Dom.NodeType.Text)
+            {
+                yield return child;
+            }
+            else if (child is AngleSharp.Dom.IElement element &&
+                     (element.LocalName == "script" ||
+                      element.LocalName == "style" ||
+                      element.LocalName == "template"))
+            {
+                continue;
+            }
+            else
+            {
+                foreach (var descendant in GetHeadingTextNodes(child))
+                {
+                    yield return descendant;
+                }
+            }
+        }
+    }
 }

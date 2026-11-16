@@ -1,4 +1,4 @@
-﻿@using System
+@using System
 @using System.Linq
 @using ETG.Web.Features.Destinations
 @model DestinationLandingPageViewModel
@@ -29,16 +29,36 @@
     </script>
 }
 
+@section Styles
+{
+    @if (pageModel.Page.HeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <link rel="preload" fetchpriority="high" as="image" href="@pageModel.Page.HeroImage.Imgixify(1920, 600)" media="(min-width: 768px)" />
+        <link rel="preload" fetchpriority="high" as="image" href="@pageModel.Page.HeroImage.Imgixify(768, 960)" media="(max-width: 767px)" />
+    }
+}
+
 <vc:bread-crumb />
 
 <div class="about-page">
     <section class="about-hero position-relative">
         @if (pageModel.Page.HeroImage?.LegacyMediaFileAsset is not null)
         {
-            <img src="@pageModel.Page.HeroImage.LegacyMediaFileAsset.Url"
-                 alt="@pageModel.Page.HeroImageAltText"
-                 class="about-hero-img w-100 object-fit-cover"
-                 loading="lazy" />
+            <picture>
+                <source media="(max-width: 767px)"
+                        srcset="@pageModel.Page.HeroImage.ImgixSrcset(768, 960, null)"
+                        width="768"
+                        height="960" />
+                <img src="@pageModel.Page.HeroImage.Imgixify(1920, 600)"
+                     srcset="@pageModel.Page.HeroImage.ImgixSrcset(1920, 600, new[] { 1 })"
+                     alt="@pageModel.Page.HeroImageAltText"
+                     width="1920"
+                     height="600"
+                     class="about-hero-img w-100 object-fit-cover"
+                     fetchpriority="high"
+                     loading="eager"
+                     decoding="async" />
+            </picture>
         }
 
         <div class="about-hero-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end justify-content-center">

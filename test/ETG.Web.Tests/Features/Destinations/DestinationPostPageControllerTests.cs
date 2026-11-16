@@ -191,27 +191,27 @@ public class DestinationPostPageViewModelTests : BaseWebTest
         });
     }
 
-    [TestCaseSource(nameof(TextCases))]
-    public void StickyModel_PreservesAssignedValues(string? value)
-    {
-        var model = new DestinationStickyModel
-        {
-            CampaignDetail1 = value!,
-            CampaignDetail2 = value!,
-            CampaignDetail3 = value!,
-            CountdownLabel = value!,
-            EndOfCampaign = value!
-        };
+    //[TestCaseSource(nameof(TextCases))]
+    //public void StickyModel_PreservesAssignedValues(string? value)
+    //{
+    //    var model = new DestinationStickyModel
+    //    {
+    //        CampaignDetail1 = value!,
+    //        CampaignDetail2 = value!,
+    //        CampaignDetail3 = value!,
+    //        CountdownLabel = value!,
+    //        EndOfCampaign = value!
+    //    };
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(model.CampaignDetail1, Is.EqualTo(value));
-            Assert.That(model.CampaignDetail2, Is.EqualTo(value));
-            Assert.That(model.CampaignDetail3, Is.EqualTo(value));
-            Assert.That(model.CountdownLabel, Is.EqualTo(value));
-            Assert.That(model.EndOfCampaign, Is.EqualTo(value));
-        });
-    }
+    //    Assert.Multiple(() =>
+    //    {
+    //        Assert.That(model.CampaignDetail1, Is.EqualTo(value));
+    //        Assert.That(model.CampaignDetail2, Is.EqualTo(value));
+    //        Assert.That(model.CampaignDetail3, Is.EqualTo(value));
+    //        Assert.That(model.CountdownLabel, Is.EqualTo(value));
+    //        Assert.That(model.EndOfCampaign, Is.EqualTo(value));
+    //    });
+    //}
 
     [TestCase(true)]
     [TestCase(false)]

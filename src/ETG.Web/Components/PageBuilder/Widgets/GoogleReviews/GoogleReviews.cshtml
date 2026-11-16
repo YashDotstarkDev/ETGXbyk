@@ -5,13 +5,25 @@
 
 @{
     var displayedReviews = Model.Reviews.Reviews
-        .Where(r => !string.IsNullOrWhiteSpace(r.Text))
-        .Take(4)
-        .ToList();
-    double avg = Model.Reviews.Totals.AverageRating;
-    int fullStars = (int)Math.Floor(avg);
-    bool halfStar = (avg - fullStars) >= 0.5;
-    int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    .Where(r => !string.IsNullOrWhiteSpace(r.Text))
+    .Take(4)
+    .ToList();
+
+double avg = Math.Clamp(Model.Reviews.Totals.AverageRating, 0, 5);
+int fullStars = (int)Math.Floor(avg);
+double fraction = avg - fullStars;
+bool halfStar = false;
+
+if (fraction > 0.5)
+{
+    fullStars++;          // e.g. 4.9 -> 5 full stars
+}
+else if (fraction > 0)
+{
+    halfStar = true;      // e.g. 4.1 - 4.5 -> 4 full + half
+}
+
+int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 }
 
 <section class="section-pad bg-white" aria-labelledby="testimonials-title">
@@ -119,7 +131,7 @@
                      aria-expanded="false"
                      aria-controls="@cardId"
                      data-target="#@cardId"
-                     onclick="toggleReviewText(this); return false;">
+                     >     
                     Read more
                   </a>
               }

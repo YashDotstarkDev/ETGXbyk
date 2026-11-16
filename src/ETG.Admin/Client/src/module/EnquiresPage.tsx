@@ -14,11 +14,14 @@ import {
     ButtonType,
     Icon,
     Pagination,
+    Select,
+    MenuItem,
 } from "@kentico/xperience-admin-components";
 // Models
 interface EnquiryItem {
     itemId: number;
     consultantName: string;
+    consultants: ConsultantOption[];
     formInserted: string;
     formUpdated: string;
     firstName: string;
@@ -58,10 +61,18 @@ interface EnquiryItem {
     storeView: string;
     isSpam: boolean;
 }
+interface ConsultantOption { value: string; label: string; }
+interface ManagementOptions {
+    statuses: string[];
+    consultants: ConsultantOption[];
+    canDelete: boolean;
+    canViewTracking: boolean;
+}
 interface EnquiryListArguments {
     page: number;
     pageSize: number;
     searchText: string;
+    consultantGuid: string;
     sortColumn: string;
     sortDescending: boolean;
 }
@@ -80,6 +91,7 @@ interface SaveEnquiryResult {
     success: boolean;
     item?: EnquiryItem;
     errors: string[];
+    updatedField?: string;
 }
 interface DeleteEnquiryArguments {
     itemId: number;
@@ -147,7 +159,7 @@ const fieldSections: FieldSection[] = [
             { name: "bookingReference", label: "Booking Reference" },
             { name: "departureDate", label: "Departure Date", type: "date" },
             { name: "returnDate", label: "Return Date", type: "date" },
-            { name: "assignedUserGuid", label: "Assigned User GUID" },
+            { name: "assignedUserGuid", label: "Consultant" },
             { name: "storeView", label: "Store View" },
             { name: "comments", label: "Comments", multiline: true },
         ],
@@ -204,6 +216,13 @@ export const EnquiresTemplate = () => (
 export const EnquiryEditTemplate = () => <EnquiryScreen editMode />;
 
 const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
+    const [management, setManagement] = useState<ManagementOptions | null>(null);
+    const [consultantFilter, setConsultantFilter] = useState("");
+    const [editConsultants, setEditConsultants] = useState<ConsultantOption[]>([]);
+    const [choicesLoading, setChoicesLoading] = useState(false);
+    const choicesRequest = useRef("");
+    const inlineLocks = useRef(new Set<string>());
+    const [inlineUpdating, setInlineUpdating] = useState<Set<string>>(new Set());
     const [items, setItems] = useState<EnquiryItem[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [page, setPage] = useState(1);
@@ -229,10 +248,11 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
             page,
             pageSize,
             searchText,
+            consultantGuid: consultantFilter,
             sortColumn,
             sortDescending,
         }),
-        [page, pageSize, searchText, sortColumn, sortDescending],
+        [page, pageSize, searchText, consultantFilter, sortColumn, sortDescending],
     );
     const latestListRequest = useRef<{
         args: EnquiryListArguments;
@@ -277,6 +297,128 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
             mounted.current = false;
         };
     }, []);
+    const optionsCommand = usePageCommand<ManagementOptions>("GetManagementOptions", {
+        after: (response) => { if (response) setManagement(response); },
+    });
+    useEffect(() => {
+        void optionsCommand.execute().catch(() => {
+            setMessageSuccess(false);
+            setMessage("Unable to load enquiry permissions and options. Refresh the page.");
+        });
+    }, []);
+    const choicesCommand = usePageCommand<
+        { success: boolean; destination: string; consultants: ConsultantOption[] },
+        { itemId: number; destination: string }
+    >("GetConsultants", { after: (response) => {
+        if (response?.success && response.destination === choicesRequest.current)
+            setEditConsultants(response.consultants);
+        else if (!response?.success) {
+            setMessageSuccess(false);
+            setMessage("No consultant options could be loaded for this destination.");
+        }
+    }});
+    useEffect(() => {
+        if (!editMode || !editorItem) return;
+        const destination = editorItem.preferredDestination;
+        choicesRequest.current = destination;
+        setEditConsultants([]);
+        setChoicesLoading(true);
+        const timer = window.setTimeout(() => {
+            void choicesCommand.execute({ itemId: editorItem.itemId, destination })
+                .catch(() => { setMessageSuccess(false); setMessage("Unable to load consultants."); })
+                .finally(() => { if (choicesRequest.current === destination) setChoicesLoading(false); });
+        }, 300);
+        return () => window.clearTimeout(timer);
+    }, [editMode, editorItem?.itemId, editorItem?.preferredDestination]);
+    const inlineCommand = usePageCommand<SaveEnquiryResult,
+        { itemId: number; field: string; value: string }>("UpdateManagement", {
+        after: (response) => {
+            if (!response?.success) {
+                setMessageSuccess(false);
+                setMessage(response?.errors?.join(" ") || "Unable to update enquiry.");
+                return;
+            }
+
+            // Patch only the changed field(s) on the affected row. Do not reload the list.
+            const updated = response.item;
+            if (updated) {
+                const field = response.updatedField ?? "";
+                setItems(current => current.map(item => {
+                    if (item.itemId !== updated.itemId) return item;
+                    if (field === "consultant") {
+                        return {
+                            ...item,
+                            assignedUserGuid: updated.assignedUserGuid,
+                            consultantName: updated.consultantName,
+                            consultants: updated.consultants,
+                        };
+                    }
+                    if (field === "status") {
+                        return { ...item, status: updated.status };
+                    }
+                    return item;
+                }));
+            }
+        },
+    });
+    const updateManagement = async (itemId: number, field: string, value: string) => {
+        const key = `${itemId}:${field}`;
+        if (inlineLocks.current.has(key) || busy) return;
+        inlineLocks.current.add(key);
+        setInlineUpdating(current => new Set(current).add(key));
+        try {
+            await inlineCommand.execute({ itemId, field, value });
+        } catch {
+            setMessageSuccess(false);
+            setMessage("Unable to update enquiry. Please try again.");
+        } finally {
+            inlineLocks.current.delete(key);
+            setInlineUpdating(current => {
+                const next = new Set(current);
+                next.delete(key);
+                return next;
+            });
+        }
+    };
+    const renderStatus = (item: EnquiryItem, edit: boolean) => (
+        <div className="enquiry-status-select">
+            <Select id={edit ? "enquiry-status" : `enquiry-status-${item.itemId}`}
+                aria-label={`Status for enquiry ${item.itemId}`} value={item.status || "New"}
+                disabled={busy || !management || inlineUpdating.has(`${item.itemId}:status`)} maxContentHeight="320px"
+                onChange={value => {
+                    if (!value || value === (item.status || "New")) return;
+                    if (edit) updateEditor("status", value);
+                    else void updateManagement(item.itemId, "status", value);
+                }}>
+                {item.status && !management?.statuses.includes(item.status) &&
+                    <MenuItem value={item.status} primaryLabel={`${item.status} (legacy)`} />}
+                {(management?.statuses ?? []).map(status =>
+                    <MenuItem key={status} value={status} primaryLabel={status} />)}
+            </Select>
+        </div>
+    );
+    const renderConsultant = (item: EnquiryItem, edit: boolean) => {
+        const options = edit ? editConsultants : item.consultants ?? [];
+        const current = item.assignedUserGuid || "";
+        // Match GUIDs without case sensitivity, while preserving each option's stored value.
+        const selected = options.find(x => x.value.toLowerCase() === current.toLowerCase())?.value ?? current;
+        return <div className="enquiry-consultant-select">
+            <Select id={edit ? "enquiry-assignedUserGuid" : `enquiry-consultant-${item.itemId}`}
+                aria-label={`Consultant for enquiry ${item.itemId}`} value={selected}
+                disabled={busy || !management || (edit && choicesLoading) || (!edit && inlineUpdating.has(`${item.itemId}:consultant`))} maxContentHeight="320px"
+                onChange={value => {
+                    const next = value ?? "";
+                    if (next.toLowerCase() === current.toLowerCase()) return;
+                    if (edit) updateEditor("assignedUserGuid", next);
+                    else void updateManagement(item.itemId, "consultant", next);
+                }}>
+                <MenuItem value="" primaryLabel={edit && choicesLoading ? "Loading consultants…" : "Select"} />
+                {current && !options.some(x => x.value.toLowerCase() === current.toLowerCase()) &&
+                    <MenuItem value={current} primaryLabel={`${item.consultantName || "Previously assigned consultant"} (existing)`} />}
+                {options.map(x => <MenuItem key={x.value} value={x.value} primaryLabel={x.label} />)}
+            </Select>
+        </div>;
+    };
     // Page commands
     const listCommand = usePageCommand<EnquiryListResult, EnquiryListArguments>(
         "GetEnquiries",
@@ -286,10 +428,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
             },
         },
     );
-    const handleSaveResponse = (
-        response: SaveEnquiryResult | undefined,
-        creating: boolean,
-    ) => {
+    const handleSaveResponse = (response: SaveEnquiryResult | undefined) => {
         setSaving(false);
         if (!response?.success) {
             setMessageSuccess(false);
@@ -297,16 +436,13 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
             return;
         }
         if (response.item) setEditorItem(response.item);
-        setMessageSuccess(true);
-        setMessage(
-            creating ? "Enquiry created successfully." : "Enquiry updated successfully.",
-        );
+        setMessage("");
         setRefreshVersion((current) => current + 1);
     };
     const updateCommand = usePageCommand<SaveEnquiryResult, SaveEnquiryArguments>(
         "UpdateEnquiry",
         {
-            after: (response) => handleSaveResponse(response, false),
+            after: (response) => handleSaveResponse(response),
         },
     );
     const deleteCommand = usePageCommand<DeleteEnquiryResult, DeleteEnquiryArguments>(
@@ -320,8 +456,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                     );
                     return;
                 }
-                setMessageSuccess(true);
-                setMessage("Enquiry deleted successfully.");
+                setMessage("");
                 setRefreshVersion((current) => current + 1);
             },
         },
@@ -515,7 +650,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
     };
     const saveEditor = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!editorItem || busy) {
+        if (!editorItem || busy || choicesLoading || !management) {
             return;
         }
         if (!editorItem.firstName.trim()) {
@@ -618,12 +753,12 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                                 Created: {editorItem.formInserted} · Last updated:{" "}
                                 {editorItem.formUpdated}
                             </p>
-                            {fieldSections.map((section) => (
+                            {fieldSections.filter(section => section.title !== "Tracking" || management?.canViewTracking).map((section) => (
                                 <section key={section.title}>
                                     <h2 className="enquiry-section-heading">
                                         {section.title}
                                     </h2>
-                                    {section.fields.map((field) => (
+                                    {section.fields.filter(field => !["bookingReference", "departureDate", "returnDate"].includes(field.name) || editorItem.status === "Confirmed").map((field) => (
                                         <div
                                             className="enquiry-edit-field"
                                             key={field.name}
@@ -636,7 +771,9 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                                                 )}
                                                 {field.label}
                                             </label>
-                                            {field.multiline ? (
+                                            {field.name === "status" ? renderStatus(editorItem, true)
+                                                : field.name === "assignedUserGuid" ? renderConsultant(editorItem, true)
+                                                : field.multiline ? (
                                                 <textarea
                                                     id={`enquiry-${field.name}`}
                                                     rows={4}
@@ -729,6 +866,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
             </div>
         );
     }
+    const visibleColumns = columns.filter(column => !column.field.startsWith("utm") || management?.canViewTracking);
     // Listing: first/last pages, current page, next page and skipped-range ellipses.
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -792,6 +930,15 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                         </svg>
                     </button>
                 </form>
+                <div className="enquiry-consultant-filter">
+                    <Select aria-label="Filter by consultant" value={consultantFilter}
+                        disabled={busy || !management} maxContentHeight="320px"
+                        onChange={value => { setConsultantFilter(value ?? ""); setPage(1); }}>
+                        <MenuItem value="" primaryLabel="All consultants" />
+                        {(management?.consultants ?? []).map(x =>
+                            <MenuItem key={x.value} value={x.value} primaryLabel={x.label} />)}
+                    </Select>
+                </div>
                 <Button
                     type={ButtonType.Button}
                     color={ButtonColor.Secondary}
@@ -802,6 +949,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                         setMessage("");
                         setSearchInput("");
                         setSearchText("");
+                        setConsultantFilter("");
                         setPage(1);
                         setRefreshVersion((value) => value + 1);
                     }}
@@ -830,7 +978,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                 <table className="enquiry-table">
                     <thead>
                         <tr>
-                            {columns.map((column) => {
+                            {visibleColumns.map((column) => {
                                 const selected =
                                     sortColumn.toLowerCase() ===
                                     column.field.toLowerCase();
@@ -865,15 +1013,17 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                                     </th>
                                 );
                             })}
-                            <th scope="col">Actions</th>
+                            {management?.canDelete && <th scope="col">Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {items.map((item) => (
                             <tr key={item.itemId} onClick={() => openEditor(item)}>
-                                {columns.map((column) => (
-                                    <td key={column.field}>
-                                        {column.field === "itemId" ? (
+                                {visibleColumns.map((column) => (
+                                    <td key={column.field} onClick={event => { if (column.field === "status" || column.field === "consultantName") event.stopPropagation(); }}>
+                                        {column.field === "status" ? renderStatus(item, false)
+                                            : column.field === "consultantName" ? renderConsultant(item, false)
+                                            : column.field === "itemId" ? (
                                             <button
                                                 type="button"
                                                 className="enquiry-id"
@@ -891,7 +1041,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                                         )}
                                     </td>
                                 ))}
-                                <td>
+                                {management?.canDelete && <td>
                                     <div
                                         className="enquiry-actions"
                                         onClick={(event) => event.stopPropagation()}
@@ -907,7 +1057,7 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
                                             <Icon name="xp-bin" />
                                         </button>
                                     </div>
-                                </td>
+                                </td>}
                             </tr>
                         ))}
                     </tbody>
@@ -939,6 +1089,16 @@ const EnquiryScreen = ({ editMode }: { editMode: boolean }) => {
 const searchHint =
     "Search by destination, status, first name, last name, email, phone, experience, tour name or tour code";
 const listingCss = `
+.etg-enquiries .enquiry-status-select { width:160px; }
+.etg-enquiries .enquiry-consultant-select { width:280px; }
+.etg-enquiries .enquiry-consultant-filter { flex:0 1 280px; min-width:220px; }
+.etg-enquiries .enquiry-edit-field .enquiry-status-select,
+.etg-enquiries .enquiry-edit-field .enquiry-consultant-select { width:100%; }
+.etg-enquiries .enquiry-status-select input,
+.etg-enquiries .enquiry-consultant-select input,
+.etg-enquiries .enquiry-consultant-filter input { cursor:pointer; }
+
+
 .etg-enquiries { position:relative; }
 .etg-enquiries .enquiry-loading-status { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .etg-enquiries .enquiry-export-row > button { min-width:145px; }
@@ -949,7 +1109,7 @@ const listingCss = `
 .etg-enquiries .enquiry-edit-meta { color:#6d6470; font-size:12px; }
 .etg-enquiries .enquiry-edit-field { margin-bottom:24px; }
 .etg-enquiries .enquiry-edit-field label { display:block; font-size:14px; margin-bottom:10px; }
-.etg-enquiries .enquiry-edit-field input,.etg-enquiries .enquiry-edit-field textarea { width:100%; box-sizing:border-box; border:1px solid #8d858e; border-radius:22px; padding:9px 16px; min-height:38px; font:inherit; background:white; color:inherit; }
+.etg-enquiries .enquiry-edit-field > input,.etg-enquiries .enquiry-edit-field > textarea { width:100%; box-sizing:border-box; border:1px solid #8d858e; border-radius:22px; padding:9px 16px; min-height:38px; font:inherit; background:white; color:inherit; }
 .etg-enquiries .enquiry-edit-field textarea { border-radius:14px; resize:vertical; }
 .etg-enquiries .enquiry-required { color:#ed4c5c; }
 .etg-enquiries .enquiry-checkbox { display:flex; gap:8px; align-items:center; margin-bottom:22px; font-size:14px; }

@@ -15,7 +15,7 @@ public static class ServiceCollectionCurrencyExtensions
 
         services.AddHttpClient("FixerClient", client =>
         {
-            client.BaseAddress = new Uri("http://data.fixer.io/api/"); // http only on free/basic Fixer plans
+            client.BaseAddress = new Uri("https://data.fixer.io/api/");
         });
 
         services.AddSingleton<ConstantExchangeRateProvider>();

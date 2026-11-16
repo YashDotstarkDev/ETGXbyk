@@ -35,6 +35,12 @@
     <editable-area area-identifier="Zone1" />
     <editable-area area-identifier="Zone2" />
 
+@if (Model.ContactUs is not null)
+{
+    <partial name="~/Views/Shared/Partial/Common/_ContactUs.cshtml"
+             model="Model.ContactUs" />
+}
+
     @if (viewModel.RelatedArticles?.Any() == true)
 {
     <div class="spacer"></div>
@@ -43,5 +49,18 @@
         "~/Views/Shared/Partial/Article/RelatedArticlePartial.cshtml",
         viewModel.RelatedArticles
     )
+}
+
+@{
+    var sticky = Model.TravelTypeStickyModel;
+}
+
+@if (sticky is not null && sticky.DisplaySticky
+    && (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail2)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
+{
+    <partial name="~/Views/Shared/Partial/Common/_CampaignStickyBar.cshtml"
+             model="sticky" />
 }
 

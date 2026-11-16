@@ -1,22 +1,28 @@
-﻿using ETG.Web.Components.ViewComponents.MainNavigation;
+using ETG.Web.Components.ViewComponents.MainNavigation;
+using ETG.Web.Components.ViewComponents.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-public class TopNavigationViewComponent : ViewComponent
+public class TopNavigationViewComponent(IMediator mediator, IWebsiteLayoutAccessor? layoutAccessor = null) : ViewComponent
 {
-    private readonly IMediator mediator;
-    public TopNavigationViewComponent(IMediator mediator) => this.mediator = mediator;
-
     public async Task<IViewComponentResult> InvokeAsync(int maxDepth = 3)
     {
         try
         {
+            var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
             var query = new GetNavigationHierarchyQuery("/Shared/Menus/Top-Menu", maxDepth);
-            var result = await mediator.Send(query);
+            var result = await mediator.Send(query, cancellationToken);
+
             var model = result.HasValue ? result.Value : new NavigationViewModel();
+            if (layoutAccessor != null)
+            {
+                var layout = await layoutAccessor.GetAsync(cancellationToken);
+                model = model.WithLayout(layout ?? new WebsiteLayoutContentViewModel());
+            }
+
             return View("~/Components/ViewComponents/TopNavigation/TopNavigation.cshtml", model);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return View("~/Components/ViewComponents/TopNavigation/TopNavigation.cshtml", new NavigationViewModel());
         }

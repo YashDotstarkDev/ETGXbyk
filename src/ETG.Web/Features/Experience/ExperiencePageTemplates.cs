@@ -8,6 +8,7 @@ using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Core.Models;
+using ETG.Core.Models.GoogleReviews;
 using ETG.Core.Models.Tour;
 using ETG.Web.Components.PageBuilder.Widgets.GoogleReviews;
 using ETG.Web.Features;
@@ -80,25 +81,12 @@ public class ExperiencePageTemplateController(
         var selectedExperienceGuid =
             experience.SystemFields.WebPageItemGUID.ToString("D");
 
-        var relatedArticlesQuery = new ContentItemQueryBuilder();
-
-        relatedArticlesQuery.ForContentType(
-            ArticleContent.CONTENT_TYPE_NAME,
-            query =>
-            {
-                query.ForWebsite(channelContext.WebsiteChannelName);
-                query.WithLinkedItems(4);
-                query.Where(where =>
-                    where.WhereLike(
-                        nameof(ArticleContent.ArticleExperiences),
-                        $"%{selectedExperienceGuid}%"));
-            });
-
-        var relatedArticles = (await contentQueryExecutor
-            .GetMappedWebPageResult<ArticleContent>(relatedArticlesQuery))
-            .OrderByDescending(article => article.ArticleDate)
-            .Take(3)
-            .ToList();
+        // PERFORMANCE FIX: Use cached CQRS query handler instead of direct query
+        var relatedArticles = await mediator.Send(
+            new GetExperienceArticlesQuery(
+                channelContext.WebsiteChannelName,
+                selectedExperienceGuid),
+            HttpContext.RequestAborted);
 
         var relatedArticleViewModels = await Task.WhenAll(
             relatedArticles.Select(article =>
@@ -120,11 +108,15 @@ public class ExperiencePageTemplateController(
             selectedExperienceGuid);
 
         GoogleReviewsWidgetViewModel? googleReviewsVm = null;
+        ReviewListingResponse? reviews = null;
+
         if (!experience.HideGoogleReviews)
         {
             var reviewsData = await reviewsService.GetReviewsAsync();
             if (reviewsData != null)
             {
+                reviews = reviewsData;
+
                 var props = new GoogleReviewsWidgetProperties
                 {
                     Heading = "What our customers say"
@@ -133,7 +125,25 @@ public class ExperiencePageTemplateController(
             }
         }
 
-        var experienceAlias = (experience.ExperienceName ?? string.Empty).Trim().Replace(" ", "-").ToLowerInvariant();
+        var experienceUrl = await urlRetriever.Retrieve(experience);
+
+        var experiencePath = (experienceUrl?.RelativePath ?? string.Empty)
+            .Split(new[] { '?', '#' }, 2)[0]
+            .TrimEnd('/');
+
+        var experienceAlias = experiencePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault();
+
+        ContactUsViewModel? contactUs = string.IsNullOrWhiteSpace(experienceAlias)
+            ? null
+            : new ContactUsViewModel
+            {
+                CTAUrl = $"{Request.PathBase}/experiences/enquire/{experienceAlias}",
+                CTABackgroundImage = experience.ExperienceHeroImage?
+                    .OfType<MediaFile>()
+                    .FirstOrDefault()?.LegacyMediaFileAsset?.Url ?? string.Empty
+            };
 
         var viewModel = new ExperiencePageDetailViewModel
         {
@@ -152,19 +162,13 @@ public class ExperiencePageTemplateController(
             JsonSchema = experience.ExperienceJsonSchema ?? "",
             SelectedImageFolders = experience.SelectedImageFolders ?? Enumerable.Empty<ImageFolder>(),
             SelectedImageTileCtaFolders = experience.SelectedImageTileCtaFolders ?? Enumerable.Empty<ImageTileCtaFolder>(),
-            ContactUs = new ContactUsViewModel
-            {
-                CTAHeading = "Connect with us",
-                CTAPhoneDetail1 = "Australia: (02) 9094 3322",
-                CTAPhoneDetail2 = "New Zealand: 0800 855 045",
-                CTAUrl = $"/experiences/enquire/{experienceAlias}",
-                CTAText = "ENQUIRE NOW",
-                CTABackgroundImage = experience.ExperienceHeroImage?.OfType<MediaFile>()
-                .FirstOrDefault()?.LegacyMediaFileAsset?.Url ?? string.Empty
-            },
+            ContactUs = contactUs,
 
             HideGoogleReviews = experience.HideGoogleReviews,
             GoogleReviews = googleReviewsVm,
+
+            ExperienceStickyModel =
+                CreateExperienceStickyModel(experience, contactUs, reviews),
 
             RelatedArticles = relatedArticleViewModels,
 
@@ -278,6 +282,31 @@ public class ExperiencePageTemplateController(
             ViewAllButtonLabel = "View All"
         };
     }
+
+    private static CampaignStickyBarViewModel CreateExperienceStickyModel(
+        ExperienceContent experience,
+        ContactUsViewModel? contactUs,
+        ReviewListingResponse? reviews)
+    {
+        return new CampaignStickyBarViewModel
+        {
+            DisplaySticky = experience.DisplaySticky,
+
+            CampaignDetail1 = experience.CampaignDetail1 ?? string.Empty,
+            CampaignDetail2 = experience.CampaignDetail2 ?? string.Empty,
+            CampaignDetail3 = experience.CampaignDetail3 ?? string.Empty,
+            CountdownLabel = experience.CountdownLabel ?? string.Empty,
+
+            EndOfCampaign = experience.EndOfCampaign == DateTime.MinValue
+                ? string.Empty
+                : experience.EndOfCampaign.ToString(
+                    "yyyy-MM-ddTHH:mm:ss",
+                    CultureInfo.InvariantCulture),
+
+            CTA = contactUs,
+            Reviews = reviews
+        };
+    }
 }
 
 public class ExperiencePageDetailViewModel
@@ -292,5 +321,6 @@ public class ExperiencePageDetailViewModel
     public IEnumerable<ImageFolder> SelectedImageFolders { get; init; } = [];
     public IEnumerable<ImageTileCtaFolder> SelectedImageTileCtaFolders { get; init; } = [];
     public GoogleReviewsWidgetViewModel? GoogleReviews { get; init; }
-    public ContactUsViewModel ContactUs { get; init; } = new();
+    public ContactUsViewModel? ContactUs { get; init; } = new();
+    public CampaignStickyBarViewModel ExperienceStickyModel { get; init; } = new();
 }

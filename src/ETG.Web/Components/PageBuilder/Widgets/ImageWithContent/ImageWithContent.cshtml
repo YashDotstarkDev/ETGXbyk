@@ -42,7 +42,13 @@
     <div class="container">
         <div class="@rowClasses">
             <div class="@imageColClass">
-                <img src="@Model.Image.LegacyMediaFileAsset.Url" alt="@Model.Image.LegacyMediaFileTitle" class="img-fluid" />
+                <img src="@Model.Image.Imgixify(600, 400)"
+                     srcset="@Model.Image.ImgixSrcset(600, 400, null)"
+                     width="600"
+                     height="400"
+                     alt="@Model.Image.LegacyMediaFileTitle"
+                     class="img-fluid"
+                     loading="lazy" />
             </div>
             <div class="@contentColClass">
                 @if (!string.IsNullOrWhiteSpace(Model.Heading))

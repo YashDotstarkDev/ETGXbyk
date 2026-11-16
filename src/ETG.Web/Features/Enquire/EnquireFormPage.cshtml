@@ -1,6 +1,5 @@
-﻿@using ETG.Core.Models
+@using ETG.Core.Models
 @model EnquireFormPageViewModel
-
 @if (Model?.Page == null)
 {
     return;
@@ -8,9 +7,7 @@
 @{
     var page = Model.Page;
     var form = Model.Form ?? new EnquireFormViewModel();
-    var formTitle = !string.IsNullOrWhiteSpace(page.ContainerFormTitle)
-        ? page.ContainerFormTitle
-        : "Enquire Now";
+    var formTitle = Model.FormHeading;
 }
 
 <vc:bread-crumb />
@@ -45,7 +42,7 @@
                 </h1>
 
 
-                <form id="enquireForm" class="contact-form needs-validation" method="post" action="@Url.Action("GenericEnquire", "Form")" novalidate>
+                <form id="enquireForm" class="contact-form needs-validation" method="post" action="/form/enquire" novalidate>
                     @Html.AntiForgeryToken()
                     <div id="formSuccessMessage" class="alert alert-success d-none mb-4" role="alert">
                         Your enquiry has been sent successfully. We will get back to you soon!
@@ -167,7 +164,7 @@
 
                         <div class="col-md-6">
 
-                            <div class="mb-4">
+                            <div class="mb-4 dropdown-with-arrow">
 
                                 <label asp-for="Form.PreferredTourType"
                                        class="form-label">
@@ -217,7 +214,7 @@
                     <div class="row g-3 mb-3">
 
                         <div class="col-md-6">
-                            <div class="mb-4">
+                            <div class="mb-4 dropdown-with-arrow">
                                 <label asp-for="Form.PreferredDestination"
                                        class="form-label">
                                     Preferred destination
@@ -233,7 +230,7 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <div class="mb-4">
+                            <div class="mb-4 dropdown-with-arrow">
                                 <label asp-for="Form.PreferredExperience"
                                        class="form-label">
                                     Preferred experience (optional)
@@ -279,14 +276,9 @@
                         </label>
                     </div>
                     
-                    <input type="hidden"
-                           id="recaptchaToken"
-                           name="g-recaptcha-response" />
-
-                    <input type="hidden"
-                           id="recaptchaAction"
-                           name="g-recaptcha-action"
-                           value="generic_enquire_submit" />
+                    <!-- reCAPTCHA v3 Partial View -->
+                    <partial name="~/Components/FormBuilder/ReCaptcha/ReCaptcha.cshtml"
+                             view-data='@new ViewDataDictionary(ViewData) { { "ActionName", "generic_enquire_submit" } }' />
 
                     <button type="submit" class="btn btn-pink contact-submit-btn">
                         SUBMIT
@@ -302,10 +294,8 @@
 
 <editable-area area-identifier="editableBottom" />
 
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-
         const form = document.getElementById("enquireForm");
 
         if (!form) {
@@ -315,22 +305,22 @@
         const firstName = document.getElementById("firstName");
         const lastName = document.getElementById("lastName");
         const email = document.getElementById("email");
+        const phone = document.getElementById("phone");
+        const methodPhone = document.getElementById("methodPhone");
 
-        const successMessage =
-            document.getElementById("formSuccessMessage");
-
-        const errorMessage =
-            document.getElementById("formErrorMessage");
-
-        const submitButton =
-            form.querySelector(".contact-submit-btn");
+        const successMessage = document.getElementById("formSuccessMessage");
+        const errorMessage = document.getElementById("formErrorMessage");
+        const submitButton = form.querySelector(".contact-submit-btn");
 
         function isValidEmail(value) {
             return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(value);
         }
 
-        function showFieldError(field, message) {
+        function isValidPhone(value) {
+            return /^[0-9\s\+\-\(\)]{6,20}$/.test(value);
+        }
 
+        function showFieldError(field, message) {
             if (!field) {
                 return;
             }
@@ -338,23 +328,18 @@
             field.classList.add("is-invalid");
             field.setAttribute("aria-invalid", "true");
 
-            const feedback =
-                field.parentElement.querySelector(".invalid-feedback");
-
+            const feedback = field.parentElement.querySelector(".invalid-feedback");
             if (feedback) {
                 feedback.textContent = message;
             }
 
-            const label =
-                form.querySelector(`label[for="${field.id}"]`);
-
+            const label = form.querySelector(`label[for="${field.id}"]`);
             if (label) {
                 label.classList.add("text-danger");
             }
         }
 
         function clearFieldError(field) {
-
             if (!field) {
                 return;
             }
@@ -362,75 +347,93 @@
             field.classList.remove("is-invalid");
             field.removeAttribute("aria-invalid");
 
-            const label =
-                form.querySelector(`label[for="${field.id}"]`);
-
+            const label = form.querySelector(`label[for="${field.id}"]`);
             if (label) {
                 label.classList.remove("text-danger");
             }
         }
 
         function validateForm() {
-
             let isValid = true;
 
             clearFieldError(firstName);
             clearFieldError(lastName);
             clearFieldError(email);
+            if (phone) clearFieldError(phone);
 
-            if (!firstName.value.trim()) {
-
-                showFieldError(
-                    firstName,
-                    "Please enter a valid first name"
-                );
-
+            const fnValue = firstName.value.trim();
+            if (!fnValue) {
+                showFieldError(firstName, "Please enter a valid first name");
+                isValid = false;
+            } else if (/\d/.test(fnValue)) {
+                showFieldError(firstName, "First name cannot contain numbers.");
+                isValid = false;
+            } else if (/http/i.test(fnValue)) {
+                showFieldError(firstName, "Please enter a valid first name");
                 isValid = false;
             }
 
-            if (!lastName.value.trim()) {
-
-                showFieldError(
-                    lastName,
-                    "Please enter a valid last name"
-                );
-
+            const lnValue = lastName.value.trim();
+            if (!lnValue) {
+                showFieldError(lastName, "Please enter a valid last name");
+                isValid = false;
+            } else if (/\d/.test(lnValue)) {
+                showFieldError(lastName, "Last name cannot contain numbers.");
+                isValid = false;
+            } else if (/http/i.test(lnValue)) {
+                showFieldError(lastName, "Please enter a valid last name");
+                isValid = false;
+            } else if (fnValue && fnValue.toLowerCase() === lnValue.toLowerCase()) {
+                showFieldError(lastName, "First and last name cannot be the same.");
                 isValid = false;
             }
 
             const emailValue = email.value.trim();
+            const phoneValue = phone ? phone.value.trim() : "";
+            const isPhonePreferred = methodPhone && methodPhone.checked;
 
-            if (!emailValue) {
-
-                showFieldError(
-                    email,
-                    "Email must be a valid e-mail"
-                );
-
-                isValid = false;
-
+            if (isPhonePreferred) {
+                if (!phoneValue) {
+                    showFieldError(phone, "Please enter a valid numeric phone number.");
+                    isValid = false;
+                } else if (!isValidPhone(phoneValue)) {
+                    showFieldError(phone, "Please enter a valid numeric phone number.");
+                    isValid = false;
+                }
+                if (emailValue && !isValidEmail(emailValue)) {
+                    showFieldError(email, "Email must be a valid e-mail");
+                    isValid = false;
+                }
+            } else {
+                if (!emailValue) {
+                    showFieldError(email, "Email must be a valid e-mail");
+                    isValid = false;
+                } else if (!isValidEmail(emailValue)) {
+                    showFieldError(email, "Email must be a valid e-mail");
+                    isValid = false;
+                }
+                if (phoneValue && !isValidPhone(phoneValue)) {
+                    showFieldError(phone, "Please enter a valid numeric phone number.");
+                    isValid = false;
+                }
             }
-            else if (!isValidEmail(emailValue)) {
 
-                showFieldError(
-                    email,
-                    "Email must be a valid e-mail"
-                );
-
-                isValid = false;
-            }
             return isValid;
         }
 
-        firstName.addEventListener("input", function () {
+        phone?.addEventListener("input", function () {
+            if (isValidPhone(this.value.trim())) {
+                clearFieldError(this);
+            }
+        });
 
+        firstName.addEventListener("input", function () {
             if (this.value.trim()) {
                 clearFieldError(this);
             }
         });
 
         lastName.addEventListener("input", function () {
-
             if (this.value.trim()) {
                 clearFieldError(this);
             }
@@ -444,7 +447,7 @@
 
         form.addEventListener("submit", async function (event) {
             event.preventDefault();
-        
+
             if (successMessage) {
                 successMessage.classList.add("d-none");
             }
@@ -455,8 +458,7 @@
             }
 
             if (!validateForm()) {
-                const firstInvalidField =
-                    form.querySelector(".is-invalid");
+                const firstInvalidField = form.querySelector(".is-invalid");
                 if (firstInvalidField) {
                     firstInvalidField.focus();
                 }
@@ -468,6 +470,15 @@
             }
 
             try {
+                // Fetch token using recaptcha.js
+                const { validateCaptcha } = await import('@Url.Content("~/js/recaptcha.js")');
+                const token = await validateCaptcha("generic_enquire_submit");
+
+                const tokenInput = document.getElementById("recaptchaToken");
+                if (tokenInput && token) {
+                    tokenInput.value = token;
+                }
+
                 const formData = new FormData(form);
 
                 const response = await fetch(
@@ -482,95 +493,64 @@
                 );
 
                 if (response.redirected) {
-
                     window.location.href = response.url;
-
                     return;
                 }
 
-                const contentType =
-                    response.headers.get("content-type") || "";
+                const contentType = response.headers.get("content-type") || "";
 
                 if (contentType.includes("application/json")) {
                     const result = await response.json();
 
                     if (!result.success) {
+                        if (result.message && errorMessage) {
+                            errorMessage.textContent = result.message;
+                            errorMessage.classList.remove("d-none");
+                        }
 
                         if (result.errors) {
                             if (result.errors.firstName) {
-                                showFieldError(
-                                    firstName,
-                                    result.errors.firstName
-                                );
+                                showFieldError(firstName, result.errors.firstName);
                             }
-
                             if (result.errors.lastName) {
-
-                                showFieldError(
-                                    lastName,
-                                    result.errors.lastName
-                                );
+                                showFieldError(lastName, result.errors.lastName);
                             }
-
                             if (result.errors.email) {
-                                showFieldError(
-                                    email,
-                                    result.errors.email
-                                );
+                                showFieldError(email, result.errors.email);
                             }
-                            const firstInvalidField =
-                                form.querySelector(".is-invalid");
+                            if (result.errors.phone && phone) {
+                                showFieldError(phone, result.errors.phone);
+                            }
+
+                            const firstInvalidField = form.querySelector(".is-invalid");
                             if (firstInvalidField) {
                                 firstInvalidField.focus();
                             }
-                        }
-
-                        else if (errorMessage) {
-                            errorMessage.textContent =
-                                result.message ||
-                                "Please check the form.";
-                            errorMessage.classList.remove("d-none");
                         }
                         return;
                     }
 
                     if (result.redirectUrl) {
-                        window.location.href =
-                            result.redirectUrl;
+                        window.location.href = result.redirectUrl;
                         return;
                     }
 
+                    form.reset();
                     if (successMessage) {
-                        successMessage.textContent =
-                            result.message ||
-                            "Your enquiry has been sent successfully.";
                         successMessage.classList.remove("d-none");
                     }
-                    form.reset();
                     return;
                 }
 
                 if (!response.ok) {
-                    throw new Error(
-                        "Form submission failed."
-                    );
+                    throw new Error("Form submission returned HTTP " + response.status);
                 }
-
-            }
-            catch (error) {
-                console.error(
-                    "Enquiry form submission error:",
-                    error
-                );
-
+            } catch (err) {
                 if (errorMessage) {
-
-                    errorMessage.textContent =
-                        "Something went wrong. Please try again.";
+                    errorMessage.textContent = "Something went wrong. Please try again.";
                     errorMessage.classList.remove("d-none");
                 }
-            }
-            finally {
+            } finally {
                 if (submitButton) {
                     submitButton.disabled = false;
                 }

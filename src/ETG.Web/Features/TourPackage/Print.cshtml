@@ -1,4 +1,4 @@
-﻿@using System
+@using System
 @using System.Collections.Generic
 @using System.Linq
 @using CMS.ContentEngine
@@ -98,27 +98,34 @@
 <section class="pkgd-hero">
     <div class="pkgd-hero__track" id="pkgdTrack">
         @if (!string.IsNullOrWhiteSpace(heroImageUrl))
-            {
-                <div class="pkgd-hero__slide">
-                 <img src="@heroImageUrl" alt="hero-tour-image" />
-                </div>
-            }
+        {
+            <div class="pkgd-hero__slide">
+                <img src="@heroImageUrl" alt="hero-tour-image" />
+            </div>
+        }
     </div>
     <div class="pkgd-hero__titlebar">
         <h1 class="about-hero-title text-white fw-bold display-4">@tour.TourName</h1>
     </div>
 </section>
 
-<!-- Header Row -->
-@if (destination != null
-    && !string.IsNullOrWhiteSpace(destination.DestinationName)
-    && !string.IsNullOrWhiteSpace(tour.TourCode))
+@if (!string.IsNullOrWhiteSpace(destination?.DestinationName))
 {
 
     <div class="pkg-header-wrapper border-top border-info border-2" style="background-color: #fff9fb;">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center py-3 pkg-header-row">
                 <h2 class="pkg-title m-0">@(destination?.DestinationName ?? "") | Tour Code: <span class="text-pink">@(tour?.TourCode ?? "")</span></h2>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="pkg-header-wrapper border-top border-info border-2" style="background-color: #fff9fb;">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-3 pkg-header-row">
+                <h2 class="pkg-title m-0">Tour Code: <span class="text-pink">@(tour?.TourCode ?? "")</span></h2>
             </div>
         </div>
     </div>
@@ -507,8 +514,18 @@
                                                             </div>
                                                             <i class="dropdown icon bi bi-chevron-down"></i>
                                                         </div>
-                                                        <div class="content active">
-                                                            <div class="inner-content transition visible" style="display: block !important;">
+                                                        <div class="content active pdf-accommodation-content" style="display: block !important;
+                                                            visibility: visible !important;
+                                                            height: auto !important;
+                                                            max-height: none !important;
+                                                            opacity: 1 !important;
+                                                            overflow: visible !important;">
+                                                            <div class="inner-content transition visible pdf-accommodation-inner" style="display: block !important;
+                                                                visibility: visible !important;
+                                                                height: auto !important;
+                                                                max-height: none !important;
+                                                                opacity: 1 !important;
+                                                                overflow: visible !important;">
                                                                 @if (!string.IsNullOrWhiteSpace(hotel.HotelCaption))
                                                                 {
                                                                     <p>
@@ -548,7 +565,7 @@
                                                             {
                                                                 foreach (var roomUpgrade in roomUpgradeFolder.SelectedRoomUpgrades)
                                                                 {
-                                                                    <div class="inner-content transition hidden" style="display: block !important;">
+                                                                    <div class="inner-content transition hidden">
                                                                         <h5 class="pkg-section-title">Tour Room Upgrades</h5>
                                                                         @if (!string.IsNullOrWhiteSpace(roomUpgrade.RoomUpgradeTitle))
                                                                         {
@@ -693,24 +710,24 @@
                         <!-- Section: Additional Information -->
                         <div id="pkg-additional" class="pkg-section mb-5">
                             <h3 class="pkg-section-title mb-3">Additional Information</h3>
-                            @if (destination != null)
+                            @if (!string.IsNullOrWhiteSpace(destination?.DestinationName))
                             {
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <div class="additional-info-box">
                                             <div class="info-label text-uppercase small text-white opacity-75">OFFICIAL LANGUAGE</div>
-                                            <div class="info-val text-white fw-medium">@destination.DestinationOfficialLanguages</div>
+                                            <div class="info-val text-white fw-medium">@(destination?.DestinationOfficialLanguages ?? "")</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="additional-info-box">
                                             <div class="info-label text-uppercase small text-white opacity-75">LOCAL CURRENCY</div>
-                                            <div class="info-val text-white fw-medium">@destination.DestinationCurrency</div>
+                                            <div class="info-val text-white fw-medium">@(destination?.DestinationCurrency ?? "")</div>
                                         </div>
                                     </div>
                                 </div>
-                                <br />
                             }
+                            <br />
                             @Html.Raw(tour.TourImportantNote)
                             @Html.Raw(tour.TourSmallprint)
                         </div>
@@ -726,8 +743,8 @@
                     }
 
                     
-                        @if (partnershipFolders.Any())
-                        {
+                    @if (partnershipFolders.Any())
+                    {
                         <div class="partnership-widget">
                             <h5 class="partnership-title">IN PARTNERSHIP WITH</h5>
                             <div class="partnership-logos">
@@ -754,8 +771,8 @@
                                     }
                                 }
                             </div>
-                         </div>
-                        }                    
+                        </div>
+                    }
                 </div>
             </div>
         </div>

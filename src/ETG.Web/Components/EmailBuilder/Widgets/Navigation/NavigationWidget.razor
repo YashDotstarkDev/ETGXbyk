@@ -1,0 +1,85 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.Navigation
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+@{
+    var hasItem1 = !string.IsNullOrWhiteSpace(Model.NavigationItem1);
+    var hasItem2 = !string.IsNullOrWhiteSpace(Model.NavigationItem2);
+    var hasItem3 = !string.IsNullOrWhiteSpace(Model.NavigationItem3);
+    var hasItem4 = !string.IsNullOrWhiteSpace(Model.NavigationItem4);
+    var hasAnyItem = hasItem1 || hasItem2 || hasItem3 || hasItem4;
+}
+
+@if (hasAnyItem)
+{
+<!-- ===== Navigation Section START HERE ===== -->
+        <!-- ===== Navigation_Section START HERE ===== -->
+        <tr>
+          <td align="center" valign="top"><table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+              <tbody>
+                <tr>
+                  <td align="center" valign="top" style="padding: 0px 100px;" class="em_aside24"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                      <tbody>
+                        <tr>
+                          <td height="13" style="height: 13px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td align="center" valign="top"><table border="0" cellspacing="0" cellpadding="0" align="center">
+                              <tbody>
+                                <tr>
+                                  @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(NavigationItem1)) {   %} *@
+                                  @if (hasItem1)
+                                  {
+                                  <td align="left" valign="top" class="em_defaultlink em_f12" style="font-family: Arial,sans-serif; font-size: 13px; line-height: 15px; color: #333333;"><a href="@Model.NavigationItem1Url" target="_blank" style="text-decoration: none; color: #333333;">@Model.NavigationItem1</a></td>
+                                  @if (hasItem2 || hasItem3 || hasItem4)
+                                  {
+                                  <td width="50" style="width: 50px;" class="em_side28"></td>
+                                  }
+                                  }
+                                  @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(NavigationItem2)) {   %} *@
+                                  @if (hasItem2)
+                                  {
+                                  <td align="left" valign="top" class="em_defaultlink em_f12" style="font-family: Arial,sans-serif; font-size: 13px; line-height: 15px; color: #333333;"><a href="@Model.NavigationItem2Url" target="_blank" style="text-decoration: none; color: #333333;">@Model.NavigationItem2</a></td>
+                                  @if (hasItem3 || hasItem4)
+                                  {
+                                  <td width="50" style="width: 50px;" class="em_side28"></td>
+                                  }
+                                  }
+                                  @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(NavigationItem3)) {   %} *@
+                                  @if (hasItem3)
+                                  {
+                                  <td align="left" valign="top" class="em_defaultlink em_f12" style="font-family: Arial,sans-serif; font-size: 13px; line-height: 15px; color: #333333;"><a href="@Model.NavigationItem3Url" target="_blank" style="text-decoration: none; color: #333333;">@Model.NavigationItem3</a></td>
+                                  @if (hasItem4)
+                                  {
+                                  <td width="50" style="width: 50px;" class="em_side28"></td>
+                                  }
+                                  }
+                                  @* TODO: Convert macro: {% if (!string.IsNullOrWhiteSpace(NavigationItem4)) {   %} *@
+                                  @if (hasItem4)
+                                  {
+                                  <td align="left" valign="top" class="em_defaultlink em_f12" style="font-family: Arial,sans-serif; font-size: 13px; line-height: 15px; color: #333333;"><a href="@Model.NavigationItem4Url" target="_blank" style="text-decoration: none; color: #333333;">@Model.NavigationItem4</a></td>
+                                  }
+                                </tr>
+                              </tbody>
+                            </table></td>
+                        </tr>
+                        <tr>
+                          <td height="10" style="height: 10px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td height="1" style="height: 1px; line-height: 0px; font-size: 0px;" bgcolor="#E4E4E4"><img src="images/spacer.gif" width="1" height="1" alt="" border="0" style="display: block; "/></td>
+                        </tr>
+                        <tr>
+                          <td height="20" style="height: 20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                      </tbody>
+                    </table></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
+        <!-- ===== // Navigation_Section END HERE ===== --> 
+<!-- ===== // Navigation Section END HERE ===== -->
+}

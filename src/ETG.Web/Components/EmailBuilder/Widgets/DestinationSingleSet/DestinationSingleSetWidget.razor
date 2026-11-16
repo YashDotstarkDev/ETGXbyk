@@ -1,0 +1,55 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.DestinationSingleSet
+@using Microsoft.AspNetCore.Components
+
+<!-- == Explore Destination Section == -->
+<table bgcolor="#ffffff" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ffffff;">
+    <tr>
+        <td align="center" valign="top">
+            <table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+                <tr>
+                    <td class="em_pad" align="center" valign="top" style="padding-bottom:50px;">
+                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td align="left" valign="top">
+                                    <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td>
+                                                <a href="@(string.IsNullOrWhiteSpace(Model.Url) ? "#" : Model.Url)" target="_blank" style="display:block; text-decoration:none;">
+                                                    <table align="left" width="290" class="em_wrapper" border="0" cellspacing="0" cellpadding="0" style="width:290px;">
+                                                        <tr>
+                                                            <td align="center" valign="top">
+                                                                <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                                    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                                                                    {
+                                                                        <tr>
+                                                                            <td align="center" valign="top">
+                                                                                <img class="em_full_img1" src="@Model.ImageUrl" alt="@Model.Label" border="0" width="290" height="161" style="max-width:290px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                    @if (!string.IsNullOrWhiteSpace(Model.Label))
+                                                                    {
+                                                                        <tr>
+                                                                            <td class="em_pad1" align="left" valign="top" bgcolor="#ededed" style="background-color:#ededed; padding:13px 20px; font-size:20px; line-height:28px; font-family: Arial, sans-serif; color:#CA568E; letter-spacing: 0.5px;">
+                                                                                @Model.Label
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<!-- == //Explore Destination Section == -->

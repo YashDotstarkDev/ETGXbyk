@@ -21,7 +21,7 @@
                 Apply @(Model.Role != null && !string.IsNullOrWhiteSpace(Model.Role.Title) ? $"for {Model.Role.Title}" : "")
             </h1>
 
-          
+
             @if (!string.IsNullOrWhiteSpace(page.PageContent))
             {
                 <div class="mb-4 html-text">
@@ -41,7 +41,7 @@
             <form id="careerApplyForm" class="contact-form needs-validation" method="post" action="/api/careers/apply" enctype="multipart/form-data" novalidate>
                 @Html.AntiForgeryToken()
 
-               
+
                 <input type="hidden" asp-for="Form.Role" id="role" />
 
                 <!-- Honeypot -->
@@ -113,7 +113,7 @@
                     </div>
                 </div>
 
-              
+
                 <div class="mb-3">
                     <label class="form-label d-block">Preferred contact method</label>
                     <div class="form-check mb-1">
@@ -126,7 +126,7 @@
                     </div>
                 </div>
 
-            
+
                 <div class="mb-3">
                     <input type="file"
                            asp-for="Form.CVFile"
@@ -137,9 +137,10 @@
                         ATTACH CV
                     </button>
                     <span id="cvFileName" class="ms-2 text-muted"></span>
+                    <div id="cvFileError" class="text-danger small mt-1 d-none">Please choose a file</div>
                 </div>
 
-               
+
                 <div class="mb-4">
                     <label asp-for="Form.Comments" class="form-label">
                         Questions or comments
@@ -151,8 +152,9 @@
                               placeholder="optional"></textarea>
                 </div>
 
-                <input type="hidden" id="recaptchaToken" name="g-recaptcha-response" />
-                <input type="hidden" id="recaptchaAction" name="g-recaptcha-action" value="career_apply_submit" />
+                <!-- reCAPTCHA v3 Partial View -->
+                <partial name="~/Components/FormBuilder/ReCaptcha/ReCaptcha.cshtml"
+                         view-data='@new ViewDataDictionary(ViewData) { { "ActionName", "career_apply_submit" } }' />
 
                 <button type="submit" id="applybutton" class="btn btn-pink contact-submit-btn">
                     SUBMIT
@@ -162,7 +164,10 @@
     </div>
 </div>
 
-<editable-area area-identifier="editableBottom" />
+@if (Model.HasWebPageContext)
+{
+    <editable-area area-identifier="editableBottom" />
+}
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -180,8 +185,31 @@
 
         if (cvFile && cvFileName) {
             cvFile.addEventListener("change", function() {
+                const cvError = document.getElementById("cvFileError");
                 if (this.files && this.files.length > 0) {
-                    cvFileName.textContent = this.files[0].name;
+                    const file = this.files[0];
+                    const allowedExtensions = [".pdf", ".doc", ".docx"];
+                    const fileName = file.name.toLowerCase();
+                    const hasValidExt = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+                    cvFileName.textContent = file.name;
+
+                    if (!hasValidExt) {
+                        if (cvError) {
+                            cvError.textContent = "Only PDF, DOC, and DOCX files are allowed.";
+                            cvError.classList.remove("d-none");
+                        }
+                    } else if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                        if (cvError) {
+                            cvError.textContent = "File size must not exceed 10MB.";
+                            cvError.classList.remove("d-none");
+                        }
+                    } else {
+                        if (cvError) {
+                            cvError.classList.add("d-none");
+                            cvError.textContent = "Please choose a file";
+                        }
+                    }
                 } else {
                     cvFileName.textContent = "";
                 }
@@ -204,24 +232,63 @@
             return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(value);
         }
 
+        function isValidPhone(value) {
+            return /^[0-9\s\+\-\(\)]{6,20}$/.test(value);
+        }
+
         form.addEventListener("submit", async function(e) {
             e.preventDefault();
             let isValid = true;
 
             [firstName, lastName, email, phone].forEach(clearFieldError);
+            const cvError = document.getElementById("cvFileError");
+            if (cvError) cvError.classList.add("d-none");
             if (errorMessage) errorMessage.classList.add("d-none");
 
-            if (!firstName.value.trim()) { showFieldError(firstName, "Please enter a valid first name."); isValid = false; }
-            if (!lastName.value.trim()) { showFieldError(lastName, "Please enter a valid last name."); isValid = false; }
-            if (!email.value.trim() || !isValidEmail(email.value.trim())) { showFieldError(email, "Please enter your email address."); isValid = false; }
-            if (!phone.value.trim()) { showFieldError(phone, "Please enter your phone number."); isValid = false; }
+            const hasVowel = (val) => /[aeiouy]/i.test(val);
+
+            if (!firstName.value.trim() || !hasVowel(firstName.value)) { 
+                showFieldError(firstName, "Please enter a valid first name"); 
+                isValid = false; 
+            }
+            if (!lastName.value.trim() || !hasVowel(lastName.value)) { 
+                showFieldError(lastName, "Please enter a valid last name"); 
+                isValid = false; 
+            }
+            if (!email.value.trim() || !isValidEmail(email.value.trim())) { 
+                showFieldError(email, "Please enter your email address."); 
+                isValid = false; 
+            }
+            if (!phone.value.trim()) { 
+                showFieldError(phone, "Please enter a valid value"); 
+                isValid = false; 
+            }
 
             if (!cvFile.files || cvFile.files.length === 0) {
-                if (errorMessage) {
-                    errorMessage.textContent = "Please attach your CV.";
-                    errorMessage.classList.remove("d-none");
+                if (cvError) {
+                    cvError.textContent = "Please choose a file";
+                    cvError.classList.remove("d-none");
                 }
                 isValid = false;
+            } else {
+                const file = cvFile.files[0];
+                const allowedExtensions = [".pdf", ".doc", ".docx"];
+                const fileName = file.name.toLowerCase();
+                const hasValidExt = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+                if (!hasValidExt) {
+                    if (cvError) {
+                        cvError.textContent = "Only PDF, DOC, and DOCX files are allowed.";
+                        cvError.classList.remove("d-none");
+                    }
+                    isValid = false;
+                } else if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    if (cvError) {
+                        cvError.textContent = "File size must not exceed 10MB.";
+                        cvError.classList.remove("d-none");
+                    }
+                    isValid = false;
+                }
             }
 
             if (!isValid) return;
@@ -229,23 +296,12 @@
             if (submitButton) submitButton.disabled = true;
 
             try {
-                
+                // Fetch token using recaptcha.js
+                const { validateCaptcha } = await import('@Url.Content("~/js/recaptcha.js")');
+                const token = await validateCaptcha("career_apply_submit");
                 const recaptchaToken = document.getElementById("recaptchaToken");
-                const recaptchaAction = document.getElementById("recaptchaAction");
-                if (window.grecaptcha && window.grecaptcha.execute) {
-                    try {
-                        const siteKeyMeta = document.querySelector('meta[name="captchaSiteKey"]');
-                        const siteKey = siteKeyMeta ? siteKeyMeta.content : "";
-                        if (siteKey) {
-                            await new Promise(r => window.grecaptcha.ready(r));
-                            const token = await window.grecaptcha.execute(siteKey, { action: recaptchaAction?.value || "career_apply_submit" });
-                            if (recaptchaToken && token) {
-                                recaptchaToken.value = token;
-                            }
-                        }
-                    } catch (capErr) {
-                        console.warn("reCAPTCHA execution skipped or failed:", capErr);
-                    }
+                if (recaptchaToken && token) {
+                    recaptchaToken.value = token;
                 }
 
                 const formData = new FormData(form);
@@ -257,12 +313,17 @@
 
                 const result = await response.json();
                 if (!result.success) {
-                    if (errorMessage) {
-                        let msg = result.message;
-                        if (!msg && result.errors) {
-                            msg = Object.values(result.errors).join("<br/>");
+                    if (result.errors) {
+                        if (result.errors.firstName) showFieldError(firstName, result.errors.firstName);
+                        if (result.errors.lastName) showFieldError(lastName, result.errors.lastName);
+                        if (result.errors.email) showFieldError(email, result.errors.email);
+                        if (result.errors.phone) showFieldError(phone, result.errors.phone);
+                        if (result.errors.cvFile && cvError) {
+                            cvError.textContent = result.errors.cvFile;
+                            cvError.classList.remove("d-none");
                         }
-                        errorMessage.innerHTML = msg || "Please check the form.";
+                    } else if (errorMessage) {
+                        errorMessage.innerHTML = result.message || "Please check the form.";
                         errorMessage.classList.remove("d-none");
                     }
                     return;
@@ -286,3 +347,4 @@
         });
     });
 </script>
+ 

@@ -1,0 +1,145 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.TwoColumnSection
+@using Microsoft.AspNetCore.Components
+
+<!-- ===== Two_Column_Section START HERE ===== -->
+<tr>
+    <td align="center" valign="top">
+        <table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+            <tbody>
+                <tr>
+                    <td align="center" valign="top" style="padding: 0px 130px;" class="em_aside24">
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                            <tbody>
+                                <tr>
+                                    <!-- Column 1 -->
+                                    <th align="center" valign="top" class="em_clear">
+                                        <table align="left" style="width: 260px;" class="em_wrapper" width="260" border="0" cellspacing="0" cellpadding="0">
+                                            <tbody>
+                                                <tr>
+                                                    <td align="center" valign="top" class="em_full_img">
+                                                        <img src="@Model.ImageUrl1" width="260" alt="@Model.Title1" border="0" style="display: block; max-width: 260px;" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" valign="top" style="padding: 0px 20px; border-left: 1px solid #E4E4E4; border-right:1px solid #E4E4E4; border-bottom: 1px solid #E4E4E4; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td height="20" style="height:20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td align="left" valign="middle" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 12px; text-transform: uppercase; line-height: 24px; color: #333333; padding-bottom: 6px; font-weight: 400; letter-spacing: 0.1px;">
+                                                                        <span style="font-weight: bold;">@Model.SubTitle1</span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px; line-height: 26px; font-weight: bold; color: #CA568E; padding-bottom:20px;">
+                                                                        @Model.Title1
+                                                                    </td>
+                                                                </tr>
+                                                                @if (!string.IsNullOrWhiteSpace(Model.CtaLabel1) && !string.IsNullOrWhiteSpace(Model.CtaUrl1))
+                                                                {
+                                                                    <tr>
+                                                                        <td align="left" valign="top">
+                                                                            <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                                                <tr>
+                                                                                    <td align="center" valign="top" style="border: 2px solid #CA568E; border-radius: 30px;">
+                                                                                        <table border="0" cellspacing="0" cellpadding="0">
+                                                                                            <tbody>
+                                                                                                <tr>
+                                                                                                    <td class="em_defult em_dm_txt_white" align="center" valign="middle" height="45" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #CA568E; height:45px; text-transform: uppercase; padding: 0 20px;">
+                                                                                                        <a href="@Model.CtaUrl1" target="_blank" style="text-decoration:none; color:#CA568E; line-height:45px; display:block;">@Model.CtaLabel1</a>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            </tbody>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                                <tr>
+                                                                    <td height="38" style="height:38px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </th>
+
+                                    <th width="20" style="width: 20px; line-height: 0px; font-size: 0px;" class="em_clear em_h20">&nbsp;</th>
+
+                                    <!-- Column 2 -->
+                                    <th align="center" valign="top" class="em_clear">
+                                        <table align="left" style="width: 260px;" class="em_wrapper" width="260" border="0" cellspacing="0" cellpadding="0">
+                                            <tbody>
+                                                <tr>
+                                                    <td align="center" valign="top" class="em_full_img">
+                                                        <img src="@Model.ImageUrl2" width="260" alt="@Model.Title2" border="0" style="display: block; max-width: 260px;" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" valign="top" style="padding: 0px 20px; border-left: 1px solid #E4E4E4; border-right:1px solid #E4E4E4; border-bottom: 1px solid #E4E4E4; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td height="20" style="height:20px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td align="left" valign="middle" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 12px; text-transform: uppercase; line-height: 24px; color: #333333; padding-bottom: 6px; font-weight: 400; letter-spacing: 0.1px;">
+                                                                        <span style="font-weight: bold;">@Model.SubTitle2</span>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px; line-height: 26px; font-weight: bold; color: #CA568E; padding-bottom:20px;">
+                                                                        @Model.Title2
+                                                                    </td>
+                                                                </tr>
+                                                                @if (!string.IsNullOrWhiteSpace(Model.CtaLabel2) && !string.IsNullOrWhiteSpace(Model.CtaUrl2))
+                                                                {
+                                                                    <tr>
+                                                                        <td align="left" valign="top">
+                                                                            <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                                                <tr>
+                                                                                    <td align="center" valign="top" style="border: 2px solid #CA568E; border-radius: 30px;">
+                                                                                        <table border="0" cellspacing="0" cellpadding="0">
+                                                                                            <tbody>
+                                                                                                <tr>
+                                                                                                    <td class="em_defult em_dm_txt_white" align="center" valign="middle" height="45" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #CA568E; height:45px; text-transform: uppercase; padding: 0 20px;">
+                                                                                                        <a href="@Model.CtaUrl2" target="_blank" style="text-decoration:none; color:#CA568E; line-height:45px; display:block;">@Model.CtaLabel2</a>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            </tbody>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                                <tr>
+                                                                    <td height="38" style="height:38px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td height="80" style="height: 80px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+    </td>
+</tr>
+<!-- ===== // Two_Column_Section END HERE ===== -->

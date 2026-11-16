@@ -1,15 +1,15 @@
 (function () {
-    const container = document.getElementById('algolia-landing');
+    var container = document.getElementById('algolia-landing');
     if (!container) return; 
 
-    const APP_ID    = container.dataset.algoliaAppId;
-    const API_KEY   = container.dataset.algoliaSearchKey;
-    const INDEX     = container.dataset.algoliaIndex;
+    var APP_ID    = container.dataset.algoliaAppId;
+    var API_KEY   = container.dataset.algoliaSearchKey;
+    var INDEX     = container.dataset.algoliaIndex;
 
     if (!APP_ID || !API_KEY || !INDEX) return;
 
     // Track user interaction to drop from=homepage or from=404page once user touches search
-    let userHasInteracted = false;
+    var userHasInteracted = false;
     ['click', 'change', 'input'].forEach(function(evt) {
         document.addEventListener(evt, function(e) {
             if (e.target.closest('#algolia-landing, .search-bar-wrap, #search-sidebar, #search-main')) {
@@ -19,13 +19,13 @@
     });
 
     // Dynamic Currency from Navbar Dropdown (.conversion element)
-    const convEl = document.querySelector('.conversion');
-    const currencyCode = convEl ? (convEl.getAttribute('data-currency') || 'AUD') : 'AUD';
-    const currencySymbol = convEl ? (convEl.getAttribute('data-symbol') || '$') : '$';
-    const conversionRate = convEl ? (parseFloat(convEl.getAttribute('data-rate')) || 1) : 1;
-    const appliesDiscount = convEl ? (convEl.getAttribute('data-discount') === 'true') : true;
+    var convEl = document.querySelector('.conversion');
+    var currencyCode = convEl ? (convEl.getAttribute('data-currency') || 'AUD') : 'AUD';
+    var currencySymbol = convEl ? (convEl.getAttribute('data-symbol') || '$') : '$';
+    var conversionRate = convEl ? (parseFloat(convEl.getAttribute('data-rate')) || 1) : 1;
+    var appliesDiscount = convEl ? (convEl.getAttribute('data-discount') === 'true') : true;
 
-    function convertPrice(audPrice) {
+    var convertPrice = function(audPrice) {
         if (!audPrice || isNaN(audPrice)) return 0;
         if (conversionRate === 1) return Math.round(audPrice);
         return Math.ceil(audPrice * conversionRate);
@@ -187,8 +187,8 @@
     }
 
     // Initialize Algolia client with automatic facet filter expansion for spaced & unspaced compatibility
-    const rawSearchClient = algoliasearch(APP_ID, API_KEY);
-    const searchClient = {
+    var rawSearchClient = algoliasearch(APP_ID, API_KEY);
+    var searchClient = {
         search: function(requests) {
             var transformed = (requests || []).map(function(req) {
                 var copy = Object.assign({}, req);
@@ -225,8 +225,8 @@
             return idx;
         }
     };
-    const searchIndex = INDEX;
-    const masterIndex = searchClient.initIndex(INDEX);
+    var searchIndex = INDEX;
+    var masterIndex = searchClient.initIndex(INDEX);
 
     // Pre-populate initialUiState ONLY ONCE on initial load
     const initDest = getInitialParam('Destinations');
@@ -263,13 +263,13 @@
         }
     }
 
-    let masterDestinations = [];
-    let masterExperiences = [];
-    const destExpCache = {};
-    const expDestCache = {};
-    let isSyncingDropdowns = false;
+    var masterDestinations = [];
+    var masterExperiences = [];
+    var destExpCache = {};
+    var expDestCache = {};
+    var isSyncingDropdowns = false;
 
-    function fetchExperiencesForDestination(dest, callback) {
+    var fetchExperiencesForDestination = function(dest, callback) {
         if (!dest || dest === 'all') {
             callback(masterExperiences);
             return;
@@ -291,7 +291,7 @@
             });
     }
 
-    function fetchDestinationsForExperience(exp, callback) {
+    var fetchDestinationsForExperience = function(exp, callback) {
         if (!exp || exp === 'all') {
             callback(masterDestinations);
             return;
@@ -313,7 +313,7 @@
             });
     }
 
-    function updateTomSelect(selectId, list, activeVal, defaultText) {
+    var updateTomSelect = function(selectId, list, activeVal, defaultText) {
         const el = document.querySelector(selectId);
         if (!el || !el.tomselect) return;
         const ts = el.tomselect;
@@ -346,7 +346,7 @@
         }
     }
 
-    const search = instantsearch({
+    var search = instantsearch({
         indexName: searchIndex,
         searchClient,
         routing: {
@@ -561,7 +561,7 @@
         initialUiState: initialUiState
     });
 
-    const customSearchBox = instantsearch.connectors.connectSearchBox(
+    var customSearchBox = instantsearch.connectors.connectSearchBox(
         function(renderOptions, isFirstRender) {
             const { query, refine, widgetParams } = renderOptions;
             const input = document.querySelector(widgetParams.container);
@@ -593,7 +593,7 @@
         }
     );
 
-    const customDropdown = instantsearch.connectors.connectMenu(
+    var customDropdown = instantsearch.connectors.connectMenu(
         function(renderOptions, isFirstRender) {
             const { items, refine, widgetParams, helper } = renderOptions;
             const selectEl = document.querySelector(widgetParams.container);
@@ -694,7 +694,7 @@
         }
     );
 
-    const customRangeSlider = instantsearch.connectors.connectRange(
+    var customRangeSlider = instantsearch.connectors.connectRange(
         function(renderOptions, isFirstRender) {
             const { range, start, refine, widgetParams } = renderOptions;
             const containerEl = document.querySelector(widgetParams.container);
@@ -1038,49 +1038,56 @@
                     var desc = hit.Description || '';
                     var duration = hit.Duration ? hit.Duration.toString().replace('Days', '').trim() : '';
                     var badgeText = hit.Destinations && hit.Destinations.length > 0 ? formatDisplayName(hit.Destinations[0]).toUpperCase() : '';
+                    var imageAlt = hit.ImageAlt || hit.TourHeroImageAltTag || title;
 
                     var rawPrice = hit.Price || 0;
                     var rawOrig = hit.OriginalPrice || 0;
                     var currentPriceNum = convertPrice(rawPrice);
                     var originalPriceNum = convertPrice(rawOrig);
                     var hasDiscount = appliesDiscount && (hit.HasDiscount || (rawOrig > 0 && rawPrice < rawOrig));
+                    var isSaleActive = hasDiscount && originalPriceNum > currentPriceNum;
+                    var priceBlockClass = 'tahiti-v2-price-block mt-auto' + (isSaleActive ? ' sale-style-1' : '');
 
-                    // 1. Duration / Original Price line
+                    // 1. Duration / Original Price line + SAVE: Tag
                     var durationText = duration ? (duration + ' DAYS') : '';
                     var originalPriceMarkup = '';
 
                     if (currentPriceNum > 0) {
                         var fromLabel = durationText ? (durationText + ' FROM ') : 'FROM ';
-                        if (hasDiscount && originalPriceNum > currentPriceNum) {
-                            originalPriceMarkup = '<div class="original-price text-uppercase">' + fromLabel + '<del>' + originalPriceNum.toLocaleString() + '</del></div>';
+                        if (isSaleActive) {
+                            var saveAmount = originalPriceNum - currentPriceNum;
+                            originalPriceMarkup = '<div class="original-price-wrap">' +
+                                                    '<div class="original-price text-uppercase">' + fromLabel + '<del>' + originalPriceNum.toLocaleString() + '</del></div>' +
+                                                    '<span class="sale-pill-1">SAVE: ' + currencySymbol + saveAmount.toLocaleString() + '</span>' +
+                                                  '</div>';
                         } else {
                             originalPriceMarkup = '<div class="original-price text-uppercase">' + fromLabel + '</div>';
                         }
-                    } else if (durationText) {
-                        originalPriceMarkup = '<div class="original-price text-uppercase">' + durationText + '</div>';
+                    } else {
+                        var priceLabel = durationText ? (durationText + ' <span class="pink-v-line"></span> PRICE') : 'PRICE';
+                        originalPriceMarkup = '<div class="original-price text-uppercase">' + priceLabel + '</div>';
                     }
 
-                    // 2. Current Price line
+                    // 2. Current Price line & 3. Price Note line (Kentico 13 Parity: displays Price TBC for unpriced tours)
                     var currentPriceMarkup = '';
-                    if (currentPriceNum > 0) {
-                        currentPriceMarkup = '<div class="current-price text-pink">' + currencySymbol + currentPriceNum.toLocaleString() + ' <span style="font-size: 0.55em; margin-left: 2px; font-weight: 700;">' + currencyCode + '</span></div>';
-                    }
-
-                    // 3. Price Note line (ONLY if price is present)
                     var priceNoteMarkup = '';
                     if (currentPriceNum > 0) {
+                        currentPriceMarkup = '<div class="current-price text-pink">' + currencySymbol + currentPriceNum.toLocaleString() + ' <span style="font-size: 0.55em; margin-left: 2px; font-weight: 700;">' + currencyCode + '</span></div>';
+                        priceNoteMarkup = '<div class="price-note mb-3">Per person <span class="pink-v-line"></span> twin share</div>';
+                    } else {
+                        currentPriceMarkup = '<div class="current-price text-pink">TBC</div>';
                         priceNoteMarkup = '<div class="price-note mb-3">Per person <span class="pink-v-line"></span> twin share</div>';
                     }
 
                     return '<a href="' + (hit.Url || '#') + '" class="product-card-vertical h-100 text-decoration-none">' +
                              '<div class="img-wrap">' +
-                               '<img loading="lazy" src="' + (hit.ImageUrl || '') + '" alt="' + title + '">' +
+                               '<img loading="lazy" src="' + (hit.ImageUrl || '') + '" alt="' + imageAlt + '">' +
                                (badgeText ? '<span class="card-badge">' + badgeText + '</span>' : '') +
                              '</div>' +
                              '<div class="card-body-content flex-grow-1 d-flex flex-column">' +
                                '<h3 class="card-title text-dark">' + title + '</h3>' +
                                '<p class="card-desc three-line-desc text-muted">' + desc + '</p>' +
-                               '<div class="tahiti-v2-price-block mt-auto">' +
+                               '<div class="' + priceBlockClass + '">' +
                                  originalPriceMarkup +
                                  currentPriceMarkup +
                                  priceNoteMarkup +
@@ -1167,7 +1174,7 @@
             updateTomSelect('#searchbox-destination', destList, activeDest, 'Select destination');
         });
 
-            function trimPaginationOnMobile() {
+        var trimPaginationOnMobile = function() {
         var container = document.getElementById('pagination');
         if (!container) return;
         var list = container.querySelector('.pagination');

@@ -1,4 +1,4 @@
-﻿using Algolia.Search.Models.Settings;
+using Algolia.Search.Models.Settings;
 using CMS.ContentEngine;
 using CMS.DataEngine;
 using CMS.Websites;
@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ETG.Web;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ETG.Web.Features.Search;
@@ -162,7 +163,7 @@ public class ArticleIndexingStrategy(
             [FIELD_TITLE]       = article.ArticleTitle ?? article.DocumentName ?? "",
             [FIELD_SUMMARY]     = article.ArticleSummary ?? "",
             [FIELD_URL]         = articleUrl,
-            [FIELD_IMAGE]       = imageUrl,
+            [FIELD_IMAGE]       = imageUrl.Imgixify(),
             [FIELD_DATE]        = article.ArticleDate.ToString("o"),
             [FIELD_AUTHOR]      = "",
             [FIELD_DESTINATION] = new JArray(destinationNames),
@@ -171,49 +172,126 @@ public class ArticleIndexingStrategy(
         }];
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, string> GuidNameCache = new();
+
     private List<string> OmniResolveGuids(List<Guid> guids)
     {
-        if (!guids.Any()) return new List<string>();
+        if (guids == null || !guids.Any()) return new List<string>();
+
         var names = new List<string>();
+        var uncachedGuids = new List<Guid>();
 
-        try
+        foreach (var guid in guids)
         {
-            var pages = new ObjectQuery("cms.webpageitem").WhereIn("WebPageItemGUID", guids.ToArray()).ToList();
-            foreach (var page in pages) names.Add(CleanName(page.GetStringValue("WebPageItemName", "")));
-        }
-        catch { }
-
-        try
-        {
-            var items = new ObjectQuery("cms.contentitem").WhereIn("ContentItemGUID", guids.ToArray()).ToList();
-            foreach (var item in items) names.Add(CleanName(item.GetStringValue("ContentItemName", "")));
-        }
-        catch { }
-
-        try
-        {
-            var tags = new ObjectQuery("cms.taxonomytag").WhereIn("TagGUID", guids.ToArray()).ToList();
-            foreach (var tag in tags) names.Add(CleanName(tag.GetStringValue("TagTitle", "")));
-        }
-        catch { }
-
-        try
-        {
-            var inClause = string.Join(",", guids.Select(g => $"'{g}'"));
-            var sql = $"SELECT ArticleCategoryName FROM ETG_ArticleCategory WHERE ArticleCategoryGuid IN ({inClause})";
-            var ds = ConnectionHelper.ExecuteQuery(sql, null, QueryTypeEnum.SQLQuery);
-            if (ds != null && ds.Tables.Count > 0)
+            if (GuidNameCache.TryGetValue(guid, out var cachedName))
             {
-                foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+                if (!string.IsNullOrWhiteSpace(cachedName))
                 {
-                    string name = row["ArticleCategoryName"]?.ToString() ?? "";
-                    names.Add(CleanName(name));
+                    names.Add(cachedName);
+                }
+            }
+            else
+            {
+                uncachedGuids.Add(guid);
+            }
+        }
+
+        if (!uncachedGuids.Any())
+        {
+            return names.Distinct().ToList();
+        }
+
+        try
+        {
+            var pages = new ObjectQuery("cms.webpageitem").WhereIn("WebPageItemGUID", uncachedGuids.ToArray()).ToList();
+            foreach (var page in pages)
+            {
+                var guid = page.GetGuidValue("WebPageItemGUID", Guid.Empty);
+                var clean = CleanName(page.GetStringValue("WebPageItemName", ""));
+                if (guid != Guid.Empty && !string.IsNullOrWhiteSpace(clean))
+                {
+                    GuidNameCache[guid] = clean;
+                    names.Add(clean);
+                    uncachedGuids.Remove(guid);
                 }
             }
         }
-        catch (Exception ex)
+        catch { }
+
+        if (uncachedGuids.Any())
         {
-            logger.LogError(ex, "Failed to resolve Category via SQL");
+            try
+            {
+                var items = new ObjectQuery("cms.contentitem").WhereIn("ContentItemGUID", uncachedGuids.ToArray()).ToList();
+                foreach (var item in items)
+                {
+                    var guid = item.GetGuidValue("ContentItemGUID", Guid.Empty);
+                    var clean = CleanName(item.GetStringValue("ContentItemName", ""));
+                    if (guid != Guid.Empty && !string.IsNullOrWhiteSpace(clean))
+                    {
+                        GuidNameCache[guid] = clean;
+                        names.Add(clean);
+                        uncachedGuids.Remove(guid);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        if (uncachedGuids.Any())
+        {
+            try
+            {
+                var tags = new ObjectQuery("cms.taxonomytag").WhereIn("TagGUID", uncachedGuids.ToArray()).ToList();
+                foreach (var tag in tags)
+                {
+                    var guid = tag.GetGuidValue("TagGUID", Guid.Empty);
+                    var clean = CleanName(tag.GetStringValue("TagTitle", ""));
+                    if (guid != Guid.Empty && !string.IsNullOrWhiteSpace(clean))
+                    {
+                        GuidNameCache[guid] = clean;
+                        names.Add(clean);
+                        uncachedGuids.Remove(guid);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        if (uncachedGuids.Any())
+        {
+            try
+            {
+                var inClause = string.Join(",", uncachedGuids.Select(g => $"'{g}'"));
+                var sql = $"SELECT ArticleCategoryGuid, ArticleCategoryName FROM ETG_ArticleCategory WHERE ArticleCategoryGuid IN ({inClause})";
+                var ds = ConnectionHelper.ExecuteQuery(sql, null, QueryTypeEnum.SQLQuery);
+                if (ds != null && ds.Tables.Count > 0)
+                {
+                    foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+                    {
+                        if (Guid.TryParse(row["ArticleCategoryGuid"]?.ToString(), out var g))
+                        {
+                            string name = row["ArticleCategoryName"]?.ToString() ?? "";
+                            var clean = CleanName(name);
+                            if (!string.IsNullOrWhiteSpace(clean))
+                            {
+                                GuidNameCache[g] = clean;
+                                names.Add(clean);
+                                uncachedGuids.Remove(g);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to resolve Category via SQL");
+            }
+        }
+
+        foreach (var remaining in uncachedGuids)
+        {
+            GuidNameCache.TryAdd(remaining, string.Empty);
         }
 
         return names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().ToList();

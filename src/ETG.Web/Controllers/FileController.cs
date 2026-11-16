@@ -1,4 +1,5 @@
 using ETG.Web.Services.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -24,8 +25,15 @@ public class FileController : Controller
         var target = !string.IsNullOrWhiteSpace(path) ? path : name;
         if (string.IsNullOrWhiteSpace(target))
         {
+            _logger.LogWarning("File download attempted with missing path");
             return NotFound("File path is missing.");
         }
+
+        // SECURITY FIX: Log download attempts for audit trail
+        _logger.LogInformation(
+            "User {User} requesting file: {Path}",
+            User.Identity?.Name ?? "Unknown",
+            target);
 
         var fileResult = await _storageService.GetFileAsync(target);
         if (fileResult == null)

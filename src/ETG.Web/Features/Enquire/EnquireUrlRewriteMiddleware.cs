@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
@@ -39,25 +39,19 @@ public class EnquireUrlRewriteMiddleware
 
             if (!string.IsNullOrWhiteSpace(alias))
             {
-                var destination =
-                    await GetDestinationByAlias(
-                        alias,
-                        contentQueryExecutor,
-                        context.RequestAborted);
+                var destination = await GetDestinationByAlias(
+                    alias,
+                    contentQueryExecutor,
+                    context.RequestAborted);
 
-                if (destination != null)
+                if (destination is not null)
                 {
                     context.Request.Path = "/enquire";
-
-                    context.Request.QueryString =
-                        new QueryString(
-                            "?destination=" +
-                            Uri.EscapeDataString(
-                                destination.DestinationName));
+                    context.Request.QueryString = new QueryString(
+                        "?destination=" + Uri.EscapeDataString(destination.DestinationName));
                 }
             }
         }
-
         else if (path.StartsWith(
                      "/experiences/enquire/",
                      StringComparison.OrdinalIgnoreCase))
@@ -68,25 +62,25 @@ public class EnquireUrlRewriteMiddleware
 
             if (!string.IsNullOrWhiteSpace(alias))
             {
-                var experience =
-                    await GetExperienceByAlias(
-                        alias,
-                        contentQueryExecutor,
-                        context.RequestAborted);
+                var experience = await GetExperienceByAlias(
+                    alias,
+                    contentQueryExecutor,
+                    context.RequestAborted);
 
-                if (experience != null)
-                {
-                    context.Request.Path = "/enquire";
+                if (experience is not null)
+                {                   
+                    var experiencePageSlug = GetLastTreePathSegment(
+                        experience.SystemFields.WebPageItemTreePath);
 
-                    context.Request.QueryString =
-                        new QueryString(
-                            "?experience=" +
-                            Uri.EscapeDataString(
-                                experience.ExperienceName));
+                    if (!string.IsNullOrWhiteSpace(experiencePageSlug))
+                    {
+                        context.Request.Path = "/enquire";
+                        context.Request.QueryString = new QueryString(
+                            "?experience=" + Uri.EscapeDataString("/" + experiencePageSlug));
+                    }
                 }
             }
         }
-
         else if (path.StartsWith(
                      "/tour-types/enquire/",
                      StringComparison.OrdinalIgnoreCase))
@@ -102,11 +96,8 @@ public class EnquireUrlRewriteMiddleware
                 if (!string.IsNullOrWhiteSpace(tourType))
                 {
                     context.Request.Path = "/enquire";
-
-                    context.Request.QueryString =
-                        new QueryString(
-                            "?tourType=" +
-                            Uri.EscapeDataString(tourType));
+                    context.Request.QueryString = new QueryString(
+                        "?tourType=" + Uri.EscapeDataString(tourType));
                 }
             }
         }
@@ -122,28 +113,22 @@ public class EnquireUrlRewriteMiddleware
         var query = new ContentItemQueryBuilder()
             .ForContentType(
                 Destination.CONTENT_TYPE_NAME,
-                config =>
-                {
-                    config.ForWebsite(
-                        WebsiteChannelName);
-                });
+                config => config.ForWebsite(WebsiteChannelName));
 
-        var destinations =
-            await contentQueryExecutor.GetMappedWebPageResult<Destination>(
-                query,
-                new ContentQueryExecutionOptions
-                {
-                    ForPreview = false
-                },
-                cancellationToken: cancellationToken);
+        var destinations = await contentQueryExecutor.GetMappedWebPageResult<Destination>(
+            query,
+            new ContentQueryExecutionOptions { ForPreview = false },
+            cancellationToken: cancellationToken);
 
-        var requestedAlias =
-            NormalizeAlias(alias);
+        var requestedAlias = NormalizeAlias(alias);  
 
         return destinations.FirstOrDefault(destination =>
             string.Equals(
-                NormalizeAlias(
-                    destination.DestinationName),
+                NormalizeAlias(GetLastTreePathSegment(destination.SystemFields.WebPageItemTreePath)),
+                requestedAlias,
+                StringComparison.OrdinalIgnoreCase)
+            || string.Equals(
+                NormalizeAlias(destination.DestinationName),
                 requestedAlias,
                 StringComparison.OrdinalIgnoreCase));
     }
@@ -156,31 +141,37 @@ public class EnquireUrlRewriteMiddleware
         var query = new ContentItemQueryBuilder()
             .ForContentType(
                 ETG.Core.Content.Experience.CONTENT_TYPE_NAME,
-                config =>
-                {
-                    config.ForWebsite(
-                        WebsiteChannelName);
-                });
+                config => config.ForWebsite(WebsiteChannelName));
 
-        var experiences =
-            await contentQueryExecutor
-                .GetMappedWebPageResult<ETG.Core.Content.Experience>(
-                    query,
-                    new ContentQueryExecutionOptions
-                    {
-                        ForPreview = false
-                    },
-                    cancellationToken: cancellationToken);
+        var experiences = await contentQueryExecutor.GetMappedWebPageResult<ETG.Core.Content.Experience>(
+            query,
+            new ContentQueryExecutionOptions { ForPreview = false },
+            cancellationToken: cancellationToken);
 
-        var requestedAlias =
-            NormalizeAlias(alias);
+        var requestedAlias = NormalizeAlias(alias);
 
         return experiences.FirstOrDefault(experience =>
             string.Equals(
-                NormalizeAlias(
-                    experience.ExperienceName),
+                NormalizeAlias(GetLastTreePathSegment(experience.SystemFields.WebPageItemTreePath)),
+                requestedAlias,
+                StringComparison.OrdinalIgnoreCase)
+            || string.Equals(
+                NormalizeAlias(experience.ExperienceName),
                 requestedAlias,
                 StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string GetLastTreePathSegment(string? treePath)
+    {
+        if (string.IsNullOrWhiteSpace(treePath))
+        {
+            return string.Empty;
+        }
+
+        return treePath
+            .Trim('/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault() ?? string.Empty;
     }
 
     private static string GetTourTypeByAlias(string alias)
@@ -198,24 +189,22 @@ public class EnquireUrlRewriteMiddleware
             "Group Journeys"
         };
 
-        var requestedAlias =
-            NormalizeAlias(alias);
+        var requestedAlias = NormalizeAlias(alias);
 
-        return tourTypes.FirstOrDefault(
-            tourType =>
-                string.Equals(
-                    NormalizeAlias(tourType),
-                    requestedAlias,
-                    StringComparison.OrdinalIgnoreCase))
-            ?? string.Empty;
+        return tourTypes.FirstOrDefault(tourType =>
+            string.Equals(
+                NormalizeAlias(tourType),
+                requestedAlias,
+                StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
     }
 
-    private static string NormalizeAlias(string value)
+    private static string NormalizeAlias(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             return string.Empty;
         }
+
         return value
             .Trim()
             .Trim('/')

@@ -1,0 +1,256 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.AutoFeatureTour
+@using Microsoft.AspNetCore.Components
+@using ETG.Web.Components.PageBuilder.Widgets.Products
+
+<!-- ===== Auto Feature Tour Section START HERE ===== -->
+@if (Model.Tour is { } tour)
+{
+    <table align="center" width="100%" border="0"
+           cellspacing="0" cellpadding="0"
+           bgcolor="#333333"
+           style="background-color:#333333;">
+        <tbody>
+            <tr>
+                <td align="center" valign="top"
+                    style="padding:35px 24px;">
+                    <table align="center" width="540" border="0"
+                           cellspacing="0" cellpadding="0"
+                           class="em_wrapper"
+                           style="width:540px;max-width:540px;margin:0 auto;">
+                        <tbody>
+                            <!-- Configured heading -->
+                            @if (!string.IsNullOrWhiteSpace(Model.heading))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:18px;line-height:24px;font-weight:bold;color:#ffffff;text-transform:uppercase;padding-bottom:12px;">
+                                        @Model.heading
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Selected tour image -->
+                            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                            {
+                                <tr>
+                                    <td align="center" valign="top"
+                                        style="font-size:0;line-height:0;">
+                                        <a href="@Model.EnquiryUrl"
+                                           target="_blank"
+                                           style="text-decoration:none;">
+                                            <img src="@(Model.ImageUrl.Imgixify(540, 405))"
+                                                 alt="@Model.ImageAlt"
+                                                 width="540" border="0"
+                                                 style="display:block;width:100%;max-width:540px;height:auto;margin:0 auto;" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Tour title -->
+                            <tr>
+                                <td align="left"
+                                    style="font-family:Arial,sans-serif;font-size:18px;line-height:25px;color:#ffffff;padding-top:20px;padding-bottom:8px;">
+                                    @tour.Name
+                                    <span style="font-size:10px;color:#cccccc;">
+                                        (@tour.TourCode)
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- Tour description -->
+                            @if (!string.IsNullOrWhiteSpace(tour.Description))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:14px;line-height:23px;color:#ffffff;padding-bottom:24px;">
+                                        @tour.Description
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Experiences -->
+                            @if (Model.Experiences is { Count: > 0 })
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:14px;line-height:21px;font-weight:bold;color:#ffffff;padding-bottom:10px;">
+                                        Experience
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" style="padding-bottom:24px;">
+                                        <table align="left" border="0"
+                                               cellspacing="0" cellpadding="0">
+                                            <tbody>
+                                                @foreach (var experience in Model.Experiences)
+                                                {
+                                                    <tr>
+                                                        <td width="24" align="left"
+                                                            valign="middle"
+                                                            style="width:24px;padding-bottom:6px;">
+                                                            @if (!string.IsNullOrWhiteSpace(experience.IconUrl))
+                                                            {
+                                                                <img src="@(experience.IconUrl.Imgixify(16, 16))"
+                                                                     alt=""
+                                                                     width="16" height="16"
+                                                                     border="0"
+                                                                     style="display:block;width:16px;height:16px;" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>&nbsp;</span>
+                                                            }
+                                                        </td>
+                                                        <td align="left" valign="middle"
+                                                            style="font-family:Arial,sans-serif;font-size:13px;line-height:20px;color:#ffffff;padding-bottom:6px;">
+                                                            @experience.Name
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Travel styles and icons -->
+                            @if (Model.TravelStyles is { Count: > 0 })
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:14px;line-height:21px;font-weight:bold;color:#ffffff;padding-bottom:10px;">
+                                        Travel style
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="left" style="padding-bottom:24px;">
+                                        <table align="left" border="0"
+                                               cellspacing="0" cellpadding="0">
+                                            <tbody>
+                                                @foreach (var travelStyle in Model.TravelStyles)
+                                                {
+                                                    <tr>
+                                                        <td width="24" align="left"
+                                                            valign="middle"
+                                                            style="width:24px;padding-bottom:6px;">
+                                                            @if (!string.IsNullOrWhiteSpace(travelStyle.IconUrl))
+                                                            {
+                                                                <img src="@(travelStyle.IconUrl.Imgixify(16, 16))"
+                                                                     alt=""
+                                                                     width="16" height="16" border="0"
+                                                                     style="display:block;width:16px;height:16px;" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>&nbsp;</span>
+                                                            }
+                                                        </td>
+                                                        <td align="left" valign="middle"
+                                                            style="font-family:Arial,sans-serif;font-size:13px;line-height:20px;color:#ffffff;padding-bottom:6px;">
+                                                            @travelStyle.Name
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Divider -->
+                            <tr>
+                                <td height="1" bgcolor="#555555"
+                                    style="height:1px;background-color:#555555;font-size:0;line-height:0;">
+                                    &nbsp;
+                                </td>
+                            </tr>
+
+                            <!-- Nights and price inclusions -->
+                            @if (Model.Nights > 0 ||
+                                 tour.InclusionIcons is { Count: > 0 })
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:21px;color:#ffffff;padding-top:16px;padding-bottom:6px;">
+                                        @if (Model.Nights > 0)
+                                        {
+                                            <span>@Model.Nights nights</span>
+                                        }
+
+                                        @if (tour.InclusionIcons is { Count: > 0 })
+                                        {
+                                            <span style="padding:0 8px;color:#CA568E;">|</span>
+
+                                            @foreach (var icon in tour.InclusionIcons)
+                                            {
+                                                @if (icon is not null)
+                                                {
+                                                    <span style="padding-right:8px;">
+                                                        @icon.Label
+                                                    </span>
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Pricing -->
+                            @if (!string.IsNullOrWhiteSpace(tour.CurrentPrice))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:21px;color:#cccccc;padding-bottom:6px;">
+                                        From
+                                        <strong style="color:#ffffff;">
+                                            @tour.CurrencySymbol@tour.CurrentPrice
+                                            @tour.PriceTypeLabel
+                                        </strong>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Travel period -->
+                            @if (!string.IsNullOrWhiteSpace(Model.TravelPeriod))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:21px;color:#cccccc;padding-bottom:6px;">
+                                        Travel Period: @Model.TravelPeriod
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Configured CTA copy -->
+                            @if (!string.IsNullOrWhiteSpace(Model.ctaCopy))
+                            {
+                                <tr>
+                                    <td align="left" style="padding-top:20px;">
+                                        <table align="left" border="0"
+                                               cellspacing="0" cellpadding="0">
+                                            <tbody>
+                                                <tr>
+                                                    <td align="center"
+                                                        bgcolor="#CA568E"
+                                                        style="background-color:#CA568E;border-radius:24px;padding:10px 26px;">
+                                                        <a href="@Model.EnquiryUrl"
+                                                           target="_blank"
+                                                           style="font-family:Arial,sans-serif;font-size:13px;line-height:18px;font-weight:bold;color:#ffffff;text-decoration:none;text-transform:uppercase;">
+                                                            @Model.ctaCopy
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
+<!-- ===== // Auto Feature Tour Section END HERE ===== -->

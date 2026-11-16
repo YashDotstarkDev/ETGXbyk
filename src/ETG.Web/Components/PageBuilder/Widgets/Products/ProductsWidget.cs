@@ -92,16 +92,16 @@ public class ProductsWidget(
 
     private async Task<TourSummaryViewModel> MapToViewModelAsync(TourContent tour, string path, TourPricingResult priceInfo)
     {
-        var heroImages = tour.TourHeroImage?.OfType<MediaFile>().FirstOrDefault();
-
-        var heroImage = tour.SelectedImageFolders?
-                        .FirstOrDefault()?
-                        .SelectedImages?
-                        .FirstOrDefault()?
-                        .ImageFilePath?
-                        .OfType<MediaFile>()
-                        .FirstOrDefault()
-                        ?? heroImages;
+        var heroImage = tour.TourHeroImage?.OfType<MediaFile>().FirstOrDefault();
+        
+        if (heroImage == null)
+        {
+            heroImage = tour.SelectedImageFolders?
+                .SelectMany(folder => folder.SelectedImages ?? [])
+                .SelectMany(image => image.ImageFilePath ?? [])
+                .OfType<MediaFile>()
+                .FirstOrDefault();
+        }
 
         var primaryCountryGuid = tour.TourPrimaryCountry?.FirstOrDefault()?.WebPageGuid;
         var primaryCountryName = string.Empty;
@@ -121,7 +121,7 @@ public class ProductsWidget(
                     : string.Empty;
 
         var daysLabel = tour.TourNights > 0
-            ? $"{tour.TourNights + 1} DAYS FROM"
+            ? $"{tour.TourNights + 1} DAYS"
             : string.Empty;
 
         var originalPriceText = priceInfo.OriginalPrice > 0
@@ -153,9 +153,8 @@ public class ProductsWidget(
             HeroImageAlt = heroImage?.LegacyMediaFileTitle ?? "",
             DaysFromLabel = daysLabel,
             OriginalPrice = displayOriginalPrice,
-            CurrentPrice = string.IsNullOrEmpty(currentPriceText)
-                           ? ""
-                           : $"{priceInfo.CurrencySymbol}{currentPriceText}",
+            CurrentPrice = currentPriceText ?? "",
+            CurrencySymbol = priceInfo.CurrencySymbol,
             Currency = priceInfo.CurrencyCode,
             PriceTypeLabel = tour.TourPriceTypeLabel ?? "",
             InclusionIcons = TourSummaryViewModel.ParseInclusions(tour.TourPriceInclusions)

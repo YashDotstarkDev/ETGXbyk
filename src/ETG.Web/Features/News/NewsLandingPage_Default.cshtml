@@ -333,7 +333,7 @@
                         @if (post.Image != null)
                         {
                             <div class="news-card-image-wrapper">
-                                <img src="@post.Image.LegacyMediaFileAsset.Url"
+                                <img src="@post.Image.Imgixify(400, 250)"
                                      alt="@post.Title"
                                      class="news-card-image"
                                      loading="lazy">

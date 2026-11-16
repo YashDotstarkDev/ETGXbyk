@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Features
+@using ETG.Web.Features
 @model PrimaryLandingListingViewModel
 
 @if (Model.Items.Any())
@@ -13,7 +13,10 @@
                     <div class="hd-dest-card__img-wrap">
                         @if (item.Image?.LegacyMediaFileAsset?.Url is not null)
                         {
-                            <img src="@item.Image.LegacyMediaFileAsset.Url"
+                            <img src="@item.Image.Imgixify(380, 214)"
+                                 srcset="@item.Image.ImgixSrcset(380, 214, null)"
+                                 width="380"
+                                 height="214"
                                  alt="@item.ImageAlt"
                                  loading="lazy" />
                         }

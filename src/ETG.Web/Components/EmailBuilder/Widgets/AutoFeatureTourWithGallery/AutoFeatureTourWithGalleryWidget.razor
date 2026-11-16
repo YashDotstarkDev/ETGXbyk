@@ -1,0 +1,255 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.AutoFeatureTourWithGallery
+@using Microsoft.AspNetCore.Components
+
+<!-- ===== Auto Feature Tour With Gallery Section START HERE ===== -->
+@if (Model.Tour is { } tour)
+{
+    <table align="center" width="100%" border="0"
+           cellspacing="0" cellpadding="0"
+           bgcolor="#333333"
+           style="background-color:#333333;">
+        <tbody>
+            <tr>
+                <td align="center" valign="top"
+                    style="padding:35px 24px;">
+                    <table align="center" width="540" border="0"
+                           cellspacing="0" cellpadding="0"
+                           class="em_wrapper"
+                           style="width:540px;max-width:540px;margin:0 auto;">
+                        <tbody>
+                            <!-- Configured heading -->
+                            @if (!string.IsNullOrWhiteSpace(Model.heading))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:18px;line-height:24px;font-weight:bold;color:#ffffff;text-transform:uppercase;padding-bottom:12px;">
+                                        @Model.heading
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Primary Tour Image -->
+                            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                            {
+                                <tr>
+                                    <td align="center" valign="top"
+                                        style="font-size:0;line-height:0;padding-bottom:8px;">
+                                        @if (!string.IsNullOrWhiteSpace(Model.EnquiryUrl))
+                                        {
+                                            <a href="@Model.EnquiryUrl"
+                                               target="_blank"
+                                               style="text-decoration:none;">
+                                                <img src="@Model.ImageUrl"
+                                                     alt="@Model.ImageAlt"
+                                                     width="540" border="0"
+                                                     style="display:block;width:100%;max-width:540px;height:auto;margin:0 auto;" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <img src="@Model.ImageUrl"
+                                                 alt="@Model.ImageAlt"
+                                                 width="540" border="0"
+                                                 style="display:block;width:100%;max-width:540px;height:auto;margin:0 auto;" />
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Gallery Thumbnails (3 Images) -->
+                            @if (Model.GalleryImages is { Count: > 0 })
+                            {
+                                <tr>
+                                    <td align="center" valign="top" style="padding-bottom:20px;">
+                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                @for (var i = 0; i < Model.GalleryImages.Count && i < 3; i++)
+                                                {
+                                                    var galleryImg = Model.GalleryImages[i];
+                                                    <td width="32%" align="center" valign="top" style="padding-right:@(i < 2 ? "8px" : "0px");">
+                                                        <img src="@galleryImg"
+                                                             alt=""
+                                                             width="174" border="0"
+                                                             style="display:block;width:100%;max-width:174px;height:auto;" />
+                                                    </td>
+                                                }
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Destination / Country Title -->
+                            <tr>
+                                <td align="left"
+                                    style="font-family:Arial,sans-serif;font-size:22px;line-height:28px;font-weight:bold;color:#ffffff;padding-bottom:8px;">
+                                    @Model.Title
+                                </td>
+                            </tr>
+
+                            <!-- Meta Line: Duration + Inclusions Icons (Left) & Travel Styles (Right) -->
+                            <tr>
+                                <td align="left" valign="middle" style="padding-bottom:12px;">
+                                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <!-- Duration & Inclusion Icons -->
+                                            <td align="left" valign="middle">
+                                                <table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                    <tr>
+                                                        @if (!string.IsNullOrWhiteSpace(Model.DurationLabel))
+                                                        {
+                                                            <td align="left" valign="middle" style="font-family:Arial,sans-serif;font-size:13px;line-height:17px;color:#ffffff;">
+                                                                @Model.DurationLabel
+                                                            </td>
+                                                            @if (!string.IsNullOrWhiteSpace(Model.TourPriceInclusions))
+                                                            {
+                                                                <td align="left" valign="top" width="9" style="width:9px;font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                                                <td align="left" valign="middle" style="font-family:Arial,sans-serif;font-size:13px;line-height:17px;color:#CA568E;">|</td>
+                                                            }
+                                                        }
+                                                        @if (Model.TourPriceInclusions.Contains("Flights", StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <td align="left" valign="top" width="9" style="width:9px;font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                                            <td align="center" valign="middle" style="font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/icon1.png" alt="Flights" border="0" width="15" style="max-width:15px;display:block;" /></td>
+                                                        }
+                                                        @if (Model.TourPriceInclusions.Contains("Accommodation", StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <td align="left" valign="top" width="9" style="width:9px;font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                                            <td align="center" valign="middle" style="font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/icon2.png" alt="Accommodation" border="0" width="16" style="max-width:16px;display:block;" /></td>
+                                                        }
+                                                        @if (Model.TourPriceInclusions.Contains("Meals", StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <td align="left" valign="top" width="9" style="width:9px;font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                                            <td align="center" valign="middle" style="font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/icon3.png" alt="Meals" border="0" width="11" style="max-width:11px;display:block;" /></td>
+                                                        }
+                                                        @if (Model.TourPriceInclusions.Contains("Transfer", StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <td align="left" valign="top" width="9" style="width:9px;font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/spacer.gif" alt="" border="0" height="1" width="1" style="display:block;" /></td>
+                                                            <td align="center" valign="middle" style="font-size:0px;line-height:0px;"><img src="https://www.entiretravel.com.au/edm/images/icon4.png" alt="Transfer" border="0" width="13" style="max-width:13px;display:block;" /></td>
+                                                        }
+                                                    </tr>
+                                                </table>
+                                            </td>
+
+                                            <!-- Travel Styles & Experiences (Right) -->
+                                            @if (Model.Tags is { Count: > 0 })
+                                            {
+                                                <td align="right" valign="middle">
+                                                    <table align="right" border="0" cellspacing="0" cellpadding="0">
+                                                        <tr>
+                                                            @for (var i = 0; i < Model.Tags.Count; i++)
+                                                            {
+                                                                var tag = Model.Tags[i];
+                                                                if (i > 0)
+                                                                {
+                                                                    <td align="center" valign="middle" style="font-family:Arial,sans-serif;font-size:12px;color:#cccccc;padding:0 6px;">|</td>
+                                                                }
+                                                                if (!string.IsNullOrWhiteSpace(tag.IconUrl))
+                                                                {
+                                                                    <td align="center" valign="middle" style="padding-right:4px;">
+                                                                        <img src="@tag.IconUrl" alt="" width="14" height="14" border="0" style="display:block;width:14px;height:14px;" />
+                                                                    </td>
+                                                                }
+                                                                <td align="left" valign="middle" style="font-family:Arial,sans-serif;font-size:12px;line-height:16px;color:#cccccc;">
+                                                                    @tag.Name
+                                                                </td>
+                                                            }
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            }
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Travel Period -->
+                            @if (!string.IsNullOrWhiteSpace(Model.TravelPeriod))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:13px;line-height:18px;color:#cccccc;padding-bottom:14px;">
+                                        Travel period: @Model.TravelPeriod
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Description -->
+                            @if (!string.IsNullOrWhiteSpace(Model.Description))
+                            {
+                                <tr>
+                                    <td align="left"
+                                        style="font-family:Arial,sans-serif;font-size:14px;line-height:22px;color:#ffffff;padding-bottom:18px;">
+                                        @Model.Description
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Inclusions List (Bullets) -->
+                            @if (Model.Inclusions is { Count: > 0 })
+                            {
+                                <tr>
+                                    <td align="left" style="padding-bottom:20px;">
+                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                            @foreach (var inc in Model.Inclusions)
+                                            {
+                                                <tr>
+                                                    <td width="16" align="left" valign="top" style="width:16px;font-family:Arial,sans-serif;font-size:14px;line-height:22px;color:#ffffff;">
+                                                        &bull;
+                                                    </td>
+                                                    <td align="left" valign="top" style="font-family:Arial,sans-serif;font-size:13px;line-height:22px;color:#ffffff;padding-bottom:4px;">
+                                                        @inc
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Pricing & CTA Row -->
+                            <tr>
+                                <td align="left" valign="middle" style="padding-top:10px;">
+                                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <!-- Price -->
+                                            <td align="left" valign="middle" style="font-family:Arial,sans-serif;font-size:14px;line-height:22px;color:#cccccc;">
+                                                @if (!string.IsNullOrWhiteSpace(Model.CurrentPrice))
+                                                {
+                                                    <span>From </span><strong style="font-size:20px;line-height:24px;color:#ffffff;">@Model.Currency@Model.CurrentPrice</strong>
+                                                    @if (!string.IsNullOrWhiteSpace(Model.PriceTypeLabel))
+                                                    {
+                                                        <span style="padding-left:5px;">@Model.PriceTypeLabel</span>
+                                                    }
+                                                }
+                                            </td>
+
+                                            <!-- CTA Button -->
+                                            @if (!string.IsNullOrWhiteSpace(Model.EnquiryUrl) && !string.IsNullOrWhiteSpace(Model.ctaCopy))
+                                            {
+                                                <td align="right" valign="middle">
+                                                    <table align="right" border="0" cellspacing="0" cellpadding="0">
+                                                        <tr>
+                                                            <td align="center" bgcolor="#CA568E" style="background-color:#CA568E;border-radius:24px;padding:10px 24px;">
+                                                                <a href="@Model.EnquiryUrl"
+                                                                   target="_blank"
+                                                                   style="font-family:Arial,sans-serif;font-size:13px;line-height:18px;font-weight:bold;color:#ffffff;text-decoration:none;text-transform:uppercase;display:block;">
+                                                                    @Model.ctaCopy
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            }
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
+<!-- ===== // Auto Feature Tour With Gallery Section END HERE ===== -->

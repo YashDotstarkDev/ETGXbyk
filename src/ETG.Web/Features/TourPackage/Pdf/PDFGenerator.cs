@@ -61,7 +61,9 @@ public sealed class PDFGenerator : IPDFGenerator
             doc.HtmlOptions.Engine = EngineType.Chrome86;
             doc.HtmlOptions.Media = MediaType.Print;
             doc.HtmlOptions.BrowserWidth = 1200;
-            doc.HtmlOptions.Timeout = Math.Max(_settings.MinPageLoadTime * 1000, 60000);
+            // Fonts and Bootstrap are now self-hosted, so 20s is sufficient.
+            // MinPageLoadTime (seconds) is configurable via appsettings Pdf:MinPageLoadTime.
+            doc.HtmlOptions.Timeout = Math.Max(_settings.MinPageLoadTime * 1000, 20000);
             doc.HtmlOptions.AddLinks = true;
 
             cancellationToken.ThrowIfCancellationRequested();

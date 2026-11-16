@@ -422,10 +422,14 @@ namespace ETG.Web.Tests.Features.ArticlePage
             var channel = new Mock<IWebsiteChannelContext>();
             channel.SetupGet(c => c.WebsiteChannelName).Returns("ETG");
 
+            // Mock the query options creator
+            var optionsCreator = new Mock<IContentQueryExecutionOptionsCreator>();
+            optionsCreator.Setup(x => x.Create()).Returns(new ContentQueryExecutionOptions());
+
             // Supplied Article declaration does not implement IMetaDataSchema.
             return new ArticlePostPageTemplateController(
                 _mediator.Object, contexts, null!, null!,
-                _executor.Object, channel.Object, pricing, null!)
+                _executor.Object, optionsCreator.Object, channel.Object, pricing, null!)
             {
                 ControllerContext = new ControllerContext
                 {

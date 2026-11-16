@@ -25,19 +25,21 @@
             {
                 var slide = Model.Slides[i];
                 var slideId = $"swiper-{Model.WidgetInstanceID}-slide-{i}";
+                var desktopUrl = slide.DesktopUrl.Imgixify(1920, 800);
+                var mobileUrl = slide.MobileUrl.Imgixify(768, 600);
 
-                @if (slide.MobileUrl != null)
+                @if (!string.IsNullOrWhiteSpace(mobileUrl))
                 {
                     <style>
-                        @Html.Raw($"@media (max-width: 767.98px) {{ #{slideId} {{ background-image: url('{slide.MobileUrl.LegacyMediaFileAsset.Url.Replace("~","")}') !important; }} }}")
+                        @Html.Raw($"@media (max-width: 767.98px) {{ #{slideId} {{ background-image: url('{mobileUrl}') !important; }} }}")
                     </style>
                 }
 
-                <div id="@slideId" class="swiper-slide @(slide.CustomCSSClass ?? "")" style="@(string.IsNullOrWhiteSpace(slide.DesktopUrl.LegacyMediaFileAsset.Url.Replace("~", "")) ? string.Empty : $"background-image: url('{slide.DesktopUrl.LegacyMediaFileAsset.Url.Replace("~", "")}'); background-size: cover; background-position: center;")">
-                    @if (slide.MobileUrl != null)
+                <div id="@slideId" class="swiper-slide @(slide.CustomCSSClass ?? "")" style="@(string.IsNullOrWhiteSpace(desktopUrl) ? string.Empty : $"background-image: url('{desktopUrl}'); background-size: cover; background-position: center;")">
+                    @if (!string.IsNullOrWhiteSpace(mobileUrl))
                     {
                         <div class="d-md-none swiper-slide-mobile-image">
-                            <img src="@slide.MobileUrl.LegacyMediaFileAsset.Url.Replace("~", "")" alt="@slide.MobileUrl.LegacyMediaFileTitle" class="img-fluid w-100" />
+                            <img loading="lazy"  src="@mobileUrl" alt="@slide.MobileUrl.LegacyMediaFileTitle" class="img-fluid w-100" />
                         </div>
                     }
 

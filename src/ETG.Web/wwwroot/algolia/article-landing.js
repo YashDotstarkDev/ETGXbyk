@@ -1,31 +1,31 @@
 (function () {
-    const container = document.getElementById('algolia-landing');
+    var container = document.getElementById('algolia-landing');
 
     // Safety check in case the script runs on a different page
     if (!container) return;
 
-    const APP_ID = container.dataset.algoliaAppId;
-    const API_KEY = container.dataset.algoliaSearchKey;
-    const INDEX = container.dataset.algoliaIndex;
+    var APP_ID = container.dataset.algoliaAppId;
+    var API_KEY = container.dataset.algoliaSearchKey;
+    var INDEX = container.dataset.algoliaIndex;
 
     if (!APP_ID || !API_KEY || !INDEX) return;
 
     // Parse featured article URLs to exclude from Algolia grid
-    const featuredUrlsRaw = container.dataset.featuredUrls || '';
-    const FEATURED_SLUGS = featuredUrlsRaw
+    var featuredUrlsRaw = container.dataset.featuredUrls || '';
+    var FEATURED_SLUGS = featuredUrlsRaw
         .split(',')
         .map(u => u.trim().replace(/^\/+|\/+$/g, '').split('/').filter(Boolean).pop() || '')
         .filter(Boolean)
         .map(s => s.toLowerCase());
 
     // Parse excluded article object IDs to filter out at query time
-    const excludedIdsRaw = container.dataset.excludedIds || '';
-    const EXCLUDED_IDS = excludedIdsRaw
+    var excludedIdsRaw = container.dataset.excludedIds || '';
+    var EXCLUDED_IDS = excludedIdsRaw
         .split(',')
         .map(id => id.trim().toLowerCase())
         .filter(Boolean);
 
-    const EXCLUDED_FILTER = EXCLUDED_IDS.length > 0
+    var EXCLUDED_FILTER = EXCLUDED_IDS.length > 0
         ? EXCLUDED_IDS.map(id => 'NOT objectID:' + id).join(' AND ')
         : '';
 
@@ -85,7 +85,7 @@
         return facetFilters;
     }
 
-    function transformParams(params) {
+    var transformParams = function(params) {
         if (!params) return params;
         if (typeof params === 'object') {
             var copy = Object.assign({}, params);
@@ -94,8 +94,8 @@
             }
             if (EXCLUDED_FILTER) {
                 if (copy.filters && copy.filters.trim()) {
-                    if (copy.filters.indexOf(EXCLUDED_FILTER) === -1) {
-                        copy.filters = '(' + copy.filters + ') AND (' + EXCLUDED_FILTER + ')';
+                    if (!copy.filters.includes('objectID') && copy.filters.indexOf(EXCLUDED_FILTER) === -1) {
+                        copy.filters = copy.filters + ' AND ' + EXCLUDED_FILTER;
                     }
                 } else {
                     copy.filters = EXCLUDED_FILTER;
@@ -115,8 +115,8 @@
             if (EXCLUDED_FILTER) {
                 var curFilters = urlParams.get('filters');
                 if (curFilters && curFilters.trim()) {
-                    if (curFilters.indexOf(EXCLUDED_FILTER) === -1) {
-                        urlParams.set('filters', '(' + curFilters + ') AND (' + EXCLUDED_FILTER + ')');
+                    if (!curFilters.includes('objectID') && curFilters.indexOf(EXCLUDED_FILTER) === -1) {
+                        urlParams.set('filters', curFilters + ' AND ' + EXCLUDED_FILTER);
                     }
                 } else {
                     urlParams.set('filters', EXCLUDED_FILTER);
@@ -127,8 +127,8 @@
         return params;
     }
 
-    const rawSearchClient = algoliasearch(APP_ID, API_KEY);
-    const searchClient = {
+    var rawSearchClient = algoliasearch(APP_ID, API_KEY);
+    var searchClient = {
         search: function(requests) {
             var transformed = (requests || []).map(function(req) {
                 var copy = Object.assign({}, req);
@@ -158,7 +158,7 @@
         }
     };
 
-    const search = instantsearch({
+    var search = instantsearch({
         indexName: INDEX,
         searchClient,
         routing: {
@@ -373,7 +373,7 @@
     );
 
     // Add all widgets
-        function trimPaginationOnMobile() {
+        var trimPaginationOnMobile = function() {
         var container = document.getElementById('algolia-pagination');
         if (!container) return;
         var list = container.querySelector('.pagination');
@@ -410,7 +410,7 @@
 
     window.addEventListener('resize', trimPaginationOnMobile);
 
-    const widgets = [
+    var widgets = [
         customHitsPerPage({
             items: [
                 { label: '30', value: 30, default: true },

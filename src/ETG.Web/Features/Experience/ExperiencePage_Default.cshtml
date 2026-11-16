@@ -20,11 +20,54 @@
     return;
 }
 
-@if (!string.IsNullOrWhiteSpace(experience.JsonSchema))
+@{
+    var schema = experience.JsonSchema ?? "";
+    var pattern = @"<script\b[^>]*>([\s\S]*?)</script\s*>";
+    var options = System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+
+    var blocks = System.Text.RegularExpressions.Regex
+        .Matches(schema, pattern, options)
+        .Cast<System.Text.RegularExpressions.Match>()
+        .Select(m => m.Groups[1].Value)
+        .Append(System.Text.RegularExpressions.Regex.Replace(schema, pattern, "", options))
+        .Where(b => !string.IsNullOrWhiteSpace(b))
+        .ToList();
+}
+
+@section Scripts
 {
-    <script type="application/ld+json">
-        @Html.Raw(experience.JsonSchema)
-    </script>
+    @foreach (var block in blocks)
+    {
+        string? json = null;
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(block);
+
+            if (doc.RootElement.ValueKind is
+                System.Text.Json.JsonValueKind.Object or
+                System.Text.Json.JsonValueKind.Array)
+            {
+                json = System.Text.Json.JsonSerializer.Serialize(
+                    doc.RootElement,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            json = block.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            <script type="application/ld+json">
+                @Html.Raw(json)
+            </script>
+        }
+    }
 }
 
 <vc:bread-crumb />
@@ -44,8 +87,8 @@
 
 @if (experience.TourListing?.Tours?.Any() == true)
 {
-  <partial name="~/Views/Shared/Partial/Tour/_TourListing.cshtml"
-         model="experience.TourListing" />
+    <partial name="~/Views/Shared/Partial/Tour/_TourListing.cshtml"
+             model="experience.TourListing" />
 
 }
 
@@ -90,3 +133,19 @@
              model="experience.GoogleReviews" />
 }
 
+@{
+    var sticky = experience.ExperienceStickyModel;
+}
+
+@if (sticky is not null && sticky.DisplaySticky
+    && (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail2)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
+{
+    <partial name="~/Views/Shared/Partial/Common/_CampaignStickyBar.cshtml"
+             model="sticky" />
+}
+else
+{
+    <vc:sticky-bar />
+}

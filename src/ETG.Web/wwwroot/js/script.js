@@ -565,19 +565,19 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 })();
 (function initTickerMarquee() {
-    const wrapper = document.querySelector('.ticker');
-    const track = document.getElementById('tickerTrack');
+    var wrapper = document.querySelector('.ticker');
+    var track = document.getElementById('tickerTrack');
     if (!wrapper || !track) return;
 
-    const originalHTML = track.innerHTML;
+    var originalHTML = track.innerHTML;
 
-    function build() {
+    var build = function () {
         // Reset to the single original set first
         track.innerHTML = originalHTML;
         track.style.animation = 'none';
 
-        const wrapperWidth = wrapper.getBoundingClientRect().width;
-        let setWidth = track.getBoundingClientRect().width;
+        var wrapperWidth = wrapper.getBoundingClientRect().width;
+        var setWidth = track.getBoundingClientRect().width;
 
         if (setWidth === 0) return; // not rendered yet, bail safely
 
@@ -591,14 +591,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Simpler & robust: measure width of exactly one original set by re-inserting it once more,
         // then use that as the exact scroll distance so the loop is always seamless regardless of clone count
-        const singleSetWidth = (function () {
-            const temp = document.createElement('div');
+        var singleSetWidth = (function () {
+            var temp = document.createElement('div');
             temp.style.position = 'absolute';
             temp.style.visibility = 'hidden';
             temp.style.display = 'flex';
             temp.innerHTML = originalHTML;
             document.body.appendChild(temp);
-            const w = temp.getBoundingClientRect().width;
+            var w = temp.getBoundingClientRect().width;
             document.body.removeChild(temp);
             return w;
         })();
@@ -606,27 +606,22 @@ document.addEventListener("DOMContentLoaded", function() {
         // Duplicate the whole (possibly multi-set) track once more so it can loop by exactly singleSetWidth
         track.insertAdjacentHTML('beforeend', track.innerHTML);
 
-        const distance = singleSetWidth;
-        const duration = Math.max(10, distance / 50); // consistent speed regardless of content length
+        var distance = singleSetWidth;
+        var duration = Math.max(10, distance / 50); // consistent speed regardless of content length
 
         // Inject a fresh keyframe with the exact pixel distance needed — guarantees zero gap
-        const styleTag = document.getElementById('ticker-keyframes') || document.createElement('style');
+        var styleTag = document.getElementById('ticker-keyframes') || document.createElement('style');
         styleTag.id = 'ticker-keyframes';
-        styleTag.innerHTML = `
-            @keyframes tickerScroll {
-                from { transform: translate3d(0, 0, 0); }
-                to { transform: translate3d(-${distance}px, 0, 0); }
-            }
-        `;
+        styleTag.innerHTML = '@keyframes tickerScroll { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-' + distance + 'px, 0, 0); } }';
         document.head.appendChild(styleTag);
 
-        track.style.animation = `tickerScroll ${duration}s linear infinite`;
-    }
+        track.style.animation = 'tickerScroll ' + duration + 's linear infinite';
+    };
 
     build();
 
-    let resizeTimer;
-    window.addEventListener('resize', () => {
+    var resizeTimer;
+    window.addEventListener('resize', function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(build, 200);
     });
@@ -637,119 +632,54 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-document.querySelectorAll(".tom-select").forEach((select, index) => {
-    // 🔑 Prevent double-initialization (fixes the "duplicate select" bug)
-    if (select.tomselect) {
-        return;
-    }
-
-    try {
-        const ts = new TomSelect(select, {
-            create: false,
-            searchField: [],
-            controlInput: null
-
-        });
-
-        const wrapper = select.closest(".select-wrapper");
-        if (!wrapper) {
-            // No wrapper on this select — skip arrow logic, but TomSelect still works fine
+// Initialize Tom Select for dropdowns (e.g. Subscribe Now, NotFound, etc.)
+(function () {
+    document.querySelectorAll("select.tom-select").forEach((select, index) => {
+        // 🔑 Prevent double-initialization and never run on wrapper divs or non-select elements
+        if (!select || select.tagName !== "SELECT" || select.tomselect || select.closest(".ts-wrapper")) {
             return;
         }
 
-        const arrow = wrapper.querySelector(".custom-arrow");
-        if (!arrow) {
+        // Skip Algolia-managed dropdowns handled exclusively by dedicated page scripts
+        if (select.id === "heroDestination" || select.id === "heroExperience" || select.id === "searchbox-destination" || select.id === "searchbox-experience") {
             return;
         }
 
-        ts.control.appendChild(arrow);
+        try {
+            const ts = new TomSelect(select, {
+                create: false,
+                searchField: [],
+                controlInput: null
+            });
 
-        ts.on("dropdown_open", () => {
-            arrow.classList.add("rotate");
-            wrapper.classList.add("dropdown-open");
-        });
+            const wrapper = select.closest(".select-wrapper");
+            if (!wrapper) {
+                // No wrapper on this select — skip arrow logic, but TomSelect still works fine
+                return;
+            }
 
-        ts.on("dropdown_close", () => {
-            arrow.classList.remove("rotate");
-            wrapper.classList.remove("dropdown-open");
-        });
+            const arrow = wrapper.querySelector(".custom-arrow");
+            if (!arrow) {
+                return;
+            }
 
-    } catch (err) {
-        console.error(`Tom Select init failed for element #${index}:`, err);
-    }
-});
+            ts.control.appendChild(arrow);
 
+            ts.on("dropdown_open", () => {
+                arrow.classList.add("rotate");
+                wrapper.classList.add("dropdown-open");
+            });
 
+            ts.on("dropdown_close", () => {
+                arrow.classList.remove("rotate");
+                wrapper.classList.remove("dropdown-open");
+            });
 
-
-
-
-
-
-
-
-
-const isMobile = window.matchMedia("(max-width: 768px)").matches;
-
-document.querySelectorAll(".tom-select").forEach((select, index) => {
-
-    // Don't initialize on mobile
-    if (isMobile) {
-        return;
-    }
-
-    if (select.tomselect) {
-        return;
-    }
-
-    try {
-        const ts = new TomSelect(select, {
-            create: false,
-            searchField: [],
-            controlInput: null
-        });
-
-        const wrapper = select.closest(".select-wrapper");
-        if (!wrapper) return;
-
-        const arrow = wrapper.querySelector(".custom-arrow");
-        if (!arrow) return;
-
-        ts.control.appendChild(arrow);
-
-        ts.on("dropdown_open", () => {
-            arrow.classList.add("rotate");
-            wrapper.classList.add("dropdown-open");
-        });
-
-        ts.on("dropdown_close", () => {
-            arrow.classList.remove("rotate");
-            wrapper.classList.remove("dropdown-open");
-        });
-
-    } catch (err) {
-        console.error(err);
-    }
-});
-
-
-const isDesktop = window.innerWidth > 768;
-
-document.querySelectorAll(".tom-select").forEach((select, index) => {
-
-    if (!isDesktop) {
-        return;        // Leave the native select untouched
-    }
-
-    if (select.tomselect) return;
-
-    new TomSelect(select, {
-        create: false,
-         searchField: [],
-            controlInput: null
+        } catch (err) {
+            console.error(`Tom Select init failed for element #${index}:`, err);
+        }
     });
-
-});
+})();
 
 /* ============================================================
    OPTIONAL EXTRAS ACCORDION FUNCTIONALITY (Single-Open)
@@ -1035,16 +965,16 @@ document.addEventListener('DOMContentLoaded', function () {
 (function initImageLightbox() {
     'use strict';
 
-    const cells = Array.from(
+    var cells = Array.from(
         document.querySelectorAll('[data-lb]')
-    ).filter(cell => cell.querySelector('img'));
+    ).filter(function (cell) { return cell.querySelector('img'); });
 
-    const overlay = document.getElementById('lb');
-    const strip = document.getElementById('lb-strip');
-    const caption = document.getElementById('lb-caption');
-    const btnClose = document.getElementById('lb-close');
-    const btnPrev = document.getElementById('lb-prev');
-    const btnNext = document.getElementById('lb-next');
+    var overlay = document.getElementById('lb');
+    var strip = document.getElementById('lb-strip');
+    var caption = document.getElementById('lb-caption');
+    var btnClose = document.getElementById('lb-close');
+    var btnPrev = document.getElementById('lb-prev');
+    var btnNext = document.getElementById('lb-next');
 
     if (
         !cells.length ||
@@ -1064,164 +994,112 @@ document.addEventListener('DOMContentLoaded', function () {
 
     overlay.dataset.lightboxInitialized = 'true';
 
-    const images = cells.map(cell => {
-        const img = cell.querySelector('img');
-
+    var images = cells.map(function (cell) {
+        var img = cell.querySelector('img');
         return {
             src: img.currentSrc || img.src,
             alt: img.alt || ''
         };
     });
 
-    let currentIndex = 0;
-    let touchStartX = 0;
+    var currentIndex = 0;
+    var touchStartX = 0;
+    var SWIPE_THRESHOLD = 50;
+    var previousBodyOverflow = '';
 
-    const SWIPE_THRESHOLD = 50;
-
-    let previousBodyOverflow = '';
-
-    images.forEach(imageData => {
-        const slide = document.createElement('div');
-
+    images.forEach(function (imageData) {
+        var slide = document.createElement('div');
         slide.className = 'lb-slide';
-
-        const img = document.createElement('img');
-
+        var img = document.createElement('img');
         img.src = imageData.src;
         img.alt = imageData.alt;
         img.loading = 'lazy';
-
         slide.appendChild(img);
         strip.appendChild(slide);
     });
 
-    function goTo(index) {
-        currentIndex =
-            (index + images.length) % images.length;
+    var goTo = function (index) {
+        currentIndex = (index + images.length) % images.length;
+        strip.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+        caption.textContent = images[currentIndex].alt;
+    };
 
-        strip.style.transform =
-            `translateX(-${currentIndex * 100}%)`;
-
-        caption.textContent =
-            images[currentIndex].alt;
-    }
-
-    function openLightbox(index) {
+    var openLightbox = function (index) {
         previousBodyOverflow = document.body.style.overflow;
-
         overlay.classList.add('lb-open');
-
         document.body.style.overflow = 'hidden';
-
         goTo(index);
-    }
+    };
 
-    function closeLightbox() {
+    var closeLightbox = function () {
         overlay.classList.remove('lb-open');
+        document.body.style.overflow = previousBodyOverflow;
+    };
 
-        document.body.style.overflow =
-            previousBodyOverflow;
-    }
-
-    cells.forEach((cell, index) => {
+    cells.forEach(function (cell, index) {
         cell.addEventListener('click', function () {
             openLightbox(index);
         });
     });
 
-    btnPrev.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
+    btnPrev.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         goTo(currentIndex - 1);
     });
 
-    btnNext.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
+    btnNext.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         goTo(currentIndex + 1);
     });
 
-    btnClose.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
+    btnClose.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         closeLightbox();
     });
 
-    overlay.addEventListener('click', function (event) {
-        if (event.target === overlay) {
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
             closeLightbox();
         }
     });
 
-    document.addEventListener('keydown', function (event) {
-        if (!overlay.classList.contains('lb-open')) {
-            return;
-        }
-
-        switch (event.key) {
+    document.addEventListener('keydown', function (e) {
+        if (!overlay.classList.contains('lb-open')) return;
+        switch (e.key) {
             case 'Escape':
                 closeLightbox();
                 break;
-
             case 'ArrowLeft':
                 goTo(currentIndex - 1);
                 break;
-
             case 'ArrowRight':
                 goTo(currentIndex + 1);
-                break;
-
-            default:
                 break;
         }
     });
 
-    overlay.addEventListener(
-        'touchstart',
-        function (event) {
-            if (!event.changedTouches.length) {
-                return;
-            }
-
-            touchStartX =
-                event.changedTouches[0].screenX;
-        },
-        {
-            passive: true
+    overlay.addEventListener('touchstart', function (e) {
+        if (e.changedTouches.length) {
+            touchStartX = e.changedTouches[0].screenX;
         }
-    );
+    }, { passive: true });
 
-    overlay.addEventListener(
-        'touchend',
-        function (event) {
-            if (!event.changedTouches.length) {
-                return;
+    overlay.addEventListener('touchend', function (e) {
+        if (e.changedTouches.length) {
+            var diffX = touchStartX - e.changedTouches[0].screenX;
+            if (Math.abs(diffX) > SWIPE_THRESHOLD) {
+                if (diffX > 0) {
+                    goTo(currentIndex + 1);
+                } else {
+                    goTo(currentIndex - 1);
+                }
             }
-
-            const touchEndX =
-                event.changedTouches[0].screenX;
-
-            const difference =
-                touchStartX - touchEndX;
-
-            if (Math.abs(difference) <= SWIPE_THRESHOLD) {
-                return;
-            }
-
-            if (difference > 0) {
-                goTo(currentIndex + 1);
-            } else {
-                goTo(currentIndex - 1);
-            }
-        },
-        {
-            passive: true
         }
-    );
-    })();
+    }, { passive: true });
+})();
 /*three column callouts widget custom js*/
 (function () {
     'use strict';
@@ -1522,7 +1400,6 @@ document.addEventListener("DOMContentLoaded", function () {
 function initializeOfferCountdown() {
     document.querySelectorAll(".js-offer-countdown").forEach(timer => {
         const endDate = new Date(timer.dataset.end).getTime();
-
         if (Number.isNaN(endDate)) return;
 
         const daysElement = timer.querySelector('[data-countdown="days"]');
@@ -1530,29 +1407,25 @@ function initializeOfferCountdown() {
         const minutesElement = timer.querySelector('[data-countdown="minutes"]');
         const secondsElement = timer.querySelector('[data-countdown="seconds"]');
 
-        function updateCountdown() {
+        let interval = null;
+
+        const updateCountdown = () => {
             const remaining = endDate - Date.now();
 
             if (remaining <= 0) {
-                clearInterval(interval);
+                if (interval) clearInterval(interval);
                 timer.innerHTML = "Offer ended";
                 return;
             }
 
-            const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
-            const minutes = Math.floor((remaining / (1000 * 60)) % 60);
-            const seconds = Math.floor((remaining / 1000) % 60);
-
-            daysElement.textContent = String(days).padStart(2, "0");
-            hoursElement.textContent = String(hours).padStart(2, "0");
-            minutesElement.textContent = String(minutes).padStart(2, "0");
-            secondsElement.textContent = String(seconds).padStart(2, "0");
-        }
+            if (daysElement) daysElement.textContent = String(Math.floor(remaining / 864e5)).padStart(2, "0");
+            if (hoursElement) hoursElement.textContent = String(Math.floor(remaining / 36e5) % 24).padStart(2, "0");
+            if (minutesElement) minutesElement.textContent = String(Math.floor(remaining / 6e4) % 60).padStart(2, "0");
+            if (secondsElement) secondsElement.textContent = String(Math.floor(remaining / 1e3) % 60).padStart(2, "0");
+        };
 
         updateCountdown();
-
-        const interval = setInterval(updateCountdown, 1000);
+        interval = setInterval(updateCountdown, 1000);
     });
 }
 
@@ -1561,44 +1434,44 @@ document.addEventListener("DOMContentLoaded", initializeOfferCountdown);
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    const nav = document.querySelector(".pkgd-tabs-bar__nav");
-    const moreMenu = document.querySelector(".pkgd-more-menu");
-    const moreBtn = document.querySelector(".pkgd-more-btn");
-    const moreDropdown = document.querySelector(".pkgd-more-dropdown");
+    var nav = document.querySelector(".pkgd-tabs-bar__nav");
+    var moreMenu = document.querySelector(".pkgd-more-menu");
+    var moreBtn = document.querySelector(".pkgd-more-btn");
+    var moreDropdown = document.querySelector(".pkgd-more-dropdown");
 
     if (!nav || !moreMenu || !moreBtn || !moreDropdown) return;
 
-    const DESKTOP_BREAKPOINT = 1400;
+    var DESKTOP_BREAKPOINT = 1400;
 
-    const mainItems = Array.from(
+    var mainItems = Array.from(
         nav.querySelectorAll(".nav-item:not(.pkgd-more-menu)")
     );
-    const mainLinks = Array.from(
+    var mainLinks = Array.from(
         nav.querySelectorAll(".nav-item:not(.pkgd-more-menu) .nav-link")
     );
-    const dropdownLinks = Array.from(moreDropdown.querySelectorAll("a"));
+    var dropdownLinks = Array.from(moreDropdown.querySelectorAll("a"));
 
     // Sections that exist on the page (taken from dropdown links, which list every tab)
-    const sectionIds = dropdownLinks
+    var sectionIds = dropdownLinks
         .map(function (a) { return (a.getAttribute("href") || "").replace("#", ""); })
         .filter(function (id) { return id && document.getElementById(id); });
 
-    let currentId = null;
-    let clickLock = false;
-    let lockTimer = null;
+    var currentId = null;
+    var clickLock = false;
+    var lockTimer = null;
 
-    function isDesktop() {
+    var isDesktop = function () {
         return window.innerWidth >= DESKTOP_BREAKPOINT;
-    }
+    };
 
-    function closeMore() {
+    var closeMore = function () {
         moreMenu.classList.remove("open");
         moreBtn.setAttribute("aria-expanded", "false");
-    }
+    };
 
     /* ---------- Active state ---------- */
 
-    function setActive(id) {
+    var setActive = function (id) {
         if (!id) return;
         currentId = id;
 
@@ -1611,25 +1484,25 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         // Highlight the MORE button when the active tab is hidden inside it
-        const activeItem = mainItems.find(function (item) {
-            const link = item.querySelector(".nav-link");
+        var activeItem = mainItems.find(function (item) {
+            var link = item.querySelector(".nav-link");
             return link && link.getAttribute("href") === "#" + id;
         });
-        const hiddenInMore = !activeItem || activeItem.style.display === "none";
+        var hiddenInMore = !activeItem || activeItem.style.display === "none";
         moreBtn.classList.toggle("active", hiddenInMore);
-    }
+    };
 
     /* ---------- Smooth scroll ---------- */
 
-    function getOffset() {
-        const tabsBar = document.querySelector(".pkgd-tabs-bar");
-        const tabsH = tabsBar ? tabsBar.offsetHeight : 0;
-        const navH = window.innerWidth >= 768 ? 117 : 70;
+    var getOffset = function () {
+        var tabsBar = document.querySelector(".pkgd-tabs-bar");
+        var tabsH = tabsBar ? tabsBar.offsetHeight : 0;
+        var navH = window.innerWidth >= 768 ? 117 : 70;
         return navH + tabsH + 12;
-    }
+    };
 
-    function scrollToSection(id) {
-        const target = document.getElementById(id);
+    var scrollToSection = function (id) {
+        var target = document.getElementById(id);
         if (!target) return;
 
         // Lock the scroll-spy while the smooth scroll runs, so the
@@ -1640,32 +1513,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
         setActive(id);
 
-        const top =
+        var top =
             target.getBoundingClientRect().top +
             window.pageYOffset -
             getOffset();
 
         window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-    }
+    };
 
-    function handleLinkClick(e) {
-        const href = this.getAttribute("href");
+    var handleLinkClick = function (e) {
+        var href = this.getAttribute("href");
         if (!href || !href.startsWith("#")) return;
 
         e.preventDefault();
         e.stopPropagation();
         closeMore();
         scrollToSection(href.substring(1));
-    }
+    };
 
     mainLinks.forEach(function (a) { a.addEventListener("click", handleLinkClick); });
     dropdownLinks.forEach(function (a) { a.addEventListener("click", handleLinkClick); });
 
     /* ---------- Scroll spy ---------- */
 
-    let ticking = false;
+    var ticking = false;
 
-    function onScroll() {
+    var onScroll = function () {
         if (clickLock) {
             // keep extending the lock until the smooth scroll has stopped
             clearTimeout(lockTimer);
@@ -1679,11 +1552,11 @@ document.addEventListener("DOMContentLoaded", function () {
         window.requestAnimationFrame(function () {
             ticking = false;
 
-            const line = getOffset() + 20;
-            let activeId = null;
+            var line = getOffset() + 20;
+            var activeId = null;
 
             sectionIds.forEach(function (id) {
-                const el = document.getElementById(id);
+                var el = document.getElementById(id);
                 if (el && el.getBoundingClientRect().top <= line) {
                     activeId = id;
                 }
@@ -1697,61 +1570,59 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!activeId) activeId = sectionIds[0];
             if (activeId && activeId !== currentId) setActive(activeId);
         });
-    }
+    };
 
     window.addEventListener("scroll", onScroll, { passive: true });
 
     /* ---------- Overflow / MORE menu ---------- */
 
-    function buildDropdownLinks(labelsToPush) {
-        let anyVisible = false;
+    var buildDropdownLinks = function (labelsToPush) {
+        var anyVisible = false;
 
         dropdownLinks.forEach(function (a) {
-            const show = labelsToPush.includes(a.getAttribute("data-label"));
+            var show = labelsToPush.includes(a.getAttribute("data-label"));
             a.style.display = show ? "" : "none";
             if (show) anyVisible = true;
         });
 
         return anyVisible;
-    }
+    };
 
-    function updateDividers(visibleItems) {
+    var updateDividers = function (visibleItems) {
         mainItems.forEach(function (item) { item.classList.remove("show-divider"); });
         visibleItems.forEach(function (item) { item.classList.add("show-divider"); });
-    }
+    };
 
-       function applyMobileLayout() {
-        const labelsToPush = [];
-        const visibleItems = [];
- 
+    var applyMobileLayout = function () {
+        var labelsToPush = [];
+        var visibleItems = [];
 
-        const candidates = mainItems
+        var candidates = mainItems
             .filter(function (item) {
                 return item.getAttribute("data-mobile-visible") === "true";
             })
             .slice(0, 3);
- 
 
         mainItems.forEach(function (item) {
             item.style.display = candidates.includes(item) ? "" : "none";
         });
         moreMenu.style.display = "";
- 
-        const navWidth = nav.clientWidth;
-        const gap = parseFloat(window.getComputedStyle(nav).columnGap) || 0;
-        let used = moreMenu.offsetWidth;
-        let overflowing = false;
- 
+
+        var navWidth = nav.clientWidth;
+        var gap = parseFloat(window.getComputedStyle(nav).columnGap) || 0;
+        var used = moreMenu.offsetWidth;
+        var overflowing = false;
+
         mainItems.forEach(function (item) {
-            const label = item.getAttribute("data-label");
- 
+            var label = item.getAttribute("data-label");
+
             if (!candidates.includes(item)) {
                 if (label) labelsToPush.push(label);
                 return;
             }
- 
-            const w = item.offsetWidth;
- 
+
+            var w = item.offsetWidth;
+
             // Not enough room? Send it (and everything after it) to MORE
             if (!overflowing && used + gap + w <= navWidth) {
                 used += gap + w;
@@ -1762,31 +1633,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (label) labelsToPush.push(label);
             }
         });
- 
-        const hasHidden = buildDropdownLinks(labelsToPush);
+
+        var hasHidden = buildDropdownLinks(labelsToPush);
         moreMenu.style.display = hasHidden ? "" : "none";
         if (!hasHidden) closeMore();
- 
-        updateDividers(visibleItems);
-    }
 
-    function applyDesktopLayout() {
-        // 1. Reset everything so we can measure real widths
-        //    (data-always-more items are normal candidates on desktop,
-        //     they are listed last so they overflow first)
+        updateDividers(visibleItems);
+    };
+
+    var applyDesktopLayout = function () {
         mainItems.forEach(function (item) { item.style.display = ""; });
         moreMenu.style.display = "";
 
-        const navWidth = nav.clientWidth;
-        const gap = parseFloat(window.getComputedStyle(nav).columnGap) || 0;
-        const moreWidth = moreMenu.offsetWidth;
-        const widths = mainItems.map(function (item) { return item.offsetWidth; });
+        var navWidth = nav.clientWidth;
+        var gap = parseFloat(window.getComputedStyle(nav).columnGap) || 0;
+        var moreWidth = moreMenu.offsetWidth;
+        var widths = mainItems.map(function (item) { return item.offsetWidth; });
 
-        const labelsToPush = [];
-        const visibleItems = [];
+        var labelsToPush = [];
+        var visibleItems = [];
 
-        // 2. Does everything fit WITHOUT the MORE button?
-        const totalWidth =
+        var totalWidth =
             widths.reduce(function (sum, w) { return sum + w; }, 0) +
             gap * Math.max(0, mainItems.length - 1);
 
@@ -1799,38 +1666,36 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // 3. Not everything fits: reserve room for MORE and push the rest into it
-        let used = moreWidth + gap;
-        let overflowing = false;
+        var used = moreWidth + gap;
+        var overflowing = false;
 
         mainItems.forEach(function (item, i) {
-            const label = item.getAttribute("data-label");
+            var label = item.getAttribute("data-label");
 
             if (!overflowing && used + widths[i] <= navWidth) {
                 used += widths[i] + gap;
                 visibleItems.push(item);
             } else {
-                overflowing = true; // once one overflows, all following ones do too
+                overflowing = true;
                 item.style.display = "none";
                 if (label) labelsToPush.push(label);
             }
         });
 
-        const hasHidden = buildDropdownLinks(labelsToPush);
+        var hasHidden = buildDropdownLinks(labelsToPush);
         moreMenu.style.display = hasHidden ? "" : "none";
         updateDividers(visibleItems);
-    }
+    };
 
-    function recalc() {
+    var recalc = function () {
         if (isDesktop()) {
             applyDesktopLayout();
         } else {
             applyMobileLayout();
         }
 
-        // Re-sync active state (the active tab may have moved in/out of MORE)
         if (currentId) setActive(currentId);
-    }
+    };
 
     /* ---------- MORE toggle ---------- */
 
@@ -1838,7 +1703,7 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
         e.stopPropagation();
 
-        const isOpen = moreMenu.classList.toggle("open");
+        var isOpen = moreMenu.classList.toggle("open");
         moreBtn.setAttribute("aria-expanded", String(isOpen));
     });
 
@@ -1848,7 +1713,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* ---------- Init ---------- */
 
-    const initial = nav.querySelector(".nav-link.active") || mainLinks[0];
+    var initial = nav.querySelector(".nav-link.active") || mainLinks[0];
     if (initial) {
         currentId = (initial.getAttribute("href") || "").replace("#", "") || null;
     }
@@ -1856,7 +1721,7 @@ document.addEventListener("DOMContentLoaded", function () {
     recalc();
     onScroll();
 
-    let resizeTimer;
+    var resizeTimer;
     window.addEventListener("resize", function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(recalc, 50);
@@ -1964,13 +1829,27 @@ if (document.readyState === 'loading') {
 
     // Initialize custom Tom Select for search filters to fix z-index
     document.addEventListener("DOMContentLoaded", function () {
-      document.querySelectorAll('.search-filter-select').forEach(select => {
-        new TomSelect(select, {
-          create: false,
+      document.querySelectorAll('select.search-filter-select').forEach(select => {
+        // Prevent double-initialization and never run on wrapper divs or non-select elements
+        if (!select || select.tagName !== "SELECT" || select.tomselect || select.closest(".ts-wrapper")) {
+          return;
+        }
+
+        // Skip Algolia-managed dropdowns handled exclusively by dedicated page scripts
+        if (select.id === "heroDestination" || select.id === "heroExperience" || select.id === "searchbox-destination" || select.id === "searchbox-experience") {
+          return;
+        }
+
+        try {
+          new TomSelect(select, {
+            create: false,
             searchField: [],
             controlInput: null,
-          wrapperClass: 'ts-wrapper search-filter-select-wrapper'
-        });
+            wrapperClass: 'ts-wrapper search-filter-select-wrapper'
+          });
+        } catch (err) {
+          console.error('TomSelect init failed for search-filter-select:', err);
+        }
       });
     });
 
@@ -1980,7 +1859,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     headings.forEach(heading => {
         if (!heading || typeof heading.innerText !== 'string' || !heading.innerText.trim()) return;
-
+        if (heading.closest(".payment-lead-text, .no-titlecase")) return;
         // Process node by node to protect future child elements
         const capitalizeNodeText = (node) => {
             node.childNodes.forEach(child => {

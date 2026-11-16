@@ -26,12 +26,10 @@ public class AgentPortalPageQueryHandler(WebPageQueryTools tools)
                     4,
                     options => options.IncludeWebPageData()));
 
+        // SECURITY FIX: Use request-aware options to respect live vs preview context
         var pages = await Executor.GetMappedWebPageResult<AgentPortalMainPage>(
             query,
-            new ContentQueryExecutionOptions
-            {
-                ForPreview = true
-            },
+            DefaultQueryOptions,
             cancellationToken);
 
         return pages.First();

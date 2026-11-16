@@ -41,6 +41,6 @@ public class WebsiteSettingsQueryHandler(ContentItemQueryTools tools, IInfoProvi
 
     protected override ICacheDependencyKeysBuilder AddDependencyKeys(WebsiteSettingsQuery query, WebsiteSettingsQueryResponse result, ICacheDependencyKeysBuilder builder) =>
       builder.AllObjects(WebsiteSettingsInfo.OBJECT_TYPE)
-          .Collection(result.GlobalContent.FooterLogo, (c, b) => b.ContentItem(c))
+          .Collection(result.GlobalContent.WebsiteGlobalContentLogoImageContent, (c, b) => b.ContentItem(c))
           .AllContentItems(WebsiteGlobalContent.CONTENT_TYPE_NAME);
 }

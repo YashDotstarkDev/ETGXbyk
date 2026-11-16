@@ -41,12 +41,10 @@ public class BrochuresPageQueryHandler(WebPageQueryTools tools)
                 ETG.BrochureFolder.CONTENT_TYPE_NAME,
                 parameters => parameters.WithLinkedItems(3));
 
+        // CONSISTENCY FIX: Use context-aware options like the page query above
         var folders = await Executor.GetMappedResult<ETG.BrochureFolder>(
             folderQuery,
-            new ContentQueryExecutionOptions
-            {
-                ForPreview = false
-            },
+            DefaultQueryOptions,
             cancellationToken);
 
         return new BrochuresPageQueryResponse(

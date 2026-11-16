@@ -59,7 +59,7 @@
                             ? post.TeaserImage.ThumbnailLegacyMediaFileAsset.Url
                             : post.TeaserImage.LegacyMediaFileAsset.Url; *@
 
-                        string imageUrl = post.TeaserImage?.LegacyMediaFileAsset?.Url;
+                        string imageUrl = post.TeaserImage.Imgixify(380, 214);
                         <a href="@post.LinkPath"
                            tabindex="-1"
                            aria-hidden="true"
@@ -119,7 +119,7 @@
                                     <span class="d-flex align-items-center gap-1">
                                         @if (post.Author.Photo != null && !string.IsNullOrEmpty(post.Author.Photo.LegacyMediaFileAsset?.Url))
                                         {
-                                            <img src="@post.Author.Photo.LegacyMediaFileAsset.Url"
+                                            <img src="@post.Author.Photo.Imgixify(40, 40, fit: "crop")"
                                                  alt="@post.Author.FullName"
                                                  width="20"
                                                  height="20"

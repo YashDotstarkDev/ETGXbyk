@@ -1,4 +1,4 @@
-﻿@using System.Linq
+@using System.Linq
 @using ETG.Web.Features.DestinationPostPage
 @model DestinationPostPageViewModel
 
@@ -115,17 +115,44 @@
     }
 }
 
+@section Styles
+{
+    @if (pageModel.DestinationHeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <link rel="preload" fetchpriority="high" as="image" href="@pageModel.DestinationHeroImage.Imgixify(1920, 600)" media="(min-width: 768px)" />
+        <link rel="preload" fetchpriority="high" as="image" href="@pageModel.DestinationHeroImage.Imgixify(768, 960)" media="(max-width: 767px)" />
+    }
+}
+
 <vc:bread-crumb />
 
 <section class="hero tahiti-hero"
          aria-label="@($"{pageModel.DestinationName} hero banner")">
 
+        @if (!string.IsNullOrEmpty(pageModel.DestinationHeroImageAltTag))
+    {
+        <div class="caption-top">
+            <i class="bi bi-geo-alt"></i>
+            @pageModel.DestinationHeroImageAltTag
+        </div>
+    }
+
     @if (pageModel.DestinationHeroImage?.LegacyMediaFileAsset is not null)
     {
         <picture>
-            <img src="@pageModel.DestinationHeroImage.LegacyMediaFileAsset.Url"
+            <source media="(max-width: 767px)"
+                    srcset="@pageModel.DestinationHeroImage.ImgixSrcset(768, 960, null)"
+                    width="768"
+                    height="960" />
+            <img src="@pageModel.DestinationHeroImage.Imgixify(1920, 600)"
+                 srcset="@pageModel.DestinationHeroImage.ImgixSrcset(1920, 600, new[] { 1 })"
+                 width="1920"
+                 height="600"
                  alt="@pageModel.DestinationHeroImageAltTag"
-                 class="hero-bg" />
+                 class="hero-bg"
+                 fetchpriority="high"
+                 loading="eager"
+                 decoding="async" />
         </picture>
     }
 
@@ -136,7 +163,7 @@
 
     <div class="container text-white">
         <div class="tahiti-hero__content">
-            <span class="tahiti-hero__eyebrow">
+            <span class="tahiti-hero__eyebrow"> 
                 @pageModel.DestinationCampaignTitle
             </span>
 
@@ -350,5 +377,9 @@
 || !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
 {
     <partial name="~/Views/Shared/Partial/Common/_CampaignStickyBar.cshtml"
-             model="pageModel" />
+             model="sticky" />
+}
+else
+{
+    <vc:sticky-bar />
 }

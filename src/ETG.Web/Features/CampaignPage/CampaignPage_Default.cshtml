@@ -1,4 +1,4 @@
-﻿@using System.Linq
+@using System.Linq
 @using CMS.Websites
 @using ETG.Web.Features.CampaignPage
 @using Kentico.Content.Web.Mvc
@@ -32,14 +32,34 @@
 
 <vc:bread-crumb />
 
+<!-- og:image meta tag for social sharing -->
+<meta property="og:image" content="@(viewModel.PageHero.HeroImage?.LegacyMediaFileAsset?.Url.Imgixify(1200, 630) ?? "")" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<!-- Preconnect to imgix -->
+<link rel="preconnect" href="@ImgixExtensions.ImgixDomain" crossorigin />
+
 <section class="hero tahiti-hero"
          aria-label="@viewModel.BannerLabel">
 
     @if (viewModel.PageHero.HeroImage?.LegacyMediaFileAsset is not null)
     {
+        <link rel="preload" fetchpriority="high" as="image" href="@viewModel.PageHero.HeroImage.Imgixify(1920, 600)" media="(min-width: 768px)" />
+        <link rel="preload" fetchpriority="high" as="image" href="@viewModel.PageHero.HeroImage.Imgixify(768, 960)" media="(max-width: 767px)" />
         <picture>
-            <img src="@viewModel.PageHero.HeroImage.LegacyMediaFileAsset.Url"
+            <source media="(max-width: 767px)"
+                    srcset="@viewModel.PageHero.HeroImage.ImgixSrcset(768, 960, null)"
+                    width="768"
+                    height="960" />
+            <img src="@viewModel.PageHero.HeroImage.Imgixify(1920, 600)"
+                 srcset="@viewModel.PageHero.HeroImage.ImgixSrcset(1920, 600, new[] { 1 })"
                  alt="@viewModel.PageHero.HeroImageAltText"
+                 width="1920"
+                 height="600"
+                 loading="eager"
+                 fetchpriority="high"
+                 decoding="async"
                  class="hero-bg" />
         </picture>
     }

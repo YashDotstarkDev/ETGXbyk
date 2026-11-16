@@ -20,7 +20,7 @@ using MediaFile = ETG.Core.Content.MediaFile;
     contentTypeName: TravelTypeLanding.CONTENT_TYPE_NAME,
     controllerType: typeof(
         ETG.Web.Features.TravelType.TravelTypeLandingPageTemplateController),
-   
+ 
 
     WebsiteChannelNames = new[] { "ETG" }
 
@@ -115,7 +115,13 @@ public class TravelTypeLandingPageTemplateController(
             HeroIcon = result.Page.TravelTypeHeroIcon,
             SvgIcon = result.Page.TravelTypeSVGIcon,
 
-            TravelTypeDetails = items
+            TravelTypeDetails = items,
+
+            ContactUs = new ContactUsViewModel
+            {
+                CTAUrl = $"{Request.PathBase}/enquire",
+                CTABackgroundImage = heroImage?.LegacyMediaFileAsset?.Url ?? string.Empty
+            }
         };
 
         if (result.Page is IMetaDataSchema metaFields)
@@ -144,4 +150,6 @@ public class TravelTypeLandingPageViewModel
 
     public IReadOnlyList<TravelTypeDetailSummaryModel> TravelTypeDetails { get; init; }
     = [];
+
+    public ContactUsViewModel? ContactUs { get; init; }
 }

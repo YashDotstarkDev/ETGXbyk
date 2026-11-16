@@ -77,7 +77,10 @@
             <div class="col-md-6 @imageOrder mb-4 mb-md-0">
                 @if (!string.IsNullOrWhiteSpace(detail.HeroImageUrl))
                 {
-                    <img src="@detail.HeroImageUrl"
+                    <img src="@detail.HeroImageUrl.Imgixify(640, 400)"
+                         srcset="@detail.HeroImageUrl.ImgixSrcset(640, 400, null)"
+                         width="640"
+                         height="400"
                          alt="@detail.HeroImageAltText"
                          class="dest-zigzag-img img-fluid"
                          loading="lazy" />

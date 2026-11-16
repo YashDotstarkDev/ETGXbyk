@@ -1,0 +1,48 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.CompetitionCountdown
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Competition Countdown Section START HERE ===== -->
+<tr>
+
+    <td align="center" valign="top">
+        <table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width:800;" class="em_wrapper">
+            <tbody>
+
+                <tr>
+                    <td align="center" valign="top" class="em_aside24">
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                            @if (!string.IsNullOrWhiteSpace(Model.Heading))
+                            {
+                                <tr>
+                                    <td align="center" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 30px; line-height: 35px; font-weight: 800; color: #333333; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 20px;">@Model.Heading</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td align="center" valign="top">
+                                    <img src="@Model.TimerUrl"
+                                         style="max-width:800px;"
+                                         width="@(string.IsNullOrWhiteSpace(Model.Width) ? "380" : Model.Width)" />
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td height="40" style="height: 40px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </td>
+
+</tr>
+
+
+
+
+<!-- ===== // Competition Countdown Section END HERE ===== -->

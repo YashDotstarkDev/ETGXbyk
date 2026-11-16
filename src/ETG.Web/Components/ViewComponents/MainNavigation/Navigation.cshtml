@@ -1,4 +1,4 @@
-﻿@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationViewModel
+@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationViewModel
 
 @{
     void RenderMobileItem(ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel item)
@@ -82,7 +82,7 @@
         <a href="/" class="etg-logo">
     @if (!string.IsNullOrWhiteSpace(Model.Layout?.BrandLogoSvg))
     {
-        @Html.Raw(Model.Layout.BrandLogoSvg)
+        @Html.Raw(Model.Layout?.BrandLogoSvg)
     }
     @* else
     {
@@ -101,17 +101,17 @@
 
         <div class="etg-nav__right">
             <div class="mob-icons d-md-none">
-                <a href="tel:@(Model.Layout?.ContactNumber)" class="mob-btn"><img src="~/images/PhoneIcon.svg" alt="Phone"></a>
-                <a href="@(Model.Layout.SearchPageUrl)" class="mob-btn"><img src="~/images/SearchIcon.svg" alt="search"></a>
+                <a href="tel:@(Model.Layout?.ContactNumber)" class="mob-btn"><img loading="lazy" src="~/images/PhoneIcon.svg" alt="Phone"></a>
+                <a href="@(Model.Layout?.SearchPageUrl ?? "/search")" class="mob-btn"><img loading="lazy" src="~/images/SearchIcon.svg" alt="search"></a>
             </div>
             <a href="tel:@(Model.Layout?.ContactNumber )" class="phone-block d-none d-lg-block">  
                @* ?? "0290943322" *@
     <i class="bi bi-telephone" style="margin-right: 7px;"></i>@(Model.Layout?.ContactNumber )
 </a>
-            <a href="@(Model.Layout.ContactPageUrl)" class="btn-enquire d-none d-md-block">@(Model.Layout?.NavCtaText)</a>
+            <a href="@(Model.Layout?.ContactPageUrl ?? "/enquire")" class="btn-enquire d-none d-md-block">@(Model.Layout?.NavCtaText ?? "Enquire Now")</a>
             @* ?? "Enquire Now" *@
             <button class="btn d-md-none p-0" data-bs-toggle="offcanvas" data-bs-target="#mMenu">
-                <img src="~/images/Hamburger.svg" alt="menu">
+                <img loading="lazy" src="~/images/Hamburger.svg" alt="menu">
             </button>
         </div>
 
@@ -124,7 +124,7 @@
     </div>
     <div class="offcanvas-body p-0">
         <div class="p-3 px-5 mob-cta">
-            <a href="@(Model.Layout.ContactPageUrl)" class="btn-enquire w-100 d-block text-center py-3">@(Model.Layout?.NavCtaText)</a>
+            <a href="@(Model.Layout?.ContactPageUrl ?? "/enquire")" class="btn-enquire w-100 d-block text-center py-3">@(Model.Layout?.NavCtaText ?? "Enquire Now")</a>
         </div>
 
         @foreach (var item in Model.RootItems)

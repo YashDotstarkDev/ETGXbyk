@@ -1,4 +1,12 @@
-﻿@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel
+@model ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel
+
+@functions {
+    private static string CleanSvg(string? svg) =>
+        string.IsNullOrWhiteSpace(svg) ? string.Empty :
+        System.Text.RegularExpressions.Regex.Replace(
+            System.Text.RegularExpressions.Regex.Replace(svg, @"<!--[\s\S]*?-->", ""),
+            @">\s+<", "><").Trim();
+}
 
 @{
     var hasColumns = Model.Children.Any(c => c.HasChildren);
@@ -36,7 +44,7 @@ else
            <a href="@item.LinkTo" class="exp-item" target="@item.Target">
     @if (!string.IsNullOrWhiteSpace(item.SvgIcon))
     {
-        <span class="exp-svg-icon">@Html.Raw(item.SvgIcon)</span>
+        <span class="exp-svg-icon">@Html.Raw(CleanSvg(item.SvgIcon))</span>
     }
     else if (!string.IsNullOrWhiteSpace(item.IconClass))
     {

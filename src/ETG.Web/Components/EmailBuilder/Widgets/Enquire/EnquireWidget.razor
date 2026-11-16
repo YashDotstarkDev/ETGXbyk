@@ -1,0 +1,61 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.Enquire
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Enquire Section START HERE ===== -->
+<!-- == 2column image with text Section == -->
+<table bgcolor="#ededed" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ededed;">
+  <tr>
+    <td align="center" valign="top"><table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+        <tr>
+          <td class="em_pad" align="center" valign="top" style="padding:45px 0px 34px;"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="em_defaultlink em_text1" align="left" valign="top" style="font-size:20px; line-height:28px;  font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; font-weight:600; padding-bottom:13px; text-transform:uppercase;">@Model.heading</td>
+              </tr>
+              <tr>
+                <td  align="center" valign="top" ><table align="center" class="em_wrapper" width="570" border="0" cellspacing="0" cellpadding="0" style="width:570px;">
+                    <tr>
+                      <td align="left" valign="top"><table align="left" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td align="center" valign="top"><img class="em_full_img" src="@Model.image" alt="" border="0" width="154" height="192" style="max-width:154px; display:block; font-size:16px; line-height:20px; color:#000000; font-weight:bold; font-family:Arial,sans-serif;"/></td>
+                          </tr>
+                        </table>
+                        
+                        <!--[if gte mso 9]>
+            </td>
+            <td valign="top">
+            <![endif]-->
+                        
+                        <table align="right" width="391" class="em_wrapper" border="0" cellspacing="0" cellpadding="0" style="width:391px;">
+                          <tr>
+                            <td align="center" valign="top" class="em_ptop"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td class="em_defaultlink em_pbottom" align="left" valign="top" style="font-size:14px; line-height:25px;  font-family: Arial, sans-serif; color:#333333; padding-bottom:25px;">@Model.copy</td>
+                                </tr>
+                                <tr>
+                                  <td  align="left" valign="top"><table align="left" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                      <tr>
+                                        <td align="center" valign="top"><table align="center"  border="0" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                              <td align="center" valign="middle" height="40" style="height:40px; font-size:14px; color:#CA568E; font-family:Arial, sans-serif; text-transform:uppercase; padding:0px 40px; font-weight:600; letter-spacing: 0.5px; border-radius:30px; border:2px solid #ca568e; display:block; "><a href="@Model.ctaUrl" target="_blank" style="text-decoration:none; color:#CA568E; display:block; line-height:40px;">Enquire</a></td>
+                                            </tr>
+                                          </table></td>
+                                      </tr>
+                                    </table></td>
+                                </tr>
+                              </table></td>
+                          </tr>
+                        </table></td>
+                    </tr>
+                  </table></td>
+              </tr>
+            </table></td>
+        </tr>
+      </table></td>
+  </tr>
+</table>
+<!-- == //2column image with text Section == --> 
+<!-- ===== // Enquire Section END HERE ===== -->

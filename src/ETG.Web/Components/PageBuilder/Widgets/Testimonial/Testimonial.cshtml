@@ -1,12 +1,15 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.Testimonial
+@using ETG.Web.Components.PageBuilder.Widgets.Testimonial
 @model TestimonialWidgetViewModel
 
 <section class="careers-culture-section position-relative overflow-hidden" aria-label="Company Culture">
     @if (!string.IsNullOrEmpty(Model.Image?.LegacyMediaFileAsset?.Url))
     {
         <img loading="lazy"
-             src="@Model.Image.LegacyMediaFileAsset.Url"
-             data-src="@Model.Image.LegacyMediaFileAsset.Url"
+             src="@Model.Image.Imgixify(1296, 420)"
+             srcset="@Model.Image.ImgixSrcset(1296, 420, null)"
+             sizes="100vw"
+             width="1296"
+             height="420"
              alt="@(string.IsNullOrEmpty(Model.Heading) ? (Model.Image.LegacyMediaFileTitle ?? "Culture background") : Model.Heading)"
              class="cta-bg bg lazyload position-absolute w-100 h-100 top-0 start-0 object-fit-cover"
              style="z-index: 0;" />

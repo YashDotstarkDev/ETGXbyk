@@ -1,0 +1,39 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.IntroWhite
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Intro White Section START HERE ===== -->
+
+<table bgcolor="#ffffff" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ffffff;">
+  <tr>
+    <td align="center" valign="top"><table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+        @if (!string.IsNullOrWhiteSpace(Model.heading) || !string.IsNullOrWhiteSpace(Model.copy))
+        {
+        <tr>
+          <td class="em_pad" align="center" valign="top" style="padding:42px 0px 0px;">
+            <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+              @if (!string.IsNullOrWhiteSpace(Model.heading))
+              {
+                <tr>
+                  <td class="em_defaultlink em_text1" align="left" valign="top" style="font-size:20px; line-height:28px;  font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; font-weight:600; padding-bottom:7px; text-transform:uppercase;">@Model.heading</td>
+                </tr>
+              }
+              @if (!string.IsNullOrWhiteSpace(Model.copy))
+              {
+                <tr>
+                  <td class="em_defaultlink em_pbottom" align="left" valign="top" style="font-size:14px; line-height:25px;  font-family: Arial, sans-serif; color:#333333; padding-bottom:23px;">@Model.copy</td>
+                </tr>
+              }
+            </table>
+          </td>
+        </tr>
+        }
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- ===== // Intro White Section END HERE ===== -->

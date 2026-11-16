@@ -48,7 +48,7 @@
                 <div class="card h-100 shadow-sm">
                      @if (Model.ShowImage && card.Image?.LegacyMediaFileAsset != null)
                     {
-                        <img src="@card.Image.LegacyMediaFileAsset.Url"
+                        <img src="@card.Image.Imgixify(400, 250)"
                              alt="@(string.IsNullOrWhiteSpace(card.Image.LegacyMediaFileTitle) ? card.Title : card.Image.LegacyMediaFileTitle)"
                              class="card-img-top object-fit-cover"
                              style="max-height: 220px;"

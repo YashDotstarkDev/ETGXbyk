@@ -1,4 +1,4 @@
-﻿@using ETG.Core.Models.Tour
+@using ETG.Core.Models.Tour
 @using ETG.Web.Components.PageBuilder.Widgets.Products
 
 @model TourListingViewModel
@@ -47,7 +47,12 @@
 
                             @if (!string.IsNullOrWhiteSpace(tour.HeroImageUrl))
                             {
-                                <img loading="lazy" src="@tour.HeroImageUrl" alt="@tour.HeroImageAlt">
+                                <img loading="lazy" 
+                                     src="@tour.HeroImageUrl.Imgixify(400, 300)"
+                                     srcset="@tour.HeroImageUrl.ImgixSrcset(400, 300, null)"
+                                     width="400"
+                                     height="300"
+                                     alt="@tour.Name" />
                             }
 
                             @if (!string.IsNullOrWhiteSpace(tour.Badge))
@@ -66,18 +71,32 @@
                             }
 
                             <!-- Price Block -->
-                            <div class="tahiti-v2-price-block mt-auto">
+                            <div class="tahiti-v2-price-block mt-auto sale-style-1">
                                 @if (!string.IsNullOrWhiteSpace(tour.DaysFromLabel) || !string.IsNullOrWhiteSpace(tour.OriginalPrice))
                                 {
-                                    <div class="original-price text-uppercase">
-
+                                    <div class="original-price-wrap">
+                                    <div class="original-price text-uppercase">                                        
                                         @tour.DaysFromLabel
-
+                                            @if (!string.IsNullOrWhiteSpace(tour.CurrentPrice))
+                                            {
+                                              <span>FROM </span>                                                
+                                            }
                                         @if (!string.IsNullOrWhiteSpace(tour.OriginalPrice))
                                         {
-                                            <del>@tour.OriginalPrice</del>
-                                        }
+                                         <del>@tour.OriginalPrice</del>
+                                        }                                       
+                                    </div>
+                                        @if (decimal.TryParse(tour.OriginalPrice, out var originalPrice) && decimal.TryParse(tour.CurrentPrice, out var currentPrice))
+                                        {
+                                            var save = originalPrice - currentPrice;
 
+                                            if (save > 0)
+                                            {
+                                                <span class="sale-pill-1">
+                                                    SAVE: @tour.CurrencySymbol @save.ToString("F2")
+                                                </span>
+                                            }
+                                        }
                                     </div>
                                 }
 
@@ -85,7 +104,7 @@
                                 {
                                     <div class="current-price text-pink">
 
-                                        @tour.CurrentPrice
+                                        @tour.CurrencySymbol @tour.CurrentPrice
                                         <span style="font-size: 0.55em; margin-left: 2px; font-weight: 700;">
                                             @tour.Currency
                                         </span>

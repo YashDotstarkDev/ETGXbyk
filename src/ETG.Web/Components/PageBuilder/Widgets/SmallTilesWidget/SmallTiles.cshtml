@@ -1,4 +1,4 @@
-﻿@using ETG.Web.Components.PageBuilder.Widgets.SmallTiles
+@using ETG.Web.Components.PageBuilder.Widgets.SmallTiles
 @model SmallTilesWidgetViewModel
 
 @using System.Globalization
@@ -7,6 +7,19 @@
         string.IsNullOrWhiteSpace(text)
             ? string.Empty
             : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
+
+    (int w, int h) GetDimensions(string? dimensions, int defaultW, int defaultH)
+    {
+        if (string.IsNullOrWhiteSpace(dimensions))
+        {
+            return (defaultW, defaultH);
+        }
+
+        var parts = dimensions.Split(',', StringSplitOptions.TrimEntries);
+        var w = parts.Length > 0 && int.TryParse(parts[0], out var parsedW) && parsedW > 0 ? parsedW : defaultW;
+        var h = parts.Length > 1 && int.TryParse(parts[1], out var parsedH) && parsedH > 0 ? parsedH : defaultH;
+        return (w, h);
+    }
 }
 @{
     var tiles = Model.Tiles.Take(6).ToList();   // max 6
@@ -81,9 +94,12 @@
             <div class="row g-3">
                 @if (count == 6)
                 {
+                    var (w0, h0) = GetDimensions(tiles[0].Dimensions, 278, 433);
+                    var (w5, h5) = GetDimensions(tiles[5].Dimensions, 278, 433);
+
                     <div class="col-md-3">
                         <a href="@(string.IsNullOrWhiteSpace(tiles[0].CtaUrl) ? "#" : tiles[0].CtaUrl)" class="dest-tile dest-tall">
-                            <img loading="lazy" src="@tiles[0].ImageUrl" alt="@tiles[0].Caption" />
+                            <img loading="lazy" src="@tiles[0].ImageUrl.Imgixify(w0, h0)" srcset="@tiles[0].ImageUrl.ImgixSrcset(w0, h0, null)" sizes="(min-width:768px) 25vw, 100vw" width="@w0" height="@h0" alt="@tiles[0].Caption" style="aspect-ratio: 278 / 433;" />
                             <span class="dest-label">@Cap(tiles[0].Caption)</span>
                         </a>
                     </div>
@@ -92,9 +108,10 @@
                         <div class="row g-3">
                             @foreach (var tile in tiles.Skip(1).Take(4))
                             {
+                                var (w, h) = GetDimensions(tile.Dimensions, 278, 248);
                                 <div class="col-6">
                                     <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="dest-tile">
-                                        <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                        <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:768px) 25vw, 50vw" width="@w" height="@h" alt="@tile.Caption" />
                                         <span class="dest-label">@Cap(tile.Caption)</span>
                                     </a>
                                 </div>
@@ -104,7 +121,7 @@
 
                     <div class="col-md-3">
                         <a href="@(string.IsNullOrWhiteSpace(tiles[5].CtaUrl) ? "#" : tiles[5].CtaUrl)" class="dest-tile dest-tall">
-                            <img loading="lazy" src="@tiles[5].ImageUrl" alt="@tiles[5].Caption" />
+                            <img loading="lazy" src="@tiles[5].ImageUrl.Imgixify(w5, h5)" srcset="@tiles[5].ImageUrl.ImgixSrcset(w5, h5, null)" sizes="(min-width:768px) 25vw, 100vw" width="@w5" height="@h5" alt="@tiles[5].Caption" />
                             <span class="dest-label">@Cap(tiles[5].Caption)</span>
                         </a>
                     </div>
@@ -114,9 +131,10 @@
                     @for (int i = 0; i < count; i++)
                     {
                         var tile = tiles[i];
+                        var (w, h) = GetDimensions(tile.Dimensions, 278, 248);
                         <div class="@GetColClass(i, count)">
                             <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="dest-tile">
-                                <img loading="lazy" src="@tile.ImageUrl" alt="@tile.Caption" />
+                                <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" width="@w" height="@h" alt="@tile.Caption" />
                                 <span class="dest-label">@Cap(tile.Caption)</span>
                             </a>
                         </div>
@@ -164,10 +182,11 @@ else
                 {
                     var tile = tilesToRender[i];
                     var isExtra = i >= InitialCount;
+                    var (w, h) = GetDimensions(tile.Dimensions, 131, 164);
 
                     <div class="region-col@(isExtra ? " region-extra d-none" : "")">
                         <a href="@(string.IsNullOrWhiteSpace(tile.CtaUrl) ? "#" : tile.CtaUrl)" class="region-app-tile">
-                            <img loading="lazy" src="@tile.ImageUrl" alt="@Cap(tile.Caption)" />
+                            <img loading="lazy" src="@tile.ImageUrl.Imgixify(w, h)" srcset="@tile.ImageUrl.ImgixSrcset(w, h, null)" sizes="(min-width:768px) 25vw, 50vw" width="@w" height="@h" alt="@Cap(tile.Caption)" />
                             <span class="region-app-label">@tile.Caption</span>
                         </a>
                     </div>

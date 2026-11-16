@@ -94,7 +94,7 @@ namespace ETG.Web.Tests.Components.ViewComponents
         }
 
         [TestCaseSource(typeof(InvalidSubscriptionCases))]
-        public void Save_RejectsInvalidServerSideSubmission(
+        public async Task SaveAsync_RejectsInvalidServerSideSubmission(
             string? email,
             string? agent)
         {
@@ -102,7 +102,10 @@ namespace ETG.Web.Tests.Components.ViewComponents
             // no browser or client-side validation is involved.
             var model = CreateModel(email, agent);
 
-            var result = GetSubscribeNowQuery.Save(model);
+            var result = await GetSubscribeNowQuery.SaveAsync(
+                model,
+                formEmailService: null!,
+                logger: null!);
 
             Assert.That(result, Is.False);
         }
@@ -110,8 +113,11 @@ namespace ETG.Web.Tests.Components.ViewComponents
         [Test]
         public void Save_NullModel_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(
-                () => GetSubscribeNowQuery.Save(null!));
+            Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await GetSubscribeNowQuery.SaveAsync(
+                    null!,
+                    formEmailService: null!,
+                    logger: null!));
         }
 
         [TestCaseSource(typeof(SubscriptionRequiredFieldCases))]

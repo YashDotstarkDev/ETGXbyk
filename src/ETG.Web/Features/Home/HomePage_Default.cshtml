@@ -54,6 +54,15 @@
     }
 }
 
+@section Styles
+{
+    @if (Model.HeroImage?.LegacyMediaFileAsset is not null)
+    {
+        <link rel="preload" fetchpriority="high" as="image" href="@Model.HeroImage.Imgixify(1920, 600)" media="(min-width: 768px)" />
+        <link rel="preload" fetchpriority="high" as="image" href="@Model.HeroImage.Imgixify(768, 960)" media="(max-width: 767px)" />
+    }
+}
+
 <style>
     .proof-points-no-line .section-title::before,
     .proof-points-no-line .section-title::after,
@@ -73,9 +82,19 @@
   @if (Model.HeroImage?.LegacyMediaFileAsset is not null)
 {
     <picture>
-        <img src="@Url.Content(Model.HeroImage.LegacyMediaFileAsset.Url)"
-             alt=""
-             class="hero-bg" />
+        <source media="(max-width: 767px)"
+                srcset="@Model.HeroImage.ImgixSrcset(768, 960, null)"
+                width="768"
+                height="960" />
+        <img src="@Model.HeroImage.Imgixify(1920, 600)"
+             alt="@(string.IsNullOrWhiteSpace(Model.HeroCaption) ? "Entire Travel Group" : Model.HeroCaption)"
+             srcset="@Model.HeroImage.ImgixSrcset(1920, 600, new[] { 1 })"
+             width="1920"
+             height="600"
+             class="hero-bg"
+             fetchpriority="high"
+             loading="eager"
+             decoding="async" />
     </picture>
 }
 
@@ -252,14 +271,11 @@
     </section>
 }
 
+<editable-area area-identifier="bottom2" />          
 
-    <editable-area area-identifier="bottom2" />          
-
-<!-- ============================================== -->
-<!-- ALGOLIA EXTERNAL SCRIPTS                      -->
-<!-- ============================================== -->
+<vc:sticky-bar />
 
 <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
 
-<script src="~/algolia/homepagescript.js"
+<script src="~/minified/js/homepagescript.min.js"
         asp-append-version="true"></script>

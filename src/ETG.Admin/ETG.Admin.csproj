@@ -36,21 +36,12 @@
 		</EmbeddedResource>
 	</ItemGroup>
 
-	<Target Name="RestoreAdminClientDependencies"
-			BeforeTargets="PrepareForBuild"
-			Inputs="$(MSBuildProjectDirectory)/Client/package.json;$(MSBuildProjectDirectory)/Client/package-lock.json"
-			Outputs="$(MSBuildProjectDirectory)/Client/node_modules/.package-lock.json"
-			Condition="'$(DesignTimeBuild)' != 'true'">
-		<Exec Command="npm ci"
-			  WorkingDirectory="$(MSBuildProjectDirectory)/Client" />
+	<Target Name="RestoreAdminClientDependencies" BeforeTargets="PrepareForBuild" Inputs="$(MSBuildProjectDirectory)/Client/package.json;$(MSBuildProjectDirectory)/Client/package-lock.json" Outputs="$(MSBuildProjectDirectory)/Client/node_modules/.package-lock.json" Condition="'$(DesignTimeBuild)' != 'true'">
+		<Exec Command="npm ci" WorkingDirectory="$(MSBuildProjectDirectory)/Client" />
 	</Target>
 
-	<Target Name="BuildAdminClient"
-			BeforeTargets="PrepareForBuild"
-			DependsOnTargets="RestoreAdminClientDependencies"
-			Condition="'$(DesignTimeBuild)' != 'true'">
-		<Exec Command="npm run build"
-			  WorkingDirectory="$(MSBuildProjectDirectory)/Client" />
+	<Target Name="BuildAdminClient" BeforeTargets="PrepareForBuild" DependsOnTargets="RestoreAdminClientDependencies" Condition="'$(DesignTimeBuild)' != 'true'">
+		<Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)/Client" />
 
 		<ItemGroup>
 			<AdminClientPath Remove="@(AdminClientPath)" />

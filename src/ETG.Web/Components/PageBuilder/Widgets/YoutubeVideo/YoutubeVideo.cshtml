@@ -1,4 +1,4 @@
-﻿@model ETG.Web.Components.PageBuilder.Widgets.YoutubeVideo.YoutubeVideoWidgetViewModel
+@model ETG.Web.Components.PageBuilder.Widgets.YoutubeVideo.YoutubeVideoWidgetViewModel
 
 @{
     var widgetId = $"youtube-video-{Guid.NewGuid():N}";
@@ -20,6 +20,7 @@
                 <iframe id="@iframeId"
                         src="https://www.youtube.com/embed/@youtubeId?rel=0"
                         title="@(string.IsNullOrWhiteSpace(Model.Caption) ? "YouTube video player" : Model.Caption)"
+                        loading="lazy"
                         style="border: 0;"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowfullscreen>

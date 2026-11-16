@@ -3,7 +3,11 @@
 @model ETG.Web.Components.ViewComponents.MainNavigation.NavigationItemViewModel
 
 @{
-    string href = string.IsNullOrWhiteSpace(Model.LinkTo) ? "#" : Model.LinkTo!;
+   string href = string.IsNullOrWhiteSpace(Model.LinkTo) 
+    ? "#" 
+    : string.IsNullOrWhiteSpace(Model.QueryParameter) 
+        ? Model.LinkTo 
+        : $"{Model.LinkTo.TrimEnd('/')}{Model.QueryParameter}";
 }
 
 @if (Model.HasChildren)

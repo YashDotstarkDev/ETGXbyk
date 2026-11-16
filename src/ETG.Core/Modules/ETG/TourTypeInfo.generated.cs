@@ -62,20 +62,18 @@ public partial class TourTypeInfo
     }
 
     [DatabaseField]
-    public virtual string TourTypeWhiteIconImage
+    public virtual IEnumerable<IContentItemFieldsSource> TourTypeWhiteIconImage
     {
-        get => ValidationHelper.GetString(
-            GetValue(nameof(TourTypeWhiteIconImage)), string.Empty);
-        set => SetValue(nameof(TourTypeWhiteIconImage), value);
-    }
+        get;
+        set;
+    } = [];
 
     [DatabaseField]
-    public virtual string TourTypeBlackIconImage
+    public virtual IEnumerable<IContentItemFieldsSource> TourTypeBlackIconImage
     {
-        get => ValidationHelper.GetString(
-            GetValue(nameof(TourTypeBlackIconImage)), string.Empty);
-        set => SetValue(nameof(TourTypeBlackIconImage), value);
-    }
+        get;
+        set;
+    } = [];
 
     [DatabaseField]
     public virtual string TourTypeDescription

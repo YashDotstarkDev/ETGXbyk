@@ -1,0 +1,82 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.TextBlockImages
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+@{
+    var hasHeading = !string.IsNullOrWhiteSpace(Model.Heading);
+    var hasCopy = !string.IsNullOrWhiteSpace(Model.Copy);
+    var hasImages12 = !string.IsNullOrWhiteSpace(Model.Image1Url) || !string.IsNullOrWhiteSpace(Model.Image2Url);
+    var hasImage3 = !string.IsNullOrWhiteSpace(Model.Image3Url);
+    var hasAnyContent = hasHeading || hasCopy || hasImages12 || hasImage3;
+}
+
+@if (hasAnyContent)
+{
+    <!-- == Text Block Heading Section == -->
+    <table bgcolor="#ffffff" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ffffff;">
+        <tr>
+            <td align="center" valign="top">
+                <table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+                    <tr>
+                        <td class="em_pad" align="center" valign="top" style="padding:42px 0px 54px;">
+                            <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                @if (hasHeading)
+                                {
+                                    <tr>
+                                        <td class="em_defaultlink em_text1" align="left" valign="top" style="font-size:20px; line-height:28px; font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; font-weight:600; padding-bottom:7px; text-transform:uppercase;">
+                                            @Model.Heading
+                                        </td>
+                                    </tr>
+                                }
+                                @if (hasCopy)
+                                {
+                                    <tr>
+                                        <td class="em_defaultlink em_pbottom" align="left" valign="top" style="font-size:14px; line-height:25px; font-family: Arial, sans-serif; color:#333333; padding-bottom:23px;">
+                                            @((MarkupString)Model.Copy)
+                                        </td>
+                                    </tr>
+                                }
+                                @if (hasImages12)
+                                {
+                                    <tr>
+                                        <td class="em_pbottom" align="left" valign="top" style="padding-bottom:21px;">
+                                            <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                <tr>
+                                                    <td align="left" valign="top">
+
+                                                        @if (!string.IsNullOrWhiteSpace(Model.Image1Url))
+                                                        {
+                                                            <img class="em_full_img1" src="@Model.Image1Url" alt="" border="0" width="290" style="max-width:290px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                                        }
+                                                    </td>
+                                                    <td align="center" valign="top" width="20" style="width:20px;" class="em_side15">&nbsp;</td>
+                                                    <td align="right" valign="top">
+                                                        @if (!string.IsNullOrWhiteSpace(Model.Image2Url))
+                                                        {
+                                                            <img class="em_full_img1" src="@Model.Image2Url" alt="" border="0" width="290" style="max-width:290px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (hasImage3)
+                                {
+                                    <tr>
+                                        <td align="center" valign="top">
+                                            <img class="em_full_img" src="@Model.Image3Url" alt="" border="0" width="600" style="max-width:600px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                        </td>
+                                    </tr>
+                                }
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <!-- == //Text Block Heading Section == -->
+}

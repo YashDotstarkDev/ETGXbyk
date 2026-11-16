@@ -12,6 +12,9 @@ public class NavigationItemViewModel
     public string? SvgIcon { get; set; }
     public string? LinkTo { get; set; }
     public string Target { get; set; } = "_self";
+
+    public string QueryParameter { get; set; } = string.Empty;
+
     public bool HideOnMobile { get; set; }
     public bool HideOnDesktop { get; set; }
     public List<NavigationItemViewModel> Children { get; set; } = new();

@@ -1,4 +1,4 @@
-﻿@using System.Linq
+@using System.Linq
 @using System.Net
 @using System.Text.RegularExpressions
 
@@ -46,6 +46,9 @@
         }
 
         var value = svg.Trim();
+        value = Regex.Replace(value, @"<!--[\s\S]*?-->", "");
+        value = Regex.Replace(value, @"<!DOCTYPE[^>]*>", "", RegexOptions.IgnoreCase);
+        value = Regex.Replace(value, @">\s+<", "><");
 
         if (value.StartsWith("<![CDATA[", System.StringComparison.Ordinal)
             && value.EndsWith("]]>", System.StringComparison.Ordinal))
@@ -163,7 +166,7 @@
 .pom-section .tv2-pom-item > .tv2-pom-top-box {
     box-sizing: border-box;
     height: 150px !important;
-    min-height: 150px !important;
+    min-height: 150px !important
     flex: 0 0 150px !important;
     margin: 0 !important;
 }
@@ -192,7 +195,7 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-end title-div">
                 <h2 id="pom-section-title" class="section-title">
-                    Peace Of Mind Booking Plan
+                    @Model.Heading
                 </h2>
 
                 <a href="@Model.CTAUrl" class="view-all-btn">@Model.CTALabel</a>
@@ -245,7 +248,7 @@
 @if (Model.DisplayType == "Brand Highlights" && brandItems.Any())
 {
     var logo = Model.BrandHighlightLogo;
-    var logoUrl = logo?.LegacyMediaFileAsset?.Url;
+    var logoUrl = logo.Imgixify(width: 260, height: 0, fit: "clip", auto: "format,compress");
 
     <section id="@Model.SectionId"
              class="tahiti-v2-brand-bar brand-bar--inline"
@@ -254,9 +257,12 @@
             <div class="tahiti-v2-brand-logo-area">
                 @if (!string.IsNullOrWhiteSpace(logoUrl))
                 {
-                    <img src="@Url.Content(logoUrl)"
+                    <img loading="lazy" 
+                         src="@logoUrl"
+                         srcset="@($"{logo.Imgixify(260, 0, fit: "clip")} 1x, {logo.Imgixify(260, 100, fit: "clip")} 2x")"
+                         width="130"
                          alt="@(logo?.LegacyMediaFileTitle ?? "Tahiti Travel Logo")"
-                         class="tahiti-v2-brand-icon">
+                         class="tahiti-v2-brand-icon" />
                 }
             </div>
 

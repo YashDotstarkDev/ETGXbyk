@@ -1,65 +1,122 @@
+@using CMS.Helpers
 @using CMS.Helpers.Internal
 @using Kentico.Forms.Web.Mvc
 @using ETG.Web.Components.FormBuilder.ReCaptcha
+@inject ETG.Web.Infrastructure.CaptchaValidator CaptchaValidator
+@inject Microsoft.Extensions.Options.IOptions<ETG.Web.Infrastructure.ReCaptchaSettings> CaptchaOptions
 
-
-@model ReCaptchaFormComponent
+@model object?
 
 @{
-    var htmlAttributes = ViewData.Kentico().GetEditorHtmlAttributes();
-    var safeComponentId = Html.IdFor(x => x.Value).ToString().Replace("-", "_");
-    var renderFunctionName = "renderRecaptcha" + safeComponentId;
-    var recaptchaDivId = "google-recaptcha-" + Html.IdFor(x => x.Value);
-    bool isFormBuilder = VirtualContext.ItemIsSet(VirtualContext.PARAM_FORM_BUILDER_URL);
+    var formComponent = Model as ReCaptchaFormComponent;
+    bool isFormComponent = formComponent != null;
+    bool isFormBuilder = isFormComponent && VirtualContext.ItemIsSet(VirtualContext.PARAM_FORM_BUILDER_URL);
+
+    // 1. Resolve Site Key from Channel Settings first, fallback to appsettings
+    var siteKey = CaptchaValidator.GetSiteKey();
+    if (string.IsNullOrWhiteSpace(siteKey))
+    {
+        siteKey = CaptchaOptions.Value.SiteKey;
+    }
+
+    bool areKeysConfigured = !string.IsNullOrWhiteSpace(siteKey) && (isFormComponent ? formComponent.AreKeysConfigured : CaptchaValidator.AreKeysConfigured());
+
+    // 2. Resolve element IDs and action names
+    string safeComponentId = isFormComponent
+        ? (formComponent.Name ?? "captcha").Replace("-", "_")
+        : (ViewData["ComponentId"]?.ToString() ?? "");
+
+    string tokenHiddenId = isFormComponent
+        ? "recaptchaToken" + safeComponentId
+        : (ViewData["TokenHiddenId"]?.ToString() ?? "recaptchaToken");
+
+    string actionHiddenId = isFormComponent
+        ? "recaptchaAction" + safeComponentId
+        : (ViewData["ActionHiddenId"]?.ToString() ?? "recaptchaAction");
+
+    string recaptchaDivId = isFormComponent
+        ? "google-recaptcha-" + (formComponent.Name ?? "captcha")
+        : (ViewData["DivId"]?.ToString() ?? "google-recaptcha");
+
+    string actionName;
+    if (isFormComponent)
+    {
+        var formInfo = formComponent.GetBizFormComponentContext()?.FormInfo;
+        actionName = formInfo != null
+            ? formInfo.FormName.Replace("-", "_") + "_submit"
+            : "form_builder_submit";
+    }
+    else
+    {
+        actionName = ViewData["ActionName"]?.ToString()
+                  ?? ViewData["FormAction"]?.ToString()
+                  ?? ViewBag.FormAction?.ToString()
+                  ?? (Model is string strAction && !string.IsNullOrWhiteSpace(strAction) ? strAction : "submit");
+    }
+
+    var parentFormVarName = "recaptchaParentForm" + (string.IsNullOrEmpty(safeComponentId) ? "Default" : safeComponentId);
 }
 
 @if (isFormBuilder)
 {
     <div>
-        @Html.Kentico().InfoMessage("reCAPTCHA will be displayed correctly when the form is placed on a page within a website channel. The solution must have reCAPTCHA settings configured in the appsettings.")
+        @Html.Kentico().InfoMessage("reCAPTCHA will be displayed correctly when the form is placed on a page within a website channel. Ensure Channel settings or appsettings have reCAPTCHA configured.")
     </div>
 }
 else
 {
-    @if (Model.AreKeysConfigured)
+    @if (areKeysConfigured)
     {
-        var actionName = Model.GetBizFormComponentContext().FormInfo.FormName.Replace("-", "_") + "_submit";
-        var parentFormVarName = "recaptchaParentForm" + safeComponentId;
-        var tokenHiddenId = "recaptchaToken" + safeComponentId;
-        var actionHiddenId = "recaptchaAction" + safeComponentId;
 
-        <script type="module">
-            asyncReady(async () => {
-                const recaptcha = await import('@Url.Content("~/js/recaptcha.js")');
-
-                recaptcha.initCaptcha({
+        @if (isFormComponent)
+        {
+            <script type="module">
+                import { initCaptcha } from '@Url.Content("~/js/recaptcha.js")';
+                initCaptcha({
                     fieldElemID: '@tokenHiddenId',
                     fieldName: 'g-recaptcha-response',
                     actionName: '@actionName',
-                    onSubmit: function (event) {
-                        window.kentico.updatableFormHelper.submitForm(event);
+                    siteKey: '@siteKey',
+                    onSubmit: function (event, token) {
+                        window.kentico?.updatableFormHelper?.submitForm(event);
                     }
                 });
-            });
 
-            @if (!isFormBuilder)
-            {
-                <text>
-                        const @parentFormVarName = document.getElementById('@recaptchaDivId').closest("form");
-                        const newAttr = @(parentFormVarName).getAttribute('onsubmit').replace('window.kentico.updatableFormHelper.submitForm(event);', 'function noop(e) { }');
-                    @(parentFormVarName).setAttribute('onsubmit', newAttr);
-                </text>
-            }
-        </script>
+                const @parentFormVarName = document.getElementById('@recaptchaDivId')?.closest("form");
+                if (@parentFormVarName) {
+                    const existingAttr = @(parentFormVarName).getAttribute('onsubmit');
+                    if (existingAttr && existingAttr.includes('window.kentico.updatableFormHelper.submitForm(event);')) {
+                        const newAttr = existingAttr.replace('window.kentico.updatableFormHelper.submitForm(event);', 'function noop(e) { }');
+                        @(parentFormVarName).setAttribute('onsubmit', newAttr);
+                    }
+                }
+            </script>
+        }
+        else
+        {
+            <!-- Preload Google reCAPTCHA library if not already loaded -->
+            <script>
+                if (window.grecaptcha == null) {
+                    const s = document.createElement("script");
+                    s.src = "https://www.google.com/recaptcha/api.js?render=@siteKey";
+                    s.async = true;
+                    s.defer = true;
+                    document.head.appendChild(s);
+                }
+            </script>
+        }
 
         <input id="@tokenHiddenId" type="hidden" name="g-recaptcha-response" value="" />
         <input id="@actionHiddenId" type="hidden" name="g-recaptcha-action" value="@actionName" />
-        <div id="@recaptchaDivId"></div>
+        <div id="@recaptchaDivId" class="recaptcha" data-site-key="@siteKey" data-action="@actionName"></div>
     }
     else
     {
-        <div class="ktc-form-builder-mvc-invalid-component">
-            <span>@ResHelper.GetString("recaptcha.error.invalidconfiguration")</span>
-        </div>
+        @if (isFormComponent)
+        {
+            <div class="ktc-form-builder-mvc-invalid-component">
+                <span>@ResHelper.GetString("recaptcha.error.invalidconfiguration")</span>
+            </div>
+        }
     }
 }

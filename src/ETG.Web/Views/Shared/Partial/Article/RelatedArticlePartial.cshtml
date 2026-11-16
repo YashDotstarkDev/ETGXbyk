@@ -1,4 +1,4 @@
-﻿@using System.Linq
+@using System.Linq
 @using ETG.Web.Features
 @model IEnumerable<ArticleViewModel>
 
@@ -7,7 +7,7 @@
     <div class="row g-4 justify-content-center">
         @foreach (var article in Model)
         {
-            var imageUrl = article.HeroImage?.LegacyMediaFileAsset?.Url;
+            var imageUrl = article.HeroImage.Imgixify(380, 214);
 
             var imageAlt = !string.IsNullOrWhiteSpace(article.HeroImageAltTag)
                 ? article.HeroImageAltTag
@@ -21,6 +21,10 @@
                     @if (!string.IsNullOrWhiteSpace(imageUrl))
                     {
                         <img src="@imageUrl"
+                             srcset="@article.HeroImage.ImgixSrcset(380, 214, null)"
+                             sizes="(min-width:992px) 33vw, (min-width:768px) 50vw, 100vw"
+                             width="380"
+                             height="214"
                              class="blog-list-img"
                              alt="@imageAlt"
                              loading="lazy" />

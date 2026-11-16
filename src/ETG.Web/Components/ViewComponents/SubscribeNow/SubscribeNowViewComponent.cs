@@ -1,10 +1,11 @@
-﻿using System;
+﻿using CMS.OnlineForms;
+using ETG.Core.Content.Forms;
+using ETG.Web.Services.Email;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using CMS.OnlineForms;
-using ETG.Core.Content.Forms;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ETG.Web.Components.ViewComponents.SubscribeNow;
 
@@ -47,7 +48,7 @@ public static class GetSubscribeNowQuery
         return new SubscribeNowViewModel();
     }
 
-    public static bool Save(SubscribeNowViewModel model)
+    public static async Task<bool> SaveAsync(SubscribeNowViewModel model, IFormEmailService formEmailService, ILogger logger)
     {
         if (model == null)
         {
@@ -120,7 +121,30 @@ public static class GetSubscribeNowQuery
             agent.FormUpdated = DateTime.Now;
 
             BizFormItemProvider.SetItem(agent);
+            if (agent.ItemID > 0)
+            {
+                var formData = new Dictionary<string, string?>
+                {
+                    ["EmailAddress"] = agent.EmailAddress,
+                    ["FirstName"] = agent.FirstName,
+                    ["LastName"] = agent.LastName
+                };
 
+                try
+                {
+                    await formEmailService.SendCustomerConfirmationAsync(
+                        FormEmailNames.CompetitionAgents,
+                        agent.EmailAddress,
+                        formData);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "CompetitionAgents confirmation email failed. ItemID: {ItemID}",
+                        agent.ItemID);
+                }
+            }
             return agent.ItemID > 0;
         }
 
@@ -164,6 +188,30 @@ public static class GetSubscribeNowQuery
         consumer.FormUpdated = DateTime.Now;
 
         BizFormItemProvider.SetItem(consumer);
+
+        if (consumer.ItemID > 0)
+        {
+            var formData = new Dictionary<string, string?>
+            {
+                ["EmailAddress"] = consumer.EmailAddress,
+                ["IsTravelAgent"] = consumer.IsTravelAgent.ToString()
+            };
+
+            try
+            {
+                await formEmailService.SendCustomerConfirmationAsync(
+                    FormEmailNames.Competition,
+                    consumer.EmailAddress,
+                    formData);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Competition confirmation email failed. ItemID: {ItemID}",
+                    consumer.ItemID);
+            }
+        }
 
         return consumer.ItemID > 0;
     }

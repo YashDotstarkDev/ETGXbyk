@@ -1,0 +1,255 @@
+@namespace ETG.Web.Components.EmailBuilder.Widgets.Inspiration
+@using Microsoft.AspNetCore.Components
+
+<!-- == Inspiration Section == -->
+<table bgcolor="#ededed" width="100%" border="0" cellspacing="0" cellpadding="0" class="em_full_wrap" style="table-layout:fixed; background-color:#ededed;">
+    <tr>
+        <td align="center" valign="top">
+            <table align="center" width="600" border="0" cellspacing="0" cellpadding="0" class="em_main_table" style="width:600px; table-layout:fixed;">
+                <tr>
+                    <td class="em_pad" align="center" valign="top" style="padding:46px 0px 62px;">
+                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                            @if (!string.IsNullOrWhiteSpace(Model.MainHeading))
+                            {
+                                <tr>
+                                    <td align="center" valign="top" style="font-size:24px; line-height:28px; font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; font-weight:600; padding-bottom:22px; text-transform:uppercase;">
+                                        @Model.MainHeading
+                                    </td>
+                                </tr>
+                            }
+                            @if (Model.HasLeftCard || Model.HasRightCard)
+                            {
+                                <tr>
+                                    <td class="em_pbottom" align="center" valign="top" style="padding-bottom:28px;">
+                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td align="left" valign="top">
+                                                    <!-- Left Card -->
+                                                    @if (Model.HasLeftCard)
+                                                    {
+                                                        <table align="left" class="em_wrapper" width="290" border="0" cellspacing="0" cellpadding="0" style="width:290px;">
+                                                            <tr>
+                                                                <td align="center" valign="top">
+                                                                    <table align="center" width="100%" bgcolor="#ffffff" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff;">
+                                                                        @if (!string.IsNullOrWhiteSpace(Model.LeftTitle))
+                                                                        {
+                                                                            <tr>
+                                                                                <td class="em_pad" align="left" valign="top" style="padding:16px 20px 16px; font-size:16px; line-height:23px; color:#333333; letter-spacing:0.5px; font-family:Arial,sans-serif; font-weight:600; text-transform:uppercase;">
+                                                                                    @Model.LeftTitle
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                        @if (!string.IsNullOrWhiteSpace(Model.LeftImageUrl))
+                                                                        {
+                                                                            <tr>
+                                                                                <td align="center" valign="top">
+                                                                                    <img class="em_full_img1" src="@Model.LeftImageUrl" alt="@Model.LeftTitle" border="0" width="290" style="max-width:290px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                        @if (!string.IsNullOrWhiteSpace(Model.LeftHeading) || !string.IsNullOrWhiteSpace(Model.LeftCopy) || !string.IsNullOrWhiteSpace(Model.LeftCtaCopy))
+                                                                        {
+                                                                            <tr>
+                                                                                <td class="em_pad" align="center" valign="top" style="padding:26px 25px 26px;">
+                                                                                    <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                                                        @if (!string.IsNullOrWhiteSpace(Model.LeftHeading))
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td align="left" valign="top" style="font-size:20px; line-height:28px; font-family: Arial, sans-serif; color:#CA568E; letter-spacing: 0.5px; padding-bottom:7px;">
+                                                                                                    @Model.LeftHeading
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                        @if (!string.IsNullOrWhiteSpace(Model.LeftCopy))
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td align="left" valign="top" style="font-size:14px; line-height:25px; font-family: Arial, sans-serif; color:#333333; padding-bottom:15px;">
+                                                                                                    @Model.LeftCopy
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                        @if (!string.IsNullOrWhiteSpace(Model.LeftCtaCopy))
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top">
+                                                                                                    <table align="center" border="0" cellspacing="0" cellpadding="0">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="middle" height="40" style="height:40px; font-size:14px; color:#CA568E; font-family:Arial, sans-serif; text-transform:uppercase; padding:0px 20px; font-weight:600; letter-spacing: 0.5px; border-radius:30px; border:2px solid #ca568e; display:block;">
+                                                                                                                <a href="@(string.IsNullOrWhiteSpace(Model.LeftCtaUrl) ? "#" : Model.LeftCtaUrl)" target="_blank" style="text-decoration:none; color:#CA568E; display:block; line-height:40px;">@Model.LeftCtaCopy</a>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                    </table>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    }
+
+                                                    @if (Model.HasLeftCard && Model.HasRightCard)
+                                                    {
+                                                        <!--[if gte mso 9]>
+                                                        </td>
+                                                        <td valign="top">
+                                                        <![endif]-->
+                                                    }
+
+                                                    <!-- Right Card -->
+                                                    @if (Model.HasRightCard)
+                                                    {
+                                                        <table align="right" class="em_wrapper" width="290" border="0" cellspacing="0" cellpadding="0" style="width:290px;">
+                                                            <tr>
+                                                                <td align="center" valign="top" class="em_ptop">
+                                                                    <table align="center" width="100%" bgcolor="#ffffff" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff;">
+                                                                        @if (!string.IsNullOrWhiteSpace(Model.RightTitle))
+                                                                        {
+                                                                            <tr>
+                                                                                <td class="em_pad" align="left" valign="top" style="padding:16px 20px 16px; font-size:16px; line-height:23px; color:#333333; letter-spacing:0.5px; font-family:Arial,sans-serif; font-weight:600; text-transform:uppercase;">
+                                                                                    @Model.RightTitle
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                        @if (!string.IsNullOrWhiteSpace(Model.RightImageUrl))
+                                                                        {
+                                                                            <tr>
+                                                                                <td align="center" valign="top">
+                                                                                    <img class="em_full_img1" src="@Model.RightImageUrl" alt="@Model.RightTitle" border="0" width="290" style="max-width:290px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                        @if (!string.IsNullOrWhiteSpace(Model.RightHeading) || !string.IsNullOrWhiteSpace(Model.RightCopy) || !string.IsNullOrWhiteSpace(Model.RightCtaCopy))
+                                                                        {
+                                                                            <tr>
+                                                                                <td class="em_pad" align="center" valign="top" style="padding:26px 25px 26px;">
+                                                                                    <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                                                        @if (!string.IsNullOrWhiteSpace(Model.RightHeading))
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td align="left" valign="top" style="font-size:20px; line-height:28px; font-family: Arial, sans-serif; color:#CA568E; letter-spacing: 0.5px; padding-bottom:7px;">
+                                                                                                    @Model.RightHeading
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                        @if (!string.IsNullOrWhiteSpace(Model.RightCopy))
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td class="em_pbottom" align="left" valign="top" style="font-size:14px; line-height:25px; font-family: Arial, sans-serif; color:#333333; padding-bottom:15px;">
+                                                                                                    @Model.RightCopy
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                        @if (!string.IsNullOrWhiteSpace(Model.RightCtaCopy))
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td align="center" valign="top">
+                                                                                                    <table align="center" border="0" cellspacing="0" cellpadding="0">
+                                                                                                        <tr>
+                                                                                                            <td align="center" valign="middle" height="40" style="height:40px; font-size:14px; color:#CA568E; font-family:Arial, sans-serif; text-transform:uppercase; padding:0px 20px; font-weight:600; letter-spacing: 0.5px; border-radius:30px; border:2px solid #ca568e; display:block;">
+                                                                                                                <a href="@(string.IsNullOrWhiteSpace(Model.RightCtaUrl) ? "#" : Model.RightCtaUrl)" target="_blank" style="text-decoration:none; color:#CA568E; display:block; line-height:40px;">@Model.RightCtaCopy</a>
+                                                                                                            </td>
+                                                                                                        </tr>
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                    </table>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+
+                            <!-- Bottom Card -->
+                            @if (Model.HasBottomCard)
+                            {
+                                <tr>
+                                    <td align="center" valign="top">
+                                        <table align="center" width="100%" bgcolor="#ffffff" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff;">
+                                            @if (!string.IsNullOrWhiteSpace(Model.BottomTitle))
+                                            {
+                                                <tr>
+                                                    <td class="em_pad" align="left" valign="top" style="padding:16px 20px 16px; font-size:16px; line-height:23px; color:#333333; letter-spacing:0.5px; font-family:Arial,sans-serif; font-weight:600; text-transform:uppercase;">
+                                                        @Model.BottomTitle
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.BottomImageUrl))
+                                            {
+                                                <tr>
+                                                    <td align="center" valign="top">
+                                                        <img class="em_full_img" src="@Model.BottomImageUrl" alt="@Model.BottomTitle" border="0" width="600" style="max-width:600px; display:block; font-size:16px; line-height:20px; font-weight:bold; color:#000000; font-family:Arial,sans-serif;" />
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.BottomLead) || !string.IsNullOrWhiteSpace(Model.BottomCopy) || !string.IsNullOrWhiteSpace(Model.BottomCtaCopy))
+                                            {
+                                                <tr>
+                                                    <td class="em_pad" align="center" valign="top" style="padding:24px 20px 30px 30px;">
+                                                        <table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            @if (!string.IsNullOrWhiteSpace(Model.BottomLead))
+                                                            {
+                                                                <tr>
+                                                                    <td class="em_p15" align="left" valign="top" style="font-size:20px; line-height:28px; font-family: Arial, sans-serif; color:#333333; letter-spacing: 0.5px; padding-bottom:5px;">
+                                                                        @Model.BottomLead
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                            @if (!string.IsNullOrWhiteSpace(Model.BottomCopy))
+                                                            {
+                                                                <tr>
+                                                                    <td align="left" valign="top" style="font-size:14px; line-height:25px; font-family: Arial, sans-serif; color:#333333; padding-bottom:15px;">
+                                                                        @Model.BottomCopy
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                            @if (!string.IsNullOrWhiteSpace(Model.BottomCtaCopy))
+                                                            {
+                                                                <tr>
+                                                                    <td align="left" valign="top">
+                                                                        <table align="left" class="em_wrapper" border="0" cellspacing="0" cellpadding="0">
+                                                                            <tr>
+                                                                                <td align="center" valign="top">
+                                                                                    <table align="center" bgcolor="#ca568e" border="0" cellspacing="0" cellpadding="0" style="background-color:#ca568e; border-radius:30px;">
+                                                                                        <tr>
+                                                                                            <td align="center" valign="middle" height="42" style="height:42px; font-size:14px; color:#ffffff; font-family:Arial, sans-serif; text-transform:uppercase; padding:0px 55px; font-weight:600; letter-spacing: 0.5px;">
+                                                                                                <a href="@(string.IsNullOrWhiteSpace(Model.BottomCtaUrl) ? "#" : Model.BottomCtaUrl)" target="_blank" style="text-decoration:none; color:#ffffff; display:block; line-height:42px;">@Model.BottomCtaCopy</a>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    </table>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<!-- == //Inspiration Section == -->

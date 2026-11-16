@@ -30,12 +30,25 @@ public class AzureBlobStorageService : IBlobStorageService
         _environment = environment;
         _logger = logger;
 
-        _accountName = _configuration["CMSAzureAccountName"] ?? string.Empty;
-        _sharedKey = _configuration["CMSAzureSharedKey"] ?? string.Empty;
-        _containerName = _configuration["CMSAzureContainerName"]
-                         ?? _configuration["AzureStorage:ContainerName"]
+        var azureSection = _configuration.GetSection("AzureStorage");
+        _accountName = azureSection["AccountName"]
+                       ?? azureSection["CMSAzureAccountName"]
+                       ?? _configuration["CMSAzureAccountName"]
+                       ?? string.Empty;
+
+        _sharedKey = azureSection["SharedKey"]
+                     ?? azureSection["CMSAzureSharedKey"]
+                     ?? _configuration["CMSAzureSharedKey"]
+                     ?? string.Empty;
+
+        _containerName = azureSection["ContainerName"]
+                         ?? azureSection["CMSAzureContainerName"]
+                         ?? _configuration["CMSAzureContainerName"]
                          ?? "etgfilescontainer";
-        _connectionString = _configuration["AzureStorage:ConnectionString"] ?? string.Empty;
+
+        _connectionString = azureSection["ConnectionString"]
+                            ?? _configuration["AzureStorage:ConnectionString"]
+                            ?? string.Empty;
     }
 
     private BlobContainerClient? GetContainerClient()
@@ -121,21 +134,22 @@ public class AzureBlobStorageService : IBlobStorageService
             }
         }
 
-        // 2. Fallback to local storage (e.g. wwwroot/etg/jobs/)
-        var localFolder = Path.Combine(_environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "etg", folder);
-        if (!Directory.Exists(localFolder))
+        // 2. Fallback to local storage in PRIVATE directory (NOT wwwroot)
+        // SECURITY FIX: Store CVs outside web root to prevent public access
+        var appDataPath = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "cvs", folder);
+        if (!Directory.Exists(appDataPath))
         {
-            Directory.CreateDirectory(localFolder);
+            Directory.CreateDirectory(appDataPath);
         }
 
-        var localFilePath = Path.Combine(localFolder, uniqueFileName);
+        var localFilePath = Path.Combine(appDataPath, uniqueFileName);
         using (var localStream = new FileStream(localFilePath, FileMode.Create))
         {
             await file.CopyToAsync(localStream);
         }
 
-        _logger.LogInformation("File {FileName} saved locally to {FilePath}", uniqueFileName, localFilePath);
-        return $"/getfile?path=/etg/{blobPath}";
+        _logger.LogInformation("File {FileName} saved to private storage: {FilePath}", uniqueFileName, localFilePath);
+        return $"/getfile?path=/cvs/{folder}/{uniqueFileName}";
     }
 
     public async Task<(Stream Stream, string ContentType, string FileName)?> GetFileAsync(string path)
@@ -180,19 +194,36 @@ public class AzureBlobStorageService : IBlobStorageService
             }
         }
 
-        // 2. Check local disk fallback
-        var localFolder = Path.Combine(_environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "etg");
-        var localFilePath = Path.Combine(localFolder, cleanPath.Replace('/', Path.DirectorySeparatorChar));
+        // 2. SECURITY FIX: Check private storage directory (NOT wwwroot)
+        var appDataPath = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "cvs");
+        var privateFilePath = Path.Combine(appDataPath, cleanPath.Replace('/', Path.DirectorySeparatorChar));
 
-        if (!File.Exists(localFilePath))
+        if (!File.Exists(privateFilePath))
         {
-            // Also try jobs/fileName
-            localFilePath = Path.Combine(localFolder, "jobs", fileName);
+            // Also try jobs/fileName for backward compatibility
+            privateFilePath = Path.Combine(appDataPath, "jobs", fileName);
         }
 
-        if (File.Exists(localFilePath))
+        if (File.Exists(privateFilePath))
         {
-            var stream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var stream = new FileStream(privateFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            _logger.LogInformation("Serving file from private storage: {FileName}", fileName);
+            return (stream, contentType, fileName);
+        }
+
+        // 3. LEGACY FALLBACK: Check old wwwroot location (for existing files, log warning)
+        var legacyFolder = Path.Combine(_environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "etg");
+        var legacyFilePath = Path.Combine(legacyFolder, cleanPath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (!File.Exists(legacyFilePath))
+        {
+            legacyFilePath = Path.Combine(legacyFolder, "jobs", fileName);
+        }
+
+        if (File.Exists(legacyFilePath))
+        {
+            _logger.LogWarning("SECURITY WARNING: Serving file from legacy wwwroot location: {FileName}. File should be migrated to private storage.", fileName);
+            var stream = new FileStream(legacyFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return (stream, contentType, fileName);
         }
 

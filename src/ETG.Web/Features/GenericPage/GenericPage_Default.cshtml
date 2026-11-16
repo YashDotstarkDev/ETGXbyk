@@ -3,9 +3,30 @@
 @using Kentico.Content.Web.Mvc.PageBuilder
 @using Kentico.PageBuilder.Web.Mvc
 
+@{
+    var sticky = ViewData["CampaignStickyBar"]
+        as ETG.Core.Models.CampaignStickyBarViewModel;
+}
+
 <vc:bread-crumb />
 
-<partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
-         model="Model" />
+@if (!string.IsNullOrWhiteSpace(Model?.HeroImageUrl))
+{
+    <partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
+             model="Model" />
+}
 
 <editable-area area-identifier="Content" />
+
+@if (sticky is not null && sticky.DisplaySticky
+    && (!string.IsNullOrWhiteSpace(sticky.CampaignDetail1)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail2)
+        || !string.IsNullOrWhiteSpace(sticky.CampaignDetail3)))
+{
+    <partial name="~/Views/Shared/Partial/Common/_CampaignStickyBar.cshtml"
+             model="sticky" />
+}
+else
+{
+    <vc:sticky-bar />
+}

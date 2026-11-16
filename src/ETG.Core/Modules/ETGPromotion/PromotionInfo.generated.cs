@@ -25,7 +25,7 @@ namespace ETGBooking
         /// Type information.
         /// </summary>
 #warning "You will need to configure the type info."
-        public static readonly ObjectTypeInfo TYPEINFO = new ObjectTypeInfo(typeof(IInfoProvider<PromotionInfo>), OBJECT_TYPE, "ETG.Promotion", "PromotionID", "PromotionLastModified", "PromotionGuid", "PromotionPromoCode", "PromotionName", null, null, null)
+        public static readonly ObjectTypeInfo TYPEINFO = new ObjectTypeInfo(typeof(IInfoProvider<PromotionInfo>), OBJECT_TYPE, "ETG.Promotion", "PromotionID", "PromotionLastModified", "PromotionGuid",null, "PromotionName", null, null, null)
         {
             TouchCacheDependencies = true,
         };

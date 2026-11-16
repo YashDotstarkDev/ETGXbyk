@@ -2,6 +2,7 @@ using AngleSharp.Dom;
 using CMS.ContentEngine;
 using CMS.DataEngine;
 using CMS.Websites;
+using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Core.Models;
 using ETG.Core.Models.GoogleReviews;
@@ -53,6 +54,7 @@ IMediator mediator,
     IInfoProvider<PromotionInfo> promotionProvider,
     IWebPageDataContextRetriever contextRetriever,
     IGoogleReviewsService reviewsService,
+     IWebsiteChannelContext channelContext,
     IInfoProvider<TourTypeInfo> tourTypeProvider) : Controller
 {
     private readonly IMediator mediator = mediator;
@@ -67,8 +69,9 @@ IMediator mediator,
     private readonly IContentRetriever contentRetriever = contentRetriever;
     private readonly IGoogleReviewsService reviewsService = reviewsService;
     private readonly IInfoProvider<PromotionInfo> promotionProvider = promotionProvider;
+    private readonly IWebsiteChannelContext channelContext = channelContext;
 
-    [HttpGet("~/enquires/{tourCode}")]
+    [HttpGet("~/enquire/{tourCode}")]
     public async Task<IActionResult> Enquire(string tourCode, string? date = null, string? flightclass = "Economy", string? city = null)
     {
         if (string.IsNullOrWhiteSpace(tourCode))
@@ -92,6 +95,8 @@ IMediator mediator,
         {
             return NotFound();
         }
+
+        ViewData["BreadCrumbTour"] = tour;
         var offerData = await GetTourOfferData(tour);
         var discountText = offerData.Discount != null
             ? $"{offerData.Discount.DiscountHeading} - Expires {offerData.Discount.DiscountExpiry:dd/MM/yyyy}"
@@ -140,20 +145,20 @@ IMediator mediator,
             return NotFound();
         }
 
-        //if (tour is IWebPageMetaFields metaFields)
-        //{
-        //    metaService.SetMeta(metaFields);
-        //}
-        if (tour.TourFAQFolder == null || !tour.TourFAQFolder.Any())
-        {
-            var faqFolder = await GetDefaultFaqFolder();
+        ViewData["BreadCrumbTour"] = tour;
 
-            tour.TourFAQFolder = faqFolder?.SelectedFAQs
-                ?? Enumerable.Empty<FAQ>();
-        }
+        // PERFORMANCE FIX: Use cached CQRS query handler
+        var faqs = await mediator.Send(
+            new Operations.GetTourFaqsQuery(
+                channelContext.WebsiteChannelName,
+                tour.TourFAQFolder),
+            HttpContext.RequestAborted);
 
         var destinations = await GetDestinations(tour.TourPrimaryCountry);
-        var promotion = await GetTourPromotions(tour.TourCode);
+        // PERFORMANCE FIX: Use cached CQRS query handler with optimized date filtering
+        //var promotion = await mediator.Send(
+        //    new Operations.GetActiveTourPromotionQuery(tour.TourCode),
+        //    HttpContext.RequestAborted);
 
         var offerData = await GetTourOfferData(tour);
 
@@ -180,7 +185,17 @@ IMediator mediator,
                 .ToList();
         }
 
-        var experiences = await GetExperiences(tour.TourExperiences);
+        // PERFORMANCE FIX: Use cached CQRS query handler
+        var experienceGuids = tour.TourExperiences?
+            .Where(x => x?.WebPageGuid != Guid.Empty)
+            .Select(x => x.WebPageGuid)
+            .ToArray() ?? Array.Empty<Guid>();
+
+        var experiences = await mediator.Send(
+            new Operations.GetExperiencesQuery(
+                channelContext.WebsiteChannelName,
+                experienceGuids),
+            HttpContext.RequestAborted);
 
         var partnershipFolders = new List<Folder>();
 
@@ -219,28 +234,148 @@ IMediator mediator,
         }
 
 
-        //Related Tour Packages for ETG.Tour Tour Code
-
-       var relatedTours = await mediator.Send(
-           new Operations.GetRelatedToursQuery(tour),
-           HttpContext.RequestAborted);
+        var relatedTours = await mediator.Send(
+    new Operations.GetRelatedToursQuery(tour),
+    HttpContext.RequestAborted);
 
         var mappedTours = new List<TourSummaryViewModel>();
 
         if (relatedTours != null && relatedTours.Count > 0)
+        {
+            var validRelatedTours = relatedTours
+                .Where(relatedTour =>
+                    relatedTour != null &&
+                    !string.IsNullOrWhiteSpace(
+                        relatedTour.TourCode))
+                .Take(8)
+                .ToList();
+
+            if (validRelatedTours.Count > 0)
             {
-                foreach (var relatedTour in relatedTours)
-                {
-                    if (relatedTour == null)
+                // =========================================================
+                // 1. COLLECT PRIMARY COUNTRY GUIDS
+                // =========================================================
+
+                var relatedCountryGuids = validRelatedTours
+                    .Select(relatedTour =>
+                        relatedTour.TourPrimaryCountry?
+                            .FirstOrDefault(item =>
+                                item != null &&
+                                item.WebPageGuid != Guid.Empty)?
+                            .WebPageGuid
+                        ?? Guid.Empty)
+                    .Where(guid => guid != Guid.Empty)
+                    .Distinct()
+                    .ToArray();
+
+
+                // =========================================================
+                // 2. START ALL INDEPENDENT OPERATIONS TOGETHER
+                // =========================================================
+
+                var relatedPricesTask =
+                    pricingService.GetPricesBulkAsync(
+                        validRelatedTours);
+
+                var destinationsTask =
+                    GetDestinationsLookup(
+                        relatedCountryGuids);
+
+                var urlTasks = validRelatedTours
+                    .Select(async relatedTour =>
                     {
-                        continue;
+                        var url =
+                            await urlRetriever.Retrieve(
+                                relatedTour);
+
+                        return new
+                        {
+                            Tour = relatedTour,
+                            Path = url?.RelativePath
+                                ?? string.Empty
+                        };
+                    })
+                    .ToArray();
+
+
+                // =========================================================
+                // 3. WAIT FOR ALL OPERATIONS
+                // =========================================================
+
+                await Task.WhenAll(
+                    relatedPricesTask,
+                    destinationsTask);
+
+
+                var relatedTourPrices =
+                    await relatedPricesTask;
+
+                var destinationLookup =
+                    await destinationsTask;
+
+                var relatedTourUrls =
+                    await Task.WhenAll(urlTasks);
+
+
+                // =========================================================
+                // 4. MAP RELATED TOURS
+                // =========================================================
+
+                foreach (var item in relatedTourUrls)
+                {
+                    // -----------------------------------------------------
+                    // Primary country GUID
+                    // -----------------------------------------------------
+
+                    var countryGuid =
+                        item.Tour.TourPrimaryCountry?
+                            .FirstOrDefault(country =>
+                                country != null &&
+                                country.WebPageGuid != Guid.Empty)?
+                            .WebPageGuid
+                        ?? Guid.Empty;
+
+
+                    // -----------------------------------------------------
+                    // Primary country name
+                    // -----------------------------------------------------
+
+                    string? primaryCountryName = null;
+
+                    if (countryGuid != Guid.Empty &&
+                        destinationLookup.TryGetValue(
+                            countryGuid,
+                            out var destination))
+                    {
+                        primaryCountryName =
+                            destination.DestinationName;
                     }
 
-                    var url = await urlRetriever.Retrieve(relatedTour);
-                    var tourViewModel = await tourSummaryService.MapToViewModelAsync(relatedTour, url?.RelativePath ?? string.Empty, null);
+
+                    // -----------------------------------------------------
+                    // Bulk pricing
+                    // -----------------------------------------------------
+
+                    relatedTourPrices.TryGetValue(
+                        item.Tour.TourCode,
+                        out var relatedPriceInfo);
+
+
+                    // -----------------------------------------------------
+                    // Build ViewModel
+                    // -----------------------------------------------------
+
+                    var tourViewModel =
+                        await tourSummaryService.MapToViewModelAsync(
+                            item.Tour,
+                            item.Path,
+                            relatedPriceInfo,
+                            primaryCountryName);
+
                     mappedTours.Add(tourViewModel);
                 }
             }
+        }
 
         var featureTours = new TourListingViewModel
         {
@@ -269,14 +404,13 @@ IMediator mediator,
         var ctaurl = new ContactUsViewModel
         {
             CTAUrl = !string.IsNullOrWhiteSpace(tour?.TourCode)
-                ? $"/enquires/{tour.TourCode}"
+                ? $"/enquire/{tour.TourCode}"
                 : string.Empty,
 
             CTABackgroundImage = ctaimage?.LegacyMediaFileAsset?.Url
                                  ?? "/images/travel_destination.png"
         };
 
-        //var tourViewModel = await tourSummaryService.MapToViewModelAsync(relatedTour, url?.RelativePath ?? string.Empty, null);
 
         var viewModel = new TourPageTemplateViewModel
         {
@@ -291,6 +425,7 @@ IMediator mediator,
             CurrentUrl = encodedUrl,
             TourTypeNames = tourTypeNames,
             Reviews = reviews,
+            FAQs = faqs,
             Promotion = offerData.Promotion,
             Discount = offerData.Discount
         };
@@ -369,7 +504,10 @@ IMediator mediator,
             return new TourOfferData();
         }
 
-        var promotion = await GetActiveTourPromotion(tour.TourCode);
+        // PERFORMANCE FIX: Use cached CQRS query handler
+        var promotion = await mediator.Send(
+            new Operations.GetActiveTourPromotionQuery(tour.TourCode),
+            HttpContext.RequestAborted);
 
         if (promotion != null)
         {
@@ -500,6 +638,61 @@ IMediator mediator,
         return null;
     }
 
+    private async Task<List<FAQ>> GetTourFaqs(Tour tour, CancellationToken cancellationToken)
+    {
+
+        if (tour.TourFAQFolder != null && tour.TourFAQFolder.Any())
+        {
+            var selectedFaqs = tour.TourFAQFolder
+                .Where(folder => folder != null)
+                .SelectMany(folder =>
+                    folder.SelectedFAQs ?? Enumerable.Empty<FAQ>())
+                .Where(faq => faq != null)
+                .ToList();
+
+            return selectedFaqs;
+        }
+
+        var defaultFolder = await GetDefaultFaqFolder();
+
+        if (defaultFolder == null)
+        {
+            return [];
+        }
+
+        return (defaultFolder.SelectedFAQs ??
+                Enumerable.Empty<FAQ>())
+            .Where(faq => faq != null)
+            .ToList();
+    }
+
+    private async Task<Dictionary<Guid, Destination>>
+    GetDestinationsLookup(IEnumerable<Guid> destinationGuids)
+    {
+        var guids = destinationGuids
+            .Where(guid => guid != Guid.Empty)
+            .Distinct()
+            .ToArray();
+
+        if (guids.Length == 0)
+        {
+            return new Dictionary<Guid, Destination>();
+        }
+
+        var destinations =
+            await contentRetriever.RetrievePagesByGuids<Destination>(
+                guids);
+
+        return destinations
+            .Where(destination =>
+                destination?.SystemFields != null &&
+                destination.SystemFields.WebPageItemGUID != Guid.Empty)
+            .GroupBy(destination =>
+                destination.SystemFields.WebPageItemGUID)
+            .ToDictionary(
+                group => group.Key,
+                group => group.First());
+    }
     private async Task<Folder?> GetDefaultFaqFolder()
     {
         var query = new ContentItemQueryBuilder()
@@ -517,6 +710,8 @@ IMediator mediator,
 
         return folders.FirstOrDefault();
     }
+
+
     public sealed class TourPageTemplateViewModel
     {
         public Tour Tour { get; set; } = default!;
@@ -533,6 +728,7 @@ IMediator mediator,
         public PromotionInfo? Promotion { get; set; }
         public ETG.DiscountAndOffer? Discount { get; set; }
         public ReviewListingResponse? Reviews { get; set; }
+        public IEnumerable<FAQ> FAQs { get; set; } = Enumerable.Empty<FAQ>();
     }
     public sealed class TourOfferData
     {

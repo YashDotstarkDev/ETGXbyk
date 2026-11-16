@@ -79,7 +79,8 @@ public class SmallTilesWidget(
                 tile.SubCaption ?? string.Empty,
                 GetImageUrl(tile),
                 await GetTileUrlAsync(tile),
-                tile.CtaLabel ?? string.Empty));
+                tile.CtaLabel ?? string.Empty,
+                 tile.Dimensions ?? string.Empty));
 
         var tiles = (await Task.WhenAll(tileTasks))
             .Where(t => !string.IsNullOrWhiteSpace(t.ImageUrl))
@@ -226,19 +227,21 @@ public class SmallTileViewModel
     public string ImageUrl { get; }
     public string CtaUrl { get; }
     public string CtaLabel { get; }
-
+    public string Dimensions { get; }
     public SmallTileViewModel(
         string caption,
         string subCaption,
         string imageUrl,
         string ctaUrl,
-        string ctaLabel)
+        string ctaLabel,
+        string dimensions)
     {
         Caption = caption;
         SubCaption = subCaption;
         ImageUrl = imageUrl;
         CtaUrl = ctaUrl;
         CtaLabel = ctaLabel;
+        Dimensions = dimensions;
     }
 }
 

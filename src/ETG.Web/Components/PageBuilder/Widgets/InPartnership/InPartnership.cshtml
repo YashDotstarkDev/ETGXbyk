@@ -1,31 +1,44 @@
-﻿@model ETG.Web.Components.PageBuilder.Widgets.InPartnership.InPartnershipWidgetViewModel
+@model ETG.Web.Components.PageBuilder.Widgets.InPartnership.InPartnershipWidgetViewModel
 
 @{
-    var logo1Url = Model.Logo1Image?.LegacyMediaFileAsset?.Url;
-    var logo2Url = Model.Logo2Image?.LegacyMediaFileAsset?.Url;
-    var logo3Url = Model.Logo3Image?.LegacyMediaFileAsset?.Url;
+    var logo1Url = Model.Logo1Image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress");
+    var logo2Url = Model.Logo2Image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress");
+    var logo3Url = Model.Logo3Image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress");
 }
 
-<section class="section-pad" aria-labelledby="partnership-title">
+    <section class="section-pad" aria-labelledby="partnership-title">
     <div class="container">
-        <div class="title-div">
+   @if(!string.IsNullOrWhiteSpace(@Model.Heading)){
+        <div class="title-div">      
             <h2 id="partnership-title" class="section-title">@Model.Heading</h2>
-        </div>
-
+            </div>
+         }
         <div class="logo-partnership-strip">
             @if (!string.IsNullOrWhiteSpace(logo1Url))
             {
-                <img loading="lazy" src="@logo1Url" width="135" alt="">
+                <img loading="lazy" 
+                     src="@logo1Url" 
+                     srcset="@Model.Logo1Image.ImgixSrcset(130, 0)"
+                     width="130"
+                     alt="Partner logo" />
             }
 
             @if (!string.IsNullOrWhiteSpace(logo2Url))
             {
-                <img loading="lazy" src="@logo2Url" width="135" alt="">
+                <img loading="lazy" 
+                     src="@logo2Url" 
+                     srcset="@Model.Logo2Image.ImgixSrcset(130, 0)"
+                     width="130"
+                     alt="Partner logo" />
             }
 
             @if (!string.IsNullOrWhiteSpace(logo3Url))
             {
-                <img loading="lazy" src="@logo3Url" width="135" alt="">
+                <img loading="lazy" 
+                     src="@logo3Url" 
+                     srcset="@Model.Logo3Image.ImgixSrcset(130, 0)"
+                     width="130"
+                     alt="Partner logo" />
             }
         </div>
     </div>

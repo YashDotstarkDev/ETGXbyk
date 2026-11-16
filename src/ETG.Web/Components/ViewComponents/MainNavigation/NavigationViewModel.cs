@@ -6,6 +6,13 @@ public class NavigationViewModel
     public List<NavigationItemViewModel> RootItems { get; set; } = new();
     public ETG.Web.Components.ViewComponents.Shared.WebsiteLayoutContentViewModel? Layout { get; set; }
 
+    public NavigationViewModel WithLayout(ETG.Web.Components.ViewComponents.Shared.WebsiteLayoutContentViewModel? layout) =>
+        new()
+        {
+            RootItems = RootItems,
+            Layout = layout
+        };
+
     public List<NavigationItemViewModel> GetAllItemsFlattened()
     {
         var result = new List<NavigationItemViewModel>();

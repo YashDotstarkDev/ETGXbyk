@@ -1,4 +1,5 @@
-﻿using CMS.ContentEngine;
+﻿using AngleSharp.Html.Parser;
+using CMS.ContentEngine;
 using CSharpFunctionalExtensions;
 using ETG.Core.Components;
 using ETG.Core.Content;
@@ -9,6 +10,7 @@ using Kentico.PageBuilder.Web.Mvc;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Websites.FormAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using XperienceCommunity.KenticoComponentIcons;
 
 [assembly: RegisterWidget(
@@ -119,6 +121,7 @@ public class CTAPanelProperties : BaseWidgetProperties
 
     [TextInputComponent(
         Label = "CTA Label 2",
+        ExplanationText = "(Use For Phone Number)",
         Order = 6)]
     public string CTALabel2 { get; set; } = "";
 
@@ -163,6 +166,10 @@ public class CTAPanelWidgetViewModel : BaseWidgetViewModel
     public ImageAssetViewModel? Image { get; }
 
     public string Heading { get; }
+    public string HeadingPlainText { get; }
+
+    public bool HeadingContainsHtml { get; }
+
     public string TextContent { get; }
 
     public string CTALabel { get; }
@@ -190,14 +197,22 @@ public class CTAPanelWidgetViewModel : BaseWidgetViewModel
 
         Image = image;
 
-        // Preserve the original heading for Display Type 1.
-        Heading = props.Heading;
+        // Preserve heading HTML for rendering.
+        Heading = props.Heading ?? string.Empty;
 
-        // Separate the last word for Destination CTA.
-        var headingWords = (props.Heading ?? string.Empty)
-            .Split(
-                (char[]?)null,
-                StringSplitOptions.RemoveEmptyEntries);
+        // Parse a separate plain-text version for attributes and word splitting.
+        var document = new AngleSharp.Html.Parser.HtmlParser()
+            .ParseDocument(Heading);
+
+        HeadingPlainText =
+            document.Body?.TextContent.Trim() ?? string.Empty;
+
+        HeadingContainsHtml =
+            document.Body?.QuerySelector("*") is not null;
+
+        var headingWords = HeadingPlainText.Split(
+            (char[]?)null,
+            StringSplitOptions.RemoveEmptyEntries);
 
         HeadingBeforeLastWord = headingWords.Length > 1
             ? string.Join(
@@ -205,7 +220,8 @@ public class CTAPanelWidgetViewModel : BaseWidgetViewModel
                 headingWords.Take(headingWords.Length - 1))
             : string.Empty;
 
-        HeadingLastWord = headingWords.LastOrDefault() ?? string.Empty;
+        HeadingLastWord =
+            headingWords.LastOrDefault() ?? string.Empty;
 
         TextContent = props.TextContent;
 

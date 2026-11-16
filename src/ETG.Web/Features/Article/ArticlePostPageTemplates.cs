@@ -2,6 +2,7 @@ using CMS.ContentEngine;
 using CMS.DataEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
+using ETG.Core;
 using ETG.Core.Content;
 using ContentPage = ETG.Core.Content.Page;
 using ETG.Core.Models;
@@ -49,6 +50,7 @@ public class ArticlePostPageTemplateController(
     IWebPageUrlRetriever urlRetriever,
     ITaxonomyRetriever taxonomyRetriever,
     IContentQueryExecutor queryExecutor,
+    IContentQueryExecutionOptionsCreator queryOptionsCreator,
     IWebsiteChannelContext channelContext,
     ITourPricingService pricingService,
     WebPageMetaService metaService) : Controller
@@ -68,7 +70,11 @@ public class ArticlePostPageTemplateController(
         var authorQuery = new ContentItemQueryBuilder()
             .ForWebPage((RoutedWebPage)data.WebPage);
 
-        var rawResult = await queryExecutor.GetWebPageResult(authorQuery, container => container, new ContentQueryExecutionOptions { ForPreview = true });
+        // SECURITY FIX: Use request-aware options to respect live vs preview context
+        var rawResult = await queryExecutor.GetWebPageResult(
+            authorQuery, 
+            container => container, 
+            queryOptionsCreator.Create());
         var rawArticle = rawResult.FirstOrDefault();
 
         List<Guid> rawAuthorGuids = new List<Guid>();
@@ -128,26 +134,10 @@ public class ArticlePostPageTemplateController(
 
                 foreach (var tour in toursList)
                 {
-                    // 1. Retrieve first image from SelectedImageFolders (Tour -> ImageFolder -> Image -> MediaFile)
-                    var firstImage = tour.SelectedImageFolders?
-                        .Where(f => f?.SelectedImages != null)
-                        .SelectMany(f => f.SelectedImages)
-                        .OfType<ETG.Image>()
-                        .FirstOrDefault(img => img != null);
-
                     MediaFile? mediaFile = null;
-                    if (firstImage != null)
-                    {
-                        mediaFile = firstImage.ImageFilePath?
-                            .OfType<MediaFile>()
-                            .FirstOrDefault()
-                            ?? firstImage.ImageFilePath?.FirstOrDefault() as MediaFile;
-                    }
 
-
-
-                    // 2. Fallback to TourHeroImage if no image found in SelectedImageFolders
-                    if (mediaFile == null && tour.TourHeroImage != null)
+                    // 1. Primary: TourHeroImage (hero asset)
+                    if (tour.TourHeroImage != null)
                     {
                         var heroItem = tour.TourHeroImage.FirstOrDefault();
                         mediaFile = heroItem switch
@@ -157,6 +147,24 @@ public class ArticlePostPageTemplateController(
                                           ?? img.ImageFilePath?.FirstOrDefault() as MediaFile,
                             _ => null
                         };
+                    }
+
+                    // 2. Fallback: SelectedImageFolders (Tour -> ImageFolder -> Image -> MediaFile)
+                    if (mediaFile == null)
+                    {
+                        var firstImage = tour.SelectedImageFolders?
+                            .Where(f => f?.SelectedImages != null)
+                            .SelectMany(f => f.SelectedImages)
+                            .OfType<ETG.Image>()
+                            .FirstOrDefault(img => img != null);
+
+                        if (firstImage != null)
+                        {
+                            mediaFile = firstImage.ImageFilePath?
+                                .OfType<MediaFile>()
+                                .FirstOrDefault()
+                                ?? firstImage.ImageFilePath?.FirstOrDefault() as MediaFile;
+                        }
                     }
 
                     string resolvedImageUrl = string.Empty;
@@ -193,11 +201,13 @@ public class ArticlePostPageTemplateController(
                         displayOriginalPrice = originalPriceText;
                     }
 
-                    string imageAlt = !string.IsNullOrEmpty(tour.TourHeroImageCaption)
-                        ? tour.TourHeroImageCaption
-                        : (!string.IsNullOrEmpty(mediaFile?.LegacyMediaFileTitle)
-                            ? mediaFile.LegacyMediaFileTitle
-                            : (tour.TourName ?? string.Empty));
+                    string imageAlt = !string.IsNullOrWhiteSpace(tour.TourHeroImageAltTag)
+                        ? tour.TourHeroImageAltTag.Trim()
+                        : (!string.IsNullOrWhiteSpace(tour.TourHeroImageCaption)
+                            ? tour.TourHeroImageCaption.Trim()
+                            : (!string.IsNullOrWhiteSpace(mediaFile?.LegacyMediaFileTitle)
+                                ? mediaFile.LegacyMediaFileTitle.Trim()
+                                : (tour.TourName ?? string.Empty)));
 
                     string badge = !string.IsNullOrWhiteSpace(tour.TourDestinationCity)
                         ? tour.TourDestinationCity.ToUpperInvariant()
@@ -229,10 +239,9 @@ public class ArticlePostPageTemplateController(
                         HeroImageUrl = resolvedImageUrl,
                         HeroImageAlt = imageAlt,
                         Badge = badge,
-                        DaysFromLabel = tour.TourNights > 0 ? $"{tour.TourNights + 1} DAYS FROM" : string.Empty,
-                        CurrentPrice = string.IsNullOrEmpty(currentPriceText)
-                            ? string.Empty
-                            : $"{priceInfo.CurrencySymbol}{currentPriceText}",
+                        DaysFromLabel = tour.TourNights > 0 ? $"{tour.TourNights + 1} DAYS" : string.Empty,
+                        CurrentPrice = currentPriceText ?? "",
+                        CurrencySymbol = priceInfo.CurrencySymbol,
                         OriginalPrice = displayOriginalPrice,
                         Currency = priceInfo.CurrencyCode,
                         PriceTypeLabel = !string.IsNullOrWhiteSpace(tour.TourPriceTypeLabel)

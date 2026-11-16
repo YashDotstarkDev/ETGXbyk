@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+
 
 namespace ETG.Web.Features.Brochures;
 

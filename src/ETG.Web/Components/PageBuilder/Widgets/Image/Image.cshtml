@@ -45,9 +45,13 @@
     <figure class="figure @widthClass" style="@figureStyles">
         @if (Model.LinkToFullsizeImage)
         {
-            <a href="@Model.Image.LegacyMediaFileAsset.Url">
+            <a href="@Model.Image.Imgixify(width: 1920)">
                 <picture>
-                    <img class="img-fluid @themeClasses" src="@Model.Image.LegacyMediaFileAsset.Url" alt="@Model.Image.LegacyMediaFileTitle"
+                    <img class="img-fluid @themeClasses" src="@Model.Image.Imgixify(800, 0, "max", "format,compress")"
+                        srcset="@Model.Image.ImgixSrcset(800, 0, null, "max", "format,compress")"
+                        width="800"
+                        loading="lazy"
+                        alt="@Model.Image.LegacyMediaFileTitle"
                         sizes="@sizesAttribute">
                 </picture>
             </a>
@@ -55,7 +59,7 @@
         else
         {
             <picture>
-                <img class="img-fluid @themeClasses" src="@Model.Image.LegacyMediaFileAsset.Url" alt="@Model.Image.LegacyMediaFileTitle"
+                <img class="img-fluid @themeClasses" src="@Model.Image.Imgixify(width: 800)" alt="@Model.Image.LegacyMediaFileTitle"
                     sizes="@sizesAttribute">
             </picture>
         }

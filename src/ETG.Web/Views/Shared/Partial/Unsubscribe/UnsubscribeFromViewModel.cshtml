@@ -1,0 +1,84 @@
+﻿@using ETG.Web.Models
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@model UnsubscribeFromViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.Error))
+{
+    <div class="unsubscribe-form__message" role="alert">
+        @Model.Error
+    </div>
+}
+
+<form id="unsubscribe-form"
+      class="unsubscribe-form"
+      asp-controller="UnsubscribeSubmission"
+      asp-action="Submit"
+      asp-antiforgery="true"
+      method="post"
+      data-unsubscribe-form
+      data-reason-count="@Model.Reasons.Count"
+      data-skip-captcha="@Model.SkipCaptchaValidation.ToString().ToLowerInvariant()">
+
+    <input type="hidden"
+           name="RecipientToken"
+           value="@Model.RecipientToken" />
+
+    <input type="hidden"
+           id="unsubscribe-captcha-token"
+           name="CaptchaToken"
+           value=""
+           data-captcha-token />
+
+    <div class="unsubscribe-form__field">
+        <label asp-for="ReasonGuid"
+               class="unsubscribe-form__label">
+            Reason
+        </label>
+
+        <select asp-for="ReasonGuid"
+                asp-items="Model.Reasons"
+                class="unsubscribe-form__select"
+                required>
+            <option value="">Select the reason</option>
+        </select>
+
+        <span asp-validation-for="ReasonGuid"
+              class="unsubscribe-form__validation"></span>
+
+        @if (Model.Reasons.Count == 0)
+        {
+            <p class="unsubscribe-form__empty">
+                No reasons are currently available.
+            </p>
+        }
+    </div>
+
+    <div class="unsubscribe-form__actions">
+      <button type="submit"
+        name="command"
+        value="save"
+        class="btn btn-pink px-4 m-0 text-white fw-bold"
+        style="border-radius: 4px; font-size: 0.85rem; padding: 6px 24px;">
+    UNSUBSCRIBE
+</button>
+<button type="submit"
+        name="command"
+        value="cancel"
+        formnovalidate
+        class="btn px-4 m-0 fw-bold"
+        style="background-color: #e2e2e4; color: #495057; border-radius: 4px; font-size: 0.85rem; padding: 6px 24px;">
+    CANCEL
+</button>
+    </div>
+
+    <div class="unsubscribe-form__client-error"
+         data-client-error
+         role="alert">
+    </div>
+
+</form>
+
+<script type="module"
+        src="@Url.Content("~/js/unsubscribe.js")"></script>

@@ -1,0 +1,260 @@
+﻿@using ETG.Web.Models
+@using Kentico.PageBuilder.Web.Mvc
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Kentico.Content.Web.Mvc
+
+@model UnsubscribePageViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var hasHeroImage =
+        !string.IsNullOrWhiteSpace(Model.Hero?.HeroImageUrl);
+}
+
+<style>
+    .unsubscribe-page {
+        padding: 88px 24px 64px;
+        background: #fff;
+        color: #474747;
+    }
+
+        .unsubscribe-page,
+        .unsubscribe-page *,
+        .unsubscribe-page *::before,
+        .unsubscribe-page *::after {
+            box-sizing: border-box;
+        }
+
+    .unsubscribe-page__container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .unsubscribe-page__title {
+        margin: 0 0 10px;
+        color: #474747;
+        font-family: inherit;
+        font-size: clamp(36px, 4vw, 54px);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.8px;
+    }
+
+    .unsubscribe-page__content {
+        margin-bottom: 26px;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+        .unsubscribe-page__content > :first-child {
+            margin-top: 0;
+        }
+
+        .unsubscribe-page__content > :last-child {
+            margin-bottom: 0;
+        }
+
+    .unsubscribe-form {
+        width: 100%;
+        max-width: 434px;
+        margin: 0;
+    }
+
+    .unsubscribe-form__field {
+        margin-bottom: 24px;
+    }
+
+    .unsubscribe-form__label {
+        display: block;
+        margin-bottom: 7px;
+        color: #333;
+        font-size: 15px;
+        font-weight: 400;
+    }
+
+    .unsubscribe-form__select {
+        display: block;
+        width: 100%;
+        min-height: 43px;
+        padding: 9px 14px;
+        border: 1px solid #d7d7d7;
+        border-radius: 4px;
+        background-color: #fff;
+        color: #333;
+        font-family: inherit;
+        font-size: 15px;
+        line-height: 1.4;
+    }
+
+        .unsubscribe-form__select:focus {
+            border-color: #ca508b;
+            outline: 2px solid rgba(202, 80, 139, 0.2);
+            outline-offset: 2px;
+        }
+
+        .unsubscribe-form__select:disabled {
+            background-color: #f4f4f4;
+            cursor: not-allowed;
+        }
+
+    .unsubscribe-form__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .unsubscribe-form__button {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 49px;
+        padding: 14px 30px;
+        border: 0;
+        border-radius: 999px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: center;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .unsubscribe-form__button--primary {
+        min-width: 172px;
+        background-color: #ca508b;
+        color: #fff;
+    }
+
+        .unsubscribe-form__button--primary:hover:not(:disabled) {
+            background-color: #b8427a;
+        }
+
+    .unsubscribe-form__button--secondary {
+        min-width: 125px;
+        background-color: #e1e1e3;
+        color: #555;
+        font-weight: 500;
+    }
+
+        .unsubscribe-form__button--secondary:hover:not(:disabled) {
+            background-color: #d3d3d6;
+        }
+
+    .unsubscribe-form__button:focus-visible {
+        outline: 2px solid #474747;
+        outline-offset: 3px;
+    }
+
+    .unsubscribe-form__button:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .unsubscribe-form__message {
+        max-width: 434px;
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border-left: 3px solid #ca508b;
+        background-color: #fbf1f6;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .unsubscribe-form__notice,
+    .unsubscribe-form__disclaimer,
+    .unsubscribe-form__empty {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .unsubscribe-form__notice {
+        margin: 0 0 16px;
+        color: #666;
+    }
+
+    .unsubscribe-form__disclaimer {
+        margin: 18px 0 0;
+        color: #666;
+    }
+
+    .unsubscribe-form__empty,
+    .unsubscribe-form__validation,
+    .unsubscribe-form__client-error {
+        color: #a32035;
+        font-size: 13px;
+    }
+
+    .unsubscribe-form__empty,
+    .unsubscribe-form__client-error {
+        margin-top: 10px;
+    }
+
+        .unsubscribe-form__client-error:empty {
+            display: none;
+        }
+
+    .unsubscribe-page__editable {
+        margin-top: 64px;
+    }
+
+    @@media (max-width: 600px) {
+        .unsubscribe-page {
+            padding: 44px 20px;
+        }
+
+        .unsubscribe-page__title {
+            letter-spacing: -0.4px;
+        }
+
+        .unsubscribe-form {
+            max-width: none;
+        }
+
+        .unsubscribe-page__editable {
+            margin-top: 40px;
+        }
+    }
+</style>
+
+@if (hasHeroImage)
+{
+    <partial name="~/Views/Shared/Partial/Common/_Hero.cshtml"
+             model="Model.Hero" />
+}
+
+<section class="unsubscribe-page">
+    <div class="unsubscribe-page__container">
+
+        @if (!hasHeroImage
+            && !string.IsNullOrWhiteSpace(Model.Hero?.Heading))
+        {
+            <h1 class="unsubscribe-page__title">
+                @Model.Hero.Heading
+            </h1>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Content))
+        {
+            <div class="unsubscribe-page__content">
+                @Html.Raw(Model.Content)
+            </div>
+        }
+
+        <div id="UnsubscribeForm">
+            @await Html.PartialAsync(
+                "~/Views/Shared/Partial/Unsubscribe/UnsubscribeFromViewModel.cshtml",
+                Model.Form)
+        </div>
+
+        <div class="unsubscribe-page__editable">
+            <editable-area area-identifier="editableBottom" />
+        </div>
+
+    </div>
+</section>

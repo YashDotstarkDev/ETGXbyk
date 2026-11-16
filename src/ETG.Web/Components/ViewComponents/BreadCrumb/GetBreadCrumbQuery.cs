@@ -5,55 +5,95 @@ namespace ETG.Web.Components.ViewComponents.BreadCrumb;
 
 public static class GetBreadCrumbQuery
 {
-    public static BreadCrumbViewModel Get(string currentPath, string currentPageTitle = null, bool isArticleLanding = false, bool isArticlePost = false, string articleLandingTitle = null)
+    public static BreadCrumbViewModel Get(
+        string currentPath,
+        string? currentPageTitle = null,
+        bool isArticleLanding = false,
+        bool isArticlePost = false,
+        string? articleLandingTitle = null,
+        string? tourTitle = null,
+        BreadCrumbViewModel.BreadCrumbItem? tourParent = null)
     {
         var viewModel = new BreadCrumbViewModel();
 
-        if (string.IsNullOrWhiteSpace(currentPath) || currentPath == "/")
+        if (string.IsNullOrWhiteSpace(currentPath)
+            || currentPath == "/")
         {
             return viewModel;
         }
 
-       
-        // ---------------------------------------------------------
+        // Added tour-only branch.
+        // Home is already rendered by the existing Razor view.
+        if (tourTitle is not null)
+        {
+            if (tourParent is not null)
+            {
+                viewModel.Items.Add(
+                    new BreadCrumbViewModel.BreadCrumbItem
+                    {
+                        Label = tourParent.Label,
+                        Url = tourParent.Url,
+                        IsCurrentPage = false
+                    });
+            }
 
+            viewModel.Items.Add(
+                new BreadCrumbViewModel.BreadCrumbItem
+                {
+                    Label = tourTitle,
+                    Url = "",
+                    IsCurrentPage = true
+                });
+
+            return viewModel;
+        }
+
+        // Existing article landing behavior.
         if (isArticleLanding)
         {
-            viewModel.Items.Add(new BreadCrumbViewModel.BreadCrumbItem
-            {
-               
-                Label = !string.IsNullOrEmpty(currentPageTitle) ? currentPageTitle : "The Explorer's Log",
-                Url = "",
-                IsCurrentPage = true
-            });
+            viewModel.Items.Add(
+                new BreadCrumbViewModel.BreadCrumbItem
+                {
+                    Label = !string.IsNullOrEmpty(currentPageTitle)
+                        ? currentPageTitle
+                        : "The Explorer's Log",
+                    Url = "",
+                    IsCurrentPage = true
+                });
+
             return viewModel;
         }
 
+        // Existing article post behavior.
         if (isArticlePost)
         {
-            var landingLabel = !string.IsNullOrEmpty(articleLandingTitle) ? articleLandingTitle : "The Explorer's Log";
-            viewModel.Items.Add(new BreadCrumbViewModel.BreadCrumbItem
-            {
-                Label = landingLabel,
-                Url = "/articles",
-                IsCurrentPage = false
-            });
+            var landingLabel =
+                !string.IsNullOrEmpty(articleLandingTitle)
+                    ? articleLandingTitle
+                    : "The Explorer's Log";
 
-            
-            viewModel.Items.Add(new BreadCrumbViewModel.BreadCrumbItem
-            {
-            
-                Label = !string.IsNullOrEmpty(currentPageTitle) ? currentPageTitle : "Article",
-                Url = "",
-                IsCurrentPage = true
-            });
+            viewModel.Items.Add(
+                new BreadCrumbViewModel.BreadCrumbItem
+                {
+                    Label = landingLabel,
+                    Url = "/articles",
+                    IsCurrentPage = false
+                });
+
+            viewModel.Items.Add(
+                new BreadCrumbViewModel.BreadCrumbItem
+                {
+                    Label = !string.IsNullOrEmpty(currentPageTitle)
+                        ? currentPageTitle
+                        : "Article",
+                    Url = "",
+                    IsCurrentPage = true
+                });
 
             return viewModel;
         }
 
-        // ---------------------------------------------------------
-
-
+        // Existing normal-page behavior.
         var routeParts = currentPath
             .Trim('/')
             .Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -66,14 +106,14 @@ public static class GetBreadCrumbQuery
             var isCurrentPage = i == routeParts.Length - 1;
 
             url += "/" + routePart;
-            var label = GetLabel(routePart);
 
-            viewModel.Items.Add(new BreadCrumbViewModel.BreadCrumbItem
-            {
-                Label = label,
-                Url = isCurrentPage ? "" : url,
-                IsCurrentPage = isCurrentPage
-            });
+            viewModel.Items.Add(
+                new BreadCrumbViewModel.BreadCrumbItem
+                {
+                    Label = GetLabel(routePart),
+                    Url = isCurrentPage ? "" : url,
+                    IsCurrentPage = isCurrentPage
+                });
         }
 
         return viewModel;
@@ -88,7 +128,7 @@ public static class GetBreadCrumbQuery
                 .Replace("_", " ")
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Select(word =>
-                    char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant())
-        );
+                    char.ToUpperInvariant(word[0])
+                    + word[1..].ToLowerInvariant()));
     }
 }

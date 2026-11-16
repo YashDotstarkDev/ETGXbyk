@@ -159,7 +159,7 @@ namespace ETG.Core.Content
 		/// <summary>
 		/// TourFAQFolder.
 		/// </summary>
-		public IEnumerable<FAQ> TourFAQFolder { get; set; }
+		public IEnumerable<Folder> TourFAQFolder { get; set; }
 
 
 		/// <summary>

@@ -23,20 +23,41 @@
     <section class="pkgd-hero">
         <div class="pkgd-hero__counter" id="pkgdCounter">1 / @total</div>
         <div class="pkgd-hero__track" id="pkgdTrack">
+        @{
+            var slideIndex = 0;
+        }
         @foreach (var images in heroimages)
         {
             var mediaFile = images.ImageFilePath?
                             .OfType<MediaFile>()
                             .FirstOrDefault();
+            var Caption = images.ImageCaption;
 
-            var imageUrl = mediaFile?.LegacyMediaFileAsset?.Url;
+            var imageUrl = mediaFile.Imgixify(1920, 600);
+            var srcset = mediaFile.ImgixSrcset(1920, 600, new[] { 1 });
 
             <div class="pkgd-hero__slide">  
                 @if (!string.IsNullOrWhiteSpace(imageUrl))
                 {
-                    <img src="@Url.Content(imageUrl)" alt="@images.ImageAltText" loading="lazy" />
-                }                        
+                    if (slideIndex == 0)
+                    {
+                        <img src="@imageUrl" srcset="@srcset" width="1920" height="600" alt="@images.ImageAltText" loading="eager" fetchpriority="high" decoding="async" />
+                        <div class="caption-top">
+                            <i class="bi bi-geo-alt"></i>
+                            @Caption
+                        </div>
+                    }
+                    else
+                    {
+                        <img src="@imageUrl" srcset="@srcset" width="1920" height="600" alt="@images.ImageAltText" loading="lazy" decoding="async" />
+                        <div class="caption-top">
+                            <i class="bi bi-geo-alt"></i>
+                            @Caption
+                        </div>
+                    }
+                }
             </div>
+            slideIndex++;
         }
         </div>
 

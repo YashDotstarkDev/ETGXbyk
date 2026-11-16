@@ -44,7 +44,7 @@ public class PageNotFoundQueryHandler(
         PageNotFoundQuery request,
         CancellationToken cancellationToken = default)
     {
-        var channelName = channelContext.WebsiteChannelName;
+        var channelName = !string.IsNullOrWhiteSpace(channelContext.WebsiteChannelName) ? channelContext.WebsiteChannelName : "ETG";
 
         var toursTask = GetToursAsync(channelName, request.TourCount, cancellationToken);
         var articlesTask = GetArticlesAsync(channelName, request.ArticleCount, cancellationToken);
@@ -71,6 +71,7 @@ public class PageNotFoundQueryHandler(
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(channelName)) { channelName = "ETG"; }
             var query = new ContentItemQueryBuilder()
                 .ForContentType(
                     TourContent.CONTENT_TYPE_NAME,
@@ -137,6 +138,7 @@ public class PageNotFoundQueryHandler(
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(channelName)) { channelName = "ETG"; }
             var query = new ContentItemQueryBuilder()
                 .ForContentType(
                     ArticleContent.CONTENT_TYPE_NAME,

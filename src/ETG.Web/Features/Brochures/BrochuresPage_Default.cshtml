@@ -1,4 +1,4 @@
-﻿@model ETG.Web.Features.Brochures.BrochuresPageViewModel
+@model ETG.Web.Features.Brochures.BrochuresPageViewModel
 
 @{
     var heading = Model.Heading?.Trim() ?? string.Empty;
@@ -45,7 +45,10 @@
                                 @if (!string.IsNullOrWhiteSpace(
                                     brochure.CoverImage?.LegacyMediaFileAsset?.Url))
                                 {
-                                    <img src="@brochure.CoverImage.LegacyMediaFileAsset.Url"
+                                    <img src="@brochure.CoverImage.Imgixify(300, 420)"
+                                         srcset="@brochure.CoverImage.ImgixSrcset(300, 420, null)"
+                                         width="300"
+                                         height="420"
                                          alt="@brochure.CoverAlt"
                                          loading="lazy"
                                          class="img-fluid brochure-img" />

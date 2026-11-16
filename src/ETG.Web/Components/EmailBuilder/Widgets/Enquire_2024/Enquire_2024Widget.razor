@@ -1,0 +1,94 @@
+﻿@namespace ETG.Web.Components.EmailBuilder.Widgets.Enquire_2024
+@using Microsoft.AspNetCore.Components
+
+@* Suppress Razor HTML validation for email templates *@
+@* Email HTML has different rules than web HTML *@
+
+
+<!-- ===== Enquire (2024) Section START HERE ===== -->
+        <!-- ===== Enquire_Section START HERE ===== -->
+        <tr>
+          <td align="center" valign="top"><table align="center" width="800" border="0" cellspacing="0" cellpadding="0" style="width: 800px;" class="em_wrapper">
+              <tbody>
+                <tr>
+                  <td align="center" valign="top" style="padding: 0px 100px;" class="em_aside24"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                      <tbody>
+                        <tr>
+                          <td align="center" valign="top" bgcolor="#333333" style="padding: 0px 112px 0px 30px; border-radius: 8px;" class="em_aside30"><table align="center" width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tbody>
+                                <tr>
+                                  <td height="35" style="height:35px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                  <td align="left" valign="top" style="padding-bottom: 17px;"><table align="left" border="0" cellspacing="0" cellpadding="0">
+                                      <tbody>
+                                        <tr>
+                                          <td align="center" valign="middle" style="line-height: 0px; font-size: 0px; padding-right: 7px;"><img src="@* TODO: Convert macro: {%  CurrentSite.SitePresentationURL  %} *@/edm/images2024/white_phone_icon.png" width="22" alt="Call" style="display: block; max-width:22px;"/></td>
+                                          <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 23px; line-height:25px; font-weight: 800; color: #ffffff; text-transform: uppercase;">@Model.Heading</td>
+                                        </tr>
+                                      </tbody>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td align="center" valign="top"><table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+                                      <tbody>
+                                        <tr>
+                                          <th  align="left" valign="top" class="em_clear"><table align="left" class="em_wrapper" style="width: 326px;" width="326" border="0" cellspacing="0" cellpadding="0">
+                                              <tbody>
+                                                <tr>
+                                                  <td align="left" valign="top"><table  align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold; text-transform: uppercase;"><span style="font-size: 12px;">Australia</span><br />
+                                                            <a href="tel:0290943322" style="text-decoration: none; color: #ffffff; white-space: nowrap;">(02) 9094 3322</a></td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="30" style="width: 30px;" class="em_side24">&nbsp;</td>
+                                                  <td align="left" valign="top"><table align="left" border="0" cellspacing="0" cellpadding="0">
+                                                      <tbody>
+                                                        <tr>
+                                                          <td align="left" valign="top" class="em_defaultlink" style="font-family: Arial,sans-serif; font-size: 18px;  line-height: 25px; color: #ffffff; font-weight: bold; text-transform: uppercase;"><span style="font-size: 12px;">New Zealand</span><br />
+                                                            <a href="tel:0290943322" style="text-decoration: none; color: #ffffff; white-space: nowrap;">(02) 9094 3322</a></td>
+                                                        </tr>
+                                                      </tbody>
+                                                    </table></td>
+                                                  <td width="30" style="width: 30px;" class="em_hide">&nbsp;</td>
+                                                </tr>
+                                              </tbody>
+                                            </table>
+                                          </th>
+                                          <th align="left" valign="top" class="em_clear em_ptopa"><table align="left" width="132" border="0" cellspacing="0" cellpadding="0" style="width: 132px;">
+                                              <tr>
+                                                @if(!string.IsNullOrWhiteSpace(Model.CtaLabel)){
+                                                    <td align="center" valign="top" style="border: 2px solid #ffffff; border-radius: 30px;"><table  border="0" cellspacing="0" cellpadding="0" align="center" >
+                                                    <tbody>
+                                                      <tr>
+                                                        <td class="em_defult em_dm_txt_white" align="center" valign="middle" height="44" style="font-size: 14px; font-family: Arial, sans-serif; font-weight:bold; color: #ffffff; height:44px; text-transform: uppercase;" ><a href="@Model.CTAUrl" target="_blank" style="text-decoration:none; color:#ffffff; line-height:44px; display:block;">@Model.CtaLabel</a></td>
+                                                      </tr>
+                                                    </tbody>
+                                                  </table></td>
+                                                }
+                                              </tr>
+                                            </table></th>
+                                        </tr>
+                                      </tbody>
+                                    </table></td>
+                                </tr>
+                                <tr>
+                                  <td height="31" style="height:31px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                                </tr>
+                              </tbody>
+                            </table></td>
+                        </tr>
+                        <tr>
+                          <td height="83" style="height:83px; line-height: 0px; font-size: 0px;">&nbsp;</td>
+                        </tr>
+                      </tbody>
+                    </table></td>
+                </tr>
+              </tbody>
+            </table></td>
+        </tr>
+        <!-- ===== // Enquire_Section END HERE ===== --> 
+<!-- ===== // Enquire (2024) Section END HERE ===== -->
