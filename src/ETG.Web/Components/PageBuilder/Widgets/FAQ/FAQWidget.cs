@@ -24,7 +24,7 @@ using XperienceCommunity.KenticoComponentIcons;
     propertiesType: typeof(FAQWidgetProperties),
     Description = "Displays FAQ items in an expandable accordion format",
     IconClass = KenticoIcons.CHECKLIST,
-    AllowCache = false)]
+    AllowCache = true)]
 
 namespace ETG.Web.Components.PageBuilder.Widgets.FAQ;
 

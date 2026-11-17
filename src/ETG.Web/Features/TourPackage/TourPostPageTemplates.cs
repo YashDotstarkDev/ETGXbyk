@@ -78,7 +78,7 @@ IMediator mediator,
         {
             return NotFound();
         }
-
+              
         var query = new ContentItemQueryBuilder()
             .ForContentType(
                 Tour.CONTENT_TYPE_NAME,
@@ -120,7 +120,8 @@ IMediator mediator,
                 TourClass = flightclass ?? string.Empty,
                 TourQuotedPrice = tourQuotedPrice,
                 TourDate = tour.TourTravelDates ?? string.Empty,
-                DepartureDate = date ?? string.Empty,
+                DepartureDate = DateTime.Parse(date ?? DateTime.Now.ToString()),
+                ReturnDate = DateTime.Parse(date ?? DateTime.Now.ToString()),
                 TourDiscountText = discountText,
                 PriceCurrency = priceCurrency ?? string.Empty,
                 PreferredDestination = tourdestination?.DestinationName ?? string.Empty
@@ -410,8 +411,8 @@ IMediator mediator,
             CTABackgroundImage = ctaimage?.LegacyMediaFileAsset?.Url
                                  ?? "/images/travel_destination.png"
         };
-
-
+        var FreedomOfChoiceDays = GetFreedomOfChoiceDays(tour);
+        var TourUpgrades = await GetTourUpgradesAsync(tour);
         var viewModel = new TourPageTemplateViewModel
         {
             Tour = tour,
@@ -427,7 +428,9 @@ IMediator mediator,
             Reviews = reviews,
             FAQs = faqs,
             Promotion = offerData.Promotion,
-            Discount = offerData.Discount
+            Discount = offerData.Discount,
+            FreedomOfChoiceDays = FreedomOfChoiceDays,
+            TourUpgrades = TourUpgrades
         };
 
         if (tour is IMetaDataSchema metaFields)
@@ -711,6 +714,122 @@ IMediator mediator,
         return folders.FirstOrDefault();
     }
 
+    private static List<string> GetFreedomOfChoiceDays(Tour tour)
+    {
+        return tour?.SelectedItineraryFolders?
+            .Where(folder => folder != null)
+            .SelectMany(folder => folder.SelectedTourItineraries ?? Enumerable.Empty<ETG.TourItinerary>())
+            .Where(itinerary =>
+                itinerary != null &&
+                itinerary.SelectedFreedomOfChoiceOptions != null &&
+                itinerary.SelectedFreedomOfChoiceOptions.Any() &&
+                !string.IsNullOrWhiteSpace(itinerary.TourItineraryDayCaption))
+            .Select(itinerary => itinerary.TourItineraryDayCaption.Trim())
+            .ToList()
+            ?? new List<string>();
+    }
+
+    private async Task<List<TourUpgradeFolderViewModel>> GetTourUpgradesAsync(Tour tour)
+    {
+        var folders = tour?.SelectedTourUpgradesFolders?
+            .Where(folder => folder != null)
+            .ToList() ?? [];
+
+        if (folders.Count == 0)
+        {
+            return [];
+        }
+
+        // 1. Collect GUIDs of the selected upgraded tour pages
+        var tourGuids = folders
+            .SelectMany(folder => folder.SelectedTourUpdateLinkedDocuments ?? Enumerable.Empty<ETG.TourUpdateLinkedDocument>())
+            .Where(doc => doc != null)
+            .SelectMany(doc => doc.TourUpgradesTourCode ?? Enumerable.Empty<WebPageRelatedItem>())
+            .Where(item => item != null && item.WebPageGuid != Guid.Empty)
+            .Select(item => item.WebPageGuid)
+            .Distinct()
+            .ToArray();
+
+        if (tourGuids.Length == 0)
+        {
+            return [];
+        }
+
+        // 2. Load the tour pages by GUID
+        var upgradedTours = (await contentRetriever.RetrievePagesByGuids<Tour>(tourGuids))
+            .Where(t => t?.SystemFields != null && !string.IsNullOrWhiteSpace(t.TourCode))
+            .GroupBy(t => t.SystemFields.WebPageItemGUID)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        if (upgradedTours.Count == 0)
+        {
+            return [];
+        }
+
+        // 3. Prices (bulk, keyed by TourCode) and page URLs, in parallel
+        var pricesTask = pricingService.GetPricesBulkAsync(upgradedTours.Values.ToList());
+
+        var urlTasks = upgradedTours.Values
+            .Select(async t =>
+            {
+                var url = await urlRetriever.Retrieve(t);
+                return new KeyValuePair<Guid, string>(
+                    t.SystemFields.WebPageItemGUID,
+                    url?.RelativePath ?? string.Empty);
+            })
+            .ToArray();
+
+        await Task.WhenAll(pricesTask, Task.WhenAll(urlTasks));
+
+        var prices = await pricesTask;
+        var urls = urlTasks.Select(x => x.Result).ToDictionary(x => x.Key, x => x.Value);
+
+        // 4. Map folder -> linked document -> upgraded tour
+        var result = new List<TourUpgradeFolderViewModel>();
+
+        foreach (var folder in folders)
+        {
+            var folderModel = new TourUpgradeFolderViewModel
+            {
+                Name = folder.DocumentName ?? string.Empty
+            };
+
+            foreach (var doc in folder.SelectedTourUpdateLinkedDocuments ?? Enumerable.Empty<ETG.TourUpdateLinkedDocument>())
+            {
+                if (doc == null) continue;
+
+                foreach (var related in doc.TourUpgradesTourCode ?? Enumerable.Empty<WebPageRelatedItem>())
+                {
+                    if (related == null ||
+                        !upgradedTours.TryGetValue(related.WebPageGuid, out var upgradedTour))
+                    {
+                        continue;
+                    }
+
+                    prices.TryGetValue(upgradedTour.TourCode, out var priceInfo);
+                    urls.TryGetValue(related.WebPageGuid, out var pageUrl);
+
+                    folderModel.Items.Add(new TourUpgradeItemViewModel
+                    {
+                        Label = doc.TourUpgradesLabel ?? string.Empty,
+                        IconClass = doc.TourUpgradesIconClass ?? string.Empty,
+                        TourName = upgradedTour.TourName ?? string.Empty,
+                        TourCode = upgradedTour.TourCode,
+                        PageUrl = pageUrl ?? string.Empty,
+                        PriceTypeLabel = upgradedTour.TourPriceTypeLabel ?? string.Empty,
+                        PriceInfo = priceInfo
+                    });
+                }
+            }
+
+            if (folderModel.Items.Count > 0)
+            {
+                result.Add(folderModel);
+            }
+        }
+
+        return result;
+    }
 
     public sealed class TourPageTemplateViewModel
     {
@@ -729,11 +848,30 @@ IMediator mediator,
         public ETG.DiscountAndOffer? Discount { get; set; }
         public ReviewListingResponse? Reviews { get; set; }
         public IEnumerable<FAQ> FAQs { get; set; } = Enumerable.Empty<FAQ>();
+        public IEnumerable<string> FreedomOfChoiceDays { get; set; } = Enumerable.Empty<string>();
+        public IEnumerable<TourUpgradeFolderViewModel> TourUpgrades { get; set; } = Enumerable.Empty<TourUpgradeFolderViewModel>();
     }
     public sealed class TourOfferData
     {
         public PromotionInfo? Promotion { get; set; }
         public ETG.DiscountAndOffer? Discount { get; set; }
+    }
+
+    public sealed class TourUpgradeFolderViewModel
+    {
+        public string Name { get; set; } = string.Empty;   // TourUpgradesFolder.DocumentName
+        public List<TourUpgradeItemViewModel> Items { get; set; } = new();
+    }
+
+    public sealed class TourUpgradeItemViewModel
+    {
+        public string Label { get; set; } = string.Empty;
+        public string IconClass { get; set; } = string.Empty;
+        public string TourName { get; set; } = string.Empty;
+        public string TourCode { get; set; } = string.Empty;
+        public string PageUrl { get; set; } = string.Empty;
+        public string PriceTypeLabel { get; set; } = string.Empty;
+        public TourPricingResult? PriceInfo { get; set; }
     }
 }
 

@@ -1,4 +1,4 @@
-﻿
+
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +16,10 @@ namespace ETG.Web.Features.Experience.Operations;
 public record ExperienceLandingPageQuery(
     RoutedWebPage Page,
     string ChannelName
-) : IQuery<ExperienceLandingPageQueryResponse>,
-    ICacheByValueQuery,
+) : WebPageRoutedQuery<ExperienceLandingPageQueryResponse>(Page),
     IChannelContentQuery
 {
-    public string CacheValueKey => Page.WebPageItemID.ToString();
+    public override string CacheValueKey => $"{Page.WebPageItemID}:{ChannelName}";
 }
 
 public record ExperienceLandingPageQueryResponse(
@@ -38,9 +37,12 @@ public class ExperienceLandingPageQueryHandler(
         ExperienceLandingPageQuery request,
         CancellationToken cancellationToken = default)
     {
-        // Load the container without linked items.
         var landingPageQuery = new ContentItemQueryBuilder()
-            .ForWebPage(request.Page);
+            .ForWebPage(
+                request.Page,
+                parameters => parameters.WithLinkedItems(
+                    1,
+                    options => options.IncludeWebPageData()));
 
         var landingPageResults =
             await Executor.GetMappedWebPageResult<ContainerContent>(
@@ -67,14 +69,10 @@ public class ExperienceLandingPageQueryHandler(
                         landingPage.SystemFields
                     }));
 
-        var heroImages = await Executor.GetMappedResult<MediaFile>(
+        var heroTask = Executor.GetMappedResult<MediaFile>(
             heroQuery,
             DefaultQueryOptions,
             cancellationToken);
-
-        landingPage.ContainerHeroImage = heroImages
-            .Cast<IContentItemFieldsSource>()
-            .ToArray();
 
         // Retrieve child Experience pages.
         var experiencesQuery = new ContentItemQueryBuilder()
@@ -89,14 +87,30 @@ public class ExperienceLandingPageQueryHandler(
                     .WithLinkedItems(4)
                     .OrderBy("WebPageItemOrder"));
 
-        var experiences =
-            await Executor.GetMappedWebPageResult<ExperienceContent>(
+        var experiencesTask =
+            Executor.GetMappedWebPageResult<ExperienceContent>(
                 experiencesQuery,
                 DefaultQueryOptions,
                 cancellationToken);
+
+        await Task.WhenAll(heroTask, experiencesTask);
+
+        var heroImages = await heroTask;
+        var experiences = await experiencesTask;
+
+        landingPage.ContainerHeroImage = heroImages
+            .Cast<IContentItemFieldsSource>()
+            .ToArray();
 
         return new ExperienceLandingPageQueryResponse(
             landingPage,
             experiences.ToList());
     }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        ExperienceLandingPageQuery query,
+        ExperienceLandingPageQueryResponse result,
+        ICacheDependencyKeysBuilder builder) =>
+        base.AddDependencyKeys(query, result, builder)
+            .AllContentItems(ExperienceContent.CONTENT_TYPE_NAME);
 }

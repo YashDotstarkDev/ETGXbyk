@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -112,6 +112,30 @@ public class CurrencyViewComponentTests : BaseWebTest
         _currency.Verify(
             x => x.SetCurrentCurrency("AUD"),
             Times.Once);
+    }
+
+    [Test]
+    public void ChangeCurrency_WithQueryCurrency_SetsCurrencyAndRedirects()
+    {
+        _currency.Setup(x => x.IsValidCurrencyCode("NZD")).Returns(true);
+
+        var result = _controller.ChangeCurrency("NZD", null, "/tours");
+
+        Assert.That(result, Is.TypeOf<LocalRedirectResult>());
+        Assert.That(((LocalRedirectResult)result).Url, Is.EqualTo("/tours"));
+        _currency.Verify(x => x.SetCurrentCurrency("NZD"), Times.Once);
+    }
+
+    [Test]
+    public void ChangeCurrency_WithQueryCode_SetsCurrencyAndRedirects()
+    {
+        _currency.Setup(x => x.IsValidCurrencyCode("EUR")).Returns(true);
+
+        var result = _controller.ChangeCurrency(null, "EUR", "/destinations");
+
+        Assert.That(result, Is.TypeOf<LocalRedirectResult>());
+        Assert.That(((LocalRedirectResult)result).Url, Is.EqualTo("/destinations"));
+        _currency.Verify(x => x.SetCurrentCurrency("EUR"), Times.Once);
     }
 
     [TestCaseSource(typeof(CurrencyCookieReadCases))]

@@ -50,9 +50,20 @@ public class HtmlTextWidgetProperties : BaseWidgetProperties
         Label = "Text",
         Order = 1)]
     public string Text { get; set; } = "";
+
+    [CheckBoxComponent(
+       Order = 0,
+       Label = "Featured",
+       Tooltip = "Toggle Background of the widget Contents",
+       ExplanationText = "When checked, the title will render different background"
+   )]
+    public bool featuredBackground { get; set; } = false;
 }
 
 public class HtmlTextWidgetViewModel(HtmlTextWidgetProperties props)
 {
     public string Text { get; set; } = props.Text;
+
+    public bool featuredBackground { get; set; } = props.featuredBackground;
+
 }

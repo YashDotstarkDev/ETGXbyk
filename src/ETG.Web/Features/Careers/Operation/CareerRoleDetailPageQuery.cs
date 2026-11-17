@@ -9,11 +9,10 @@ namespace ETG.Web.Features.Career.Operations;
 public record CareerRoleDetailPageQuery(
     RoutedWebPage Page,
     string ChannelName
-) : IQuery<CareerRoleDetailPageQueryResponse>,
-    ICacheByValueQuery,
+) : WebPageRoutedQuery<CareerRoleDetailPageQueryResponse>(Page),
     IChannelContentQuery
 {
-    public string CacheValueKey => Page.WebPageItemID.ToString();
+    public override string CacheValueKey => $"{Page.WebPageItemID}:{ChannelName}";
 }
 
 public record CareerRoleDetailPageQueryResponse(

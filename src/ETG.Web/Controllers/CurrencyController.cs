@@ -12,11 +12,19 @@ public class CurrencyController : Controller
         _currencyService = currencyService;
     }
 
+    [HttpGet("change-currency")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult ChangeCurrency([FromQuery(Name = "currency")] string? currency, [FromQuery(Name = "code")] string? code, [FromQuery] string? returnUrl)
+    {
+        var targetCurrency = !string.IsNullOrWhiteSpace(currency) ? currency : code;
+        return Set(targetCurrency ?? string.Empty, returnUrl);
+    }
+
     [HttpGet("currency/set/{code}")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public IActionResult Set(string code, string? returnUrl)
     {
-        if (!_currencyService.IsValidCurrencyCode(code))
+        if (string.IsNullOrWhiteSpace(code) || !_currencyService.IsValidCurrencyCode(code))
         {
             return BadRequest();
         }

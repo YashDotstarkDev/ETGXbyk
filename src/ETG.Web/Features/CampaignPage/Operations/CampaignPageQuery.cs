@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using ETG.Core.Operations;
 using Kentico.Content.Web.Mvc;
@@ -18,7 +18,11 @@ public sealed class CampaignPageQueryHandler(WebPageQueryTools tools)
         CancellationToken cancellationToken = default)
     {
         var query = new ContentItemQueryBuilder()
-            .ForWebPage(request.Page);
+            .ForWebPage(
+                request.Page,
+                parameters => parameters.WithLinkedItems(
+                    1,
+                    options => options.IncludeWebPageData()));
 
         var pages = await Executor
             .GetMappedWebPageResult<ContainerContent>(
@@ -27,5 +31,21 @@ public sealed class CampaignPageQueryHandler(WebPageQueryTools tools)
                 cancellationToken);
 
         return pages.FirstOrDefault();
+    }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        CampaignPageQuery query,
+        ContainerContent result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        base.AddDependencyKeys(query, result, builder);
+
+        if (result is null) return builder;
+
+        builder.Collection(result.ContainerHeroImage, (img, b) => b.ContentItem(img));
+        builder.Collection(result.ContainerHeroContactUsCtaPath, (cta, b) => b.ContentItem(cta));
+        builder.Collection(result.ContainerRedirect, (red, b) => b.ContentItem(red));
+
+        return builder;
     }
 }

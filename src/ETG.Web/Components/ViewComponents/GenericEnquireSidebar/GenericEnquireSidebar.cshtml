@@ -1,4 +1,4 @@
-﻿@model ETG.Web.Components.ViewComponents.GenericEnquireSidebar.GenericEnquireSidebarViewModel
+@model ETG.Web.Components.ViewComponents.GenericEnquireSidebar.GenericEnquireSidebarViewModel
 @{
     var firstEmail = Model.EnquiryContacts
         .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Email))
@@ -69,37 +69,32 @@
 }
 
 <script>
-    $(document).ready(function () {
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".calendly-button").forEach(function (button) {
+            button.addEventListener("click", function (e) {
+                e.preventDefault();
 
-        $(".calendly-button").on("click", function(e) {
-            e.preventDefault();
-            var $button = $(this);
+                var calendlyUrl = button.getAttribute("data-link");
 
-            if (!$button.length) {
-                return;
-            }
+                if (!calendlyUrl || !calendlyUrl.trim()) {
+                    console.warn("Calendly URL is missing from data-link attribute.");
+                    return;
+                }
 
-            var calendlyUrl = $button.attr("data-link");
+                if (
+                    typeof window.Calendly === "undefined" ||
+                    typeof window.Calendly.showPopupWidget !== "function"
+                ) {
+                    console.warn("Calendly is not loaded.");
+                    return;
+                }
 
-            if (!calendlyUrl || !calendlyUrl.trim()) {
-                console.warn("Calendly URL is missing from data-link attribute.");
-                return;
-            }
-
-            if (
-                typeof window.Calendly === "undefined" ||
-                typeof window.Calendly.showPopupWidget !== "function"
-            ) {
-                console.warn("Calendly is not loaded.");
-                return;
-            }
-
-            try {
-                window.Calendly.showPopupWidget(calendlyUrl);
-            } catch (error) {
-                console.error("Unable to open Calendly popup:", error);
-            }
+                try {
+                    window.Calendly.showPopupWidget(calendlyUrl);
+                } catch (error) {
+                    console.error("Unable to open Calendly popup:", error);
+                }
+            });
         });
-
     });
 </script>

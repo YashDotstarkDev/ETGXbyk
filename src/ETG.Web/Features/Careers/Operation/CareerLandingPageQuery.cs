@@ -10,11 +10,10 @@ namespace ETG.Web.Features.Career.Operations;
 public record CareerLandingPageQuery(
     RoutedWebPage Page,
     string ChannelName
-) : IQuery<CareerLandingPageQueryResponse>,
-    ICacheByValueQuery,
+) : WebPageRoutedQuery<CareerLandingPageQueryResponse>(Page),
     IChannelContentQuery
 {
-    public string CacheValueKey => Page.WebPageItemID.ToString();
+    public override string CacheValueKey => $"{Page.WebPageItemID}:{ChannelName}";
 }
 
 public record CareerLandingPageQueryResponse(
@@ -32,27 +31,12 @@ public class CareerLandingPageQueryHandler(
         CareerLandingPageQuery request,
         CancellationToken cancellationToken = default)
     {
-        // 1. Query the landing page (ETG.Page)
         var landingPageQuery = new ContentItemQueryBuilder()
             .ForWebPage(
                 request.Page,
                 query => query.WithLinkedItems(4)
             );
 
-        var landingPage = (
-            await Executor.GetMappedWebPageResult<Page>(
-                landingPageQuery,
-                DefaultQueryOptions,
-                cancellationToken
-            )
-        ).FirstOrDefault();
-
-        if (landingPage is null)
-        {
-            return null;
-        }
-
-        // 2. Query published CareerRole items from the /career-roles folder
         var careerRolesQuery = new ContentItemQueryBuilder()
             .ForContentType(
                 CareerRole.CONTENT_TYPE_NAME,
@@ -65,17 +49,37 @@ public class CareerLandingPageQueryHandler(
                     .OrderBy(nameof(WebPageFields.WebPageItemOrder))
             );
 
-        var careerRoles = (
-            await Executor.GetMappedWebPageResult<CareerRole>(
-                careerRolesQuery,
-                DefaultQueryOptions,
-                cancellationToken
-            )
-        ).ToList();
+        // Execute both queries concurrently
+        var landingPageTask = Executor.GetMappedWebPageResult<Page>(
+            landingPageQuery,
+            DefaultQueryOptions,
+            cancellationToken);
+
+        var careerRolesTask = Executor.GetMappedWebPageResult<CareerRole>(
+            careerRolesQuery,
+            DefaultQueryOptions,
+            cancellationToken);
+
+        await Task.WhenAll(landingPageTask, careerRolesTask);
+
+        var landingPage = (await landingPageTask).FirstOrDefault();
+        if (landingPage is null)
+        {
+            return null;
+        }
+
+        var careerRoles = (await careerRolesTask).ToList();
 
         return new CareerLandingPageQueryResponse(
             landingPage,
             careerRoles
         );
     }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        CareerLandingPageQuery query,
+        CareerLandingPageQueryResponse result,
+        ICacheDependencyKeysBuilder builder) =>
+        base.AddDependencyKeys(query, result, builder)
+            .AllContentItems(CareerRole.CONTENT_TYPE_NAME);
 }

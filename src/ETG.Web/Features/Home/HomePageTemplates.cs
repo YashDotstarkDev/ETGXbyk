@@ -21,6 +21,7 @@ using ExperiencePage = ETG.Core.Content.Experience;
 using MediaFile = ETG.Core.Content.MediaFile;
 using Icons = Kentico.Xperience.Admin.Base.Icons;
 using ETG.Core.Content;
+using ETG.Web.Features.Home.Operations;
 
 [assembly: RegisterPageTemplate(
     identifier: "Website.HomePage_Default",
@@ -45,7 +46,6 @@ public sealed class HomePageTemplateProperties : IPageTemplateProperties
 public sealed class HomePageTemplateController(
     IMediator mediator,
     IWebPageDataContextRetriever contextRetriever,
-    IContentQueryExecutor contentQueryExecutor,
     IWebsiteChannelContext websiteChannelContext,
     IWebPageUrlRetriever urlRetriever,
     ITaxonomyRetriever taxonomyRetriever,
@@ -65,17 +65,11 @@ public sealed class HomePageTemplateController(
             .Where(guid => guid != Guid.Empty)
             .Distinct().ToArray() ?? [];
 
-        var experiences = await GetSelectedExperiences(selectedExperienceGuids);
+        var experiences = await GetSelectedExperiencesAsync(selectedExperienceGuids);
 
-        // PERFORMANCE FIX: Use cached CQRS query handler instead of retrieving ALL articles
-        // This reduces load time from 3-5s to <500ms by limiting results and using cache
-        var relatedArticles = await mediator.Send(
-            new Operations.GetHomePageArticlesQuery(websiteChannelContext.WebsiteChannelName),
+        var relatedArticleViewModels = await mediator.Send(
+            new GetHomePageArticlesQuery(websiteChannelContext.WebsiteChannelName),
             HttpContext.RequestAborted);
-
-        var relatedArticleViewModels = await Task.WhenAll(
-            relatedArticles.Select(article =>
-                ArticleViewModel.CreateAsync(article, urlRetriever, taxonomyRetriever)));
 
         // --- ALGOLIA CONFIG ---
         var algoliaSection = configuration.GetSection("CMSAlgoliaSearch");
@@ -126,18 +120,23 @@ public sealed class HomePageTemplateController(
         return View("~/Features/Home/HomePage_Default.cshtml", model);
     }
 
-    private async Task<IReadOnlyList<HomeExperienceViewModel>> GetSelectedExperiences(IReadOnlyList<Guid> selectedGuids)
+    private async Task<IReadOnlyList<HomeExperienceViewModel>> GetSelectedExperiencesAsync(
+        IReadOnlyList<Guid> selectedGuids)
     {
         if (selectedGuids.Count == 0) return [];
 
-        var query = new ContentItemQueryBuilder();
-        query.ForContentType(ExperiencePage.CONTENT_TYPE_NAME,
-            parameters => parameters.ForWebsite(websiteChannelContext.WebsiteChannelName));
+        var experiencePages = await mediator.Send(
+            new GetSelectedExperiencesQuery(
+                websiteChannelContext.WebsiteChannelName,
+                selectedGuids),
+            HttpContext.RequestAborted);
 
-        var pages = await contentQueryExecutor.GetMappedWebPageResult<ExperiencePage>(query);
-        var pagesByGuid = pages.ToDictionary(e => e.SystemFields.WebPageItemGUID);
+        // Index by GUID so we can restore the editor-selected order after
+        // retrieval (SQL IN ordering is undefined).
+        var pagesByGuid = experiencePages.ToDictionary(
+            e => e.SystemFields.WebPageItemGUID);
 
-        var results = new List<HomeExperienceViewModel>();
+        var results = new List<HomeExperienceViewModel>(selectedGuids.Count);
         foreach (var guid in selectedGuids)
         {
             if (!pagesByGuid.TryGetValue(guid, out var experience)) continue;
@@ -151,10 +150,6 @@ public sealed class HomePageTemplateController(
             });
         }
 
-        if (pages is IMetaDataSchema metaFields)
-        {
-            metaService.SetMeta(metaFields);
-        }
         return results;
     }
 

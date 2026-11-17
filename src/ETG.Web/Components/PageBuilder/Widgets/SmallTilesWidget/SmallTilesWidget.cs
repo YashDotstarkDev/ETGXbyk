@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CSharpFunctionalExtensions;
 using ETG.Core.Components;
@@ -150,13 +150,12 @@ public class SmallTilesWidget(
             return string.Empty;
         }
 
-        var asset = mediaItem.GetType()
-            .GetProperties()
-            .Where(p => p.PropertyType == typeof(ContentItemAsset))
-            .Select(p => p.GetValue(mediaItem) as ContentItemAsset)
-            .FirstOrDefault(a => a is not null);
+        if (mediaItem is MediaFile mediaFile)
+        {
+            return mediaFile.LegacyMediaFileAsset?.Url ?? string.Empty;
+        }
 
-        return asset?.Url ?? string.Empty;
+        return string.Empty;
     }
 }
 

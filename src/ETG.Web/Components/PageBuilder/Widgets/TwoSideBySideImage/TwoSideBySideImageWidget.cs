@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CSharpFunctionalExtensions;
 using ETG.Core.Components;
 using ETG.Core.Content;
@@ -33,9 +33,15 @@ public class TwoSideBySideImageWidget(IContentRetriever contentRetriever) : View
     {
         var props = cvm.Properties;
 
-        var image1 = await RetrieveImage(props.Image1);
-        var image2 = await RetrieveImage(props.Image2);
-        var image3 = await RetrieveImage(props.Image3);
+        var image1Task = RetrieveImage(props.Image1);
+        var image2Task = RetrieveImage(props.Image2);
+        var image3Task = RetrieveImage(props.Image3);
+
+        await Task.WhenAll(image1Task, image2Task, image3Task);
+
+        var image1 = await image1Task;
+        var image2 = await image2Task;
+        var image3 = await image3Task;
 
         return Validate(props, image1, image2, image3)
             .Match(

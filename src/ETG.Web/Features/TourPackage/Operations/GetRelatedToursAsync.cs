@@ -1,4 +1,10 @@
-﻿using CMS.ContentEngine;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
@@ -154,6 +160,72 @@ public sealed class GetRelatedToursQueryHandler(
             .ToList();
     }
 
+    // In-memory indexed destination-to-tour map: ChannelName -> (Expiry, Map: DestinationGuid -> List<TourWebPageGuid>)
+    private static readonly ConcurrentDictionary<string, (DateTime Expiry, Dictionary<Guid, List<Guid>> Map)> DestinationTourMapCache =
+        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly SemaphoreSlim CacheLock = new(1, 1);
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(15);
+
+    private async Task<Dictionary<Guid, List<Guid>>> GetDestinationTourMapAsync(
+        string channelName,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        if (DestinationTourMapCache.TryGetValue(channelName, out var cached) && cached.Expiry > now)
+        {
+            return cached.Map;
+        }
+
+        await CacheLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (DestinationTourMapCache.TryGetValue(channelName, out cached) && cached.Expiry > DateTime.UtcNow)
+            {
+                return cached.Map;
+            }
+
+            var query = new ContentItemQueryBuilder()
+                .ForContentType(
+                    Tour.CONTENT_TYPE_NAME,
+                    config => config
+                        .ForWebsite(channelName)
+                        .WithLinkedItems(1));
+
+            var tours = await executor.GetMappedWebPageResult<Tour>(
+                query,
+                cancellationToken: cancellationToken);
+
+            var map = new Dictionary<Guid, List<Guid>>();
+
+            foreach (var tour in tours.Where(IsValidTour))
+            {
+                var tourWebPageGuid = tour.SystemFields?.WebPageItemGUID ?? Guid.Empty;
+                if (tourWebPageGuid == Guid.Empty)
+                {
+                    continue;
+                }
+
+                var tourDestGuids = GetDestinationGuids(tour);
+                foreach (var destGuid in tourDestGuids)
+                {
+                    if (!map.TryGetValue(destGuid, out var tourList))
+                    {
+                        tourList = new List<Guid>();
+                        map[destGuid] = tourList;
+                    }
+                    tourList.Add(tourWebPageGuid);
+                }
+            }
+
+            DestinationTourMapCache[channelName] = (DateTime.UtcNow.Add(CacheDuration), map);
+            return map;
+        }
+        finally
+        {
+            CacheLock.Release();
+        }
+    }
+
     private async Task<List<Tour>> GetToursFromDestinations(
         Tour currentTour,
         CancellationToken cancellationToken)
@@ -166,7 +238,57 @@ public sealed class GetRelatedToursQueryHandler(
             return [];
         }
 
-        // OPTIMIZED: Push destination filtering to database with TopN
+        var map = await GetDestinationTourMapAsync(
+            channelContext.WebsiteChannelName,
+            cancellationToken);
+
+        var currentTourGuid = currentTour.SystemFields?.WebPageItemGUID ?? Guid.Empty;
+
+        // Prioritize primary destination matches first, then sub-country matches
+        var primaryCountryGuid = currentTour.TourPrimaryCountry?
+            .FirstOrDefault(x => x != null && x.WebPageGuid != Guid.Empty)?.WebPageGuid ?? Guid.Empty;
+
+        var matchingTourGuids = new List<Guid>();
+        var seenTourGuids = new HashSet<Guid>();
+
+        void AddToursForDestination(Guid destGuid)
+        {
+            if (destGuid != Guid.Empty && map.TryGetValue(destGuid, out var tourGuids))
+            {
+                foreach (var guid in tourGuids)
+                {
+                    if (guid != currentTourGuid && seenTourGuids.Add(guid))
+                    {
+                        matchingTourGuids.Add(guid);
+                    }
+                }
+            }
+        }
+
+        if (primaryCountryGuid != Guid.Empty)
+        {
+            AddToursForDestination(primaryCountryGuid);
+        }
+
+        foreach (var destGuid in destinationGuids)
+        {
+            if (destGuid != primaryCountryGuid)
+            {
+                AddToursForDestination(destGuid);
+            }
+        }
+
+        if (matchingTourGuids.Count == 0)
+        {
+            return [];
+        }
+
+        // Bounded candidate set: take up to (MaxTours + 20) candidates
+        var candidateGuids = matchingTourGuids
+            .Take(MaxTours + 20)
+            .ToArray();
+
+        // Indexed seek by WebPageItemGUID instead of leading-wildcard WhereLike
         var query = new ContentItemQueryBuilder()
             .ForContentType(
                 Tour.CONTENT_TYPE_NAME,
@@ -174,25 +296,23 @@ public sealed class GetRelatedToursQueryHandler(
                     .ForWebsite(
                         channelContext.WebsiteChannelName)
                     .WithLinkedItems(1)
-                    .TopN(MaxTours + 20) // Extra buffer for deduplication and filtering
-                    .Where(where =>
-                    {
-                        // Filter by destination GUIDs at database level
-                        foreach (var destGuid in destinationGuids)
-                        {
-                            where.Or()
-                                .WhereLike(nameof(Tour.TourPrimaryCountry), $"%{destGuid}%")
-                                .Or()
-                                .WhereLike(nameof(Tour.TourSubCountries), $"%{destGuid}%");
-                        }
-                    }));
+                    .Where(where => where.WhereIn("WebPageItemGUID", candidateGuids)));
 
         var tours = await executor.GetMappedWebPageResult<Tour>(
             query,
             cancellationToken: cancellationToken);
 
-        return tours
+        var tourLookup = tours
             .Where(IsValidTour)
+            .GroupBy(tour => tour.SystemFields.WebPageItemGUID)
+            .ToDictionary(
+                group => group.Key,
+                group => group.First());
+
+        // Preserve candidate relevance order and deduplicate by TourCode
+        return candidateGuids
+            .Where(tourLookup.ContainsKey)
+            .Select(guid => tourLookup[guid])
             .GroupBy(
                 tour => tour.TourCode,
                 StringComparer.OrdinalIgnoreCase)

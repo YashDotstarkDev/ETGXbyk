@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using ETG.Core.Content;
 using ETG.Core.Operations;
@@ -11,12 +11,11 @@ namespace ETG.Web.Features.Experience.Operations;
 public record ExperiencePageQuery(
     RoutedWebPage Page,
     string ChannelName
-) : IQuery<ExperiencePageQueryResponse>,
-    ICacheByValueQuery,
+) : WebPageRoutedQuery<ExperiencePageQueryResponse>(Page),
     IChannelContentQuery
 {
-    public string CacheValueKey =>
-        Page.WebPageItemID.ToString();
+    public override string CacheValueKey =>
+        $"{Page.WebPageItemID}:{ChannelName}";
 }
 
 

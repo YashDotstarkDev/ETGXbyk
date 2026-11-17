@@ -6,6 +6,7 @@ using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Web.Infrastructure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Sidio.Sitemap.Core;
 
 namespace ETG.Web.Features.SEO;
@@ -16,7 +17,9 @@ public class SitemapRetriever(
     IWebsiteChannelContext website,
     IContentQueryExecutor executor,
     ICacheDependencyBuilderFactory cacheBuilderFactory,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    IInfoProvider<WebsiteChannelInfo>? websiteChannelInfoProvider = null,
+    IConfiguration? configuration = null)
 {
     private readonly IProgressiveCache cache = cache;
     private readonly IWebPageUrlRetriever urlRetriever = urlRetriever;
@@ -24,10 +27,13 @@ public class SitemapRetriever(
     private readonly IContentQueryExecutor executor = executor;
     private readonly ICacheDependencyBuilderFactory cacheBuilderFactory = cacheBuilderFactory;
     private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor;
+    private readonly IInfoProvider<WebsiteChannelInfo>? websiteChannelInfoProvider = websiteChannelInfoProvider;
+    private readonly IConfiguration? configuration = configuration;
 
-    public async Task<List<SitemapNode>> GetSitemapNodes()
+    public async Task<List<SitemapNode>> GetSitemapNodes(string? customBaseUrl = null)
     {
-        string baseUrl = GetBaseUrl();
+        string baseUrl = GetBaseUrl(customBaseUrl);
+        string hostKey = string.IsNullOrWhiteSpace(baseUrl) ? "no-host" : baseUrl;
 
         return await cache.LoadAsync(async cs =>
         {
@@ -36,18 +42,75 @@ public class SitemapRetriever(
             cs.CacheDependency = builder.ForWebPageItems().All(website.WebsiteChannelName).Builder().Build();
 
             return await GetSitemapNodesInternal(baseUrl);
-        }, new CacheSettings(60, [nameof(GetSitemapNodes), website.WebsiteChannelName, baseUrl]));
+        }, new CacheSettings(60, [nameof(GetSitemapNodes), website.WebsiteChannelName, hostKey]));
     }
 
-    private string GetBaseUrl()
+    private string GetBaseUrl(string? customBaseUrl = null)
     {
+        
+        if (!string.IsNullOrWhiteSpace(customBaseUrl))
+        {
+            return NormalizeBaseUrl(customBaseUrl);
+        }
+
         var request = httpContextAccessor.HttpContext?.Request;
-        if (request != null)
+        if (request != null && request.Host.HasValue)
         {
             return $"{request.Scheme}://{request.Host}{request.PathBase}".TrimEnd('/');
         }
 
+        try
+        {
+            var channel = websiteChannelInfoProvider?.Get(website.WebsiteChannelID);
+            if (channel != null && !string.IsNullOrWhiteSpace(channel.WebsiteChannelDomain))
+            {
+                return NormalizeBaseUrl(channel.WebsiteChannelDomain);
+            }
+
+            var channelItem = new ObjectQuery("cms.websitechannel")
+                .WhereEquals("WebsiteChannelID", website.WebsiteChannelID)
+                .FirstOrDefault();
+
+            if (channelItem != null)
+            {
+                string domain = channelItem.GetStringValue("WebsiteChannelDomain", string.Empty);
+                if (!string.IsNullOrWhiteSpace(domain))
+                {
+                    return NormalizeBaseUrl(domain);
+                }
+            }
+        }
+        catch
+        {
+            // Graceful fallback if channel lookup fails
+        }
+
+        
+        if (configuration != null)
+        {
+            string? configDomain = configuration["Website:BaseUrl"] ?? configuration["SiteDomain"];
+            if (!string.IsNullOrWhiteSpace(configDomain))
+            {
+                return NormalizeBaseUrl(configDomain);
+            }
+        }
+
         return string.Empty;
+    }
+
+    private static string NormalizeBaseUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return string.Empty;
+
+        url = url.Trim().TrimEnd('/');
+        if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            url = "https://" + url;
+        }
+
+        return url;
     }
 
     private async Task<List<SitemapNode>> GetSitemapNodesInternal(string baseUrl)

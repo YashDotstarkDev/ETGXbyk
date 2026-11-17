@@ -60,7 +60,8 @@
             .LegacyMediaFileAsset?
             .Url;
     }
-
+    var tourMapImage = tour.TourMapImage?.OfType<MediaFile>().FirstOrDefault();
+    var tourHeroImage = tour.TourHeroImage?.OfType<MediaFile>().FirstOrDefault();
     var partnershipFolders = pageData.PartnershipFolders
       ?? Enumerable.Empty<Folder>();
 
@@ -211,6 +212,20 @@ else
                     {
                         <p class="pkg-intro-text mb-4">@tour.TourSummary</p>
                     }
+                    @if (!string.IsNullOrWhiteSpace(tour.TourDetails))
+                    {
+                        <div id="pkg-overview" class="pkg-section mb-5">
+                            <h3 class="pkg-section-title">Overview</h3>
+                            <p class="pkg-body-text pkg-body-text-styled">@Html.Raw(tour.TourDetails)</p>
+                            @if (tourMapImage?.LegacyMediaFileAsset?.Url != null)
+                            {                                
+                                <img src="@tourMapImage.Imgixify(800, 0, "max", "format,compress")" srcset="@tourMapImage.ImgixSrcset(800, 0, null, "max", "format,compress")" width="800"
+                                     alt="Tour Map"
+                                     loading="lazy"
+                                     class="pkg-overview-image">
+                            }
+                        </div>
+                    }
 
                     @if (tour.SelectedTourHighlightFolders != null && tour.SelectedTourHighlightFolders.Any())
                     {
@@ -219,6 +234,7 @@ else
                                  folder?.SelectedTourHighlilghts != null &&
                                  folder.SelectedTourHighlilghts.Any()))
                         {
+                            <div id="pkg-highlights" class="pkg-section mb-5">
                             <h4 class="pkg-subheading mb-3 text-dark" id="pkg-highlights">Highlights</h4>
                             <ul class="pkg-inclusions-list list-unstyled">
                                 @foreach (var highlightitems in tour.SelectedTourHighlightFolders)
@@ -242,6 +258,7 @@ else
                                     }
                                 }
                             </ul>
+                            </div>
                         }
                     }
                     <!-- Entire Bonus -->
@@ -285,9 +302,7 @@ else
                         <div id="pkg-overview" class="pkg-section mb-5">
                             <h3 class="pkg-section-title">Overview</h3>
                             <div class="pkg-body-text pkg-body-text-styled">@Html.Raw(tour.TourDetails)</div>
-                            @{
-                                var tourMapImage = tour.TourMapImage?.OfType<MediaFile>().FirstOrDefault();
-                            }
+                            
                             @if (tourMapImage?.LegacyMediaFileAsset?.Url != null)
                             {
                                 <img src="@tourMapImage.LegacyMediaFileAsset.Url"

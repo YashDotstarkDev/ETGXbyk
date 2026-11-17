@@ -1,9 +1,9 @@
 @model ETG.Web.Components.PageBuilder.Widgets.InPartnership.InPartnershipWidgetViewModel
 
 @{
-    var logo1Url = Model.Logo1Image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress");
-    var logo2Url = Model.Logo2Image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress");
-    var logo3Url = Model.Logo3Image.Imgixify(width: 130, height: 0, fit: "clip", auto: "format,compress");
+    var logo1Url = Model.Logo1Image.Imgixify(width: 0, height: 0, fit: "clip", auto: "format,compress");
+    var logo2Url = Model.Logo2Image.Imgixify(width: 0, height: 0, fit: "clip", auto: "format,compress");
+    var logo3Url = Model.Logo3Image.Imgixify(width: 0, height: 0, fit: "clip", auto: "format,compress");
 }
 
     <section class="section-pad" aria-labelledby="partnership-title">
@@ -18,8 +18,7 @@
             {
                 <img loading="lazy" 
                      src="@logo1Url" 
-                     srcset="@Model.Logo1Image.ImgixSrcset(130, 0)"
-                     width="130"
+                     srcset="@Model.Logo1Image.ImgixSrcset(0, 0)"                    
                      alt="Partner logo" />
             }
 
@@ -27,8 +26,7 @@
             {
                 <img loading="lazy" 
                      src="@logo2Url" 
-                     srcset="@Model.Logo2Image.ImgixSrcset(130, 0)"
-                     width="130"
+                     srcset="@Model.Logo2Image.ImgixSrcset(0, 0)"                    
                      alt="Partner logo" />
             }
 
@@ -36,8 +34,7 @@
             {
                 <img loading="lazy" 
                      src="@logo3Url" 
-                     srcset="@Model.Logo3Image.ImgixSrcset(130, 0)"
-                     width="130"
+                     srcset="@Model.Logo3Image.ImgixSrcset(0, 0)"                     
                      alt="Partner logo" />
             }
         </div>

@@ -16,14 +16,31 @@ public class DestinationPostPageQueryHandler(WebPageQueryTools tools)
         DestinationPostPageQuery request,
         CancellationToken cancellationToken = default)
     {
+        // OPTIMIZED: Depth 2 is sufficient for Folders -> AccordionItems & MediaFiles
         var destinationQuery = new ContentItemQueryBuilder()
-            .ForWebPage(request.Page, c => c.WithLinkedItems(3));
+            .ForWebPage(request.Page, c => c.WithLinkedItems(2));
 
         var result = await Executor.GetMappedWebPageResult<Destination>(
             destinationQuery,
             DefaultQueryOptions,
             cancellationToken);
 
-        return result.First();
+        return result.FirstOrDefault()!;
+    }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        DestinationPostPageQuery query,
+        Destination result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        builder = base.AddDependencyKeys(query, result, builder);
+        if (result is null) return builder;
+
+        return builder
+            .AllContentItems(Destination.CONTENT_TYPE_NAME)
+            .AllContentItems(AccordionItemFolder.CONTENT_TYPE_NAME)
+            .AllContentItems(AccordionItem.CONTENT_TYPE_NAME)
+            .AllContentItems(MediaFile.CONTENT_TYPE_NAME)
+            .AllWebPages(query.Page.WebsiteChannelName);
     }
 }

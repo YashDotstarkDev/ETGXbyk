@@ -24,39 +24,50 @@ public class ArticleViewModel
     public string Experiences { get; init; } = "";
     public string TravelTypes { get; init; } = "";
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, (DateTime CachedAt, ArticleViewModel Vm)> s_articleVmCache = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, string> s_destinationCache = new();
+
+    public static void RegisterDestinationName(Guid guid, string name)
+    {
+        if (guid != Guid.Empty && !string.IsNullOrWhiteSpace(name))
+        {
+            s_destinationCache[guid] = name;
+        }
+    }
+
     public static async Task<ArticleViewModel> CreateAsync(
         ETG.Core.Content.Article article,
         IWebPageUrlRetriever urlRetriever,
         ITaxonomyRetriever taxonomyRetriever)
     {
+        var articleGuid = article.SystemFields.WebPageItemGUID;
+        if (articleGuid != Guid.Empty && s_articleVmCache.TryGetValue(articleGuid, out var cached) &&
+            (DateTime.UtcNow - cached.CachedAt).TotalMinutes < 30)
+        {
+            return cached.Vm;
+        }
+
         var heroImage = article.ArticleHeroImage?
             .OfType<ETG.Core.Content.MediaFile>()
             .FirstOrDefault();
 
         var url = await urlRetriever.Retrieve(article);
 
-        // MIGRATION FIX: Pass the new IEnumerable<Guid> type safely
+        // MIGRATION FIX: Pass the new IEnumerable<Guid> type safely with cached category lookup
         var categoryNames = GetCategoryNames(article.ArticleCategories);
 
-        // MIGRATION FIX: Extract Guids from WebPageRelatedItem
+        // MIGRATION FIX: Extract Guids from WebPageRelatedItem and look up from memory cache
         var destinationIds = article.ArticleDestinations?.Select(d => d.WebPageGuid).ToList() ?? new List<Guid>();
 
-        var destinationTags = destinationIds.Any()
-            ? await taxonomyRetriever.RetrieveTags(destinationIds.ToArray(), "en")
-            : Enumerable.Empty<Tag>();
+        var destinationNames = destinationIds.Count > 0
+            ? string.Join(", ", destinationIds.Select(id => s_destinationCache.TryGetValue(id, out var name) ? name : null).Where(n => !string.IsNullOrWhiteSpace(n)))
+            : string.Empty;
 
-        var destinationNames = string.Join(
-            ", ",
-            destinationTags
-                .OrderBy(tag => destinationIds.IndexOf(tag.Identifier))
-                .Select(tag => tag.Title)
-                .Where(title => !string.IsNullOrWhiteSpace(title)));
-
-        return new ArticleViewModel
+        var vm = new ArticleViewModel
         {
             Title = article.ArticleTitle ?? "",
             Summary = article.ArticleSummary ?? "",
-            LinkPath = url.RelativePath,
+            LinkPath = url?.RelativePath ?? string.Empty,
             HeroImage = heroImage is null
                 ? null
                 : ImageAssetViewModel.Create(heroImage),
@@ -72,9 +83,20 @@ public class ArticleViewModel
             Experiences = string.Join(",", article.ArticleExperiences?.Select(e => e.WebPageGuid.ToString()) ?? Enumerable.Empty<string>()),
             TravelTypes = string.Join(",", article.ArticleTravelTypes?.Select(t => t.WebPageGuid.ToString()) ?? Enumerable.Empty<string>())
         };
+
+        if (articleGuid != Guid.Empty)
+        {
+            s_articleVmCache[articleGuid] = (DateTime.UtcNow, vm);
+        }
+
+        return vm;
     }
 
-    // MIGRATION FIX: Changed parameter to accept IEnumerable<Guid> directly!
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, string> s_categoryCache = new();
+    private static DateTime s_lastCategoryCacheRefresh = DateTime.MinValue;
+    private static readonly object s_cacheLock = new();
+
+    // PERFORMANCE FIX: Cached category lookup avoids synchronous WAN database round trips
     private static string GetCategoryNames(IEnumerable<Guid>? categoryIds)
     {
         if (categoryIds == null || !categoryIds.Any())
@@ -82,29 +104,52 @@ public class ArticleViewModel
             return string.Empty;
         }
 
+        EnsureCategoriesLoaded();
+
         var categoryNames = new List<string>();
-
-        try
+        foreach (var id in categoryIds)
         {
-            var categories = ArticleCategoryInfo.Provider
-                .Get()
-                .WhereIn(nameof(ArticleCategoryInfo.ArticleCategoryGuid), categoryIds.ToArray())
-                .ToList();
-
-            foreach (var category in categories)
+            if (s_categoryCache.TryGetValue(id, out var name))
             {
-                if (!string.IsNullOrWhiteSpace(category.ArticleCategoryName))
-                {
-                    categoryNames.Add(category.ArticleCategoryName);
-                }
+                categoryNames.Add(name);
             }
-        }
-        catch
-        {
-            // Graceful fallback: do not crash if category lookup fails
         }
 
         return string.Join(", ", categoryNames);
+    }
+
+    private static void EnsureCategoriesLoaded()
+    {
+        if (DateTime.UtcNow < s_lastCategoryCacheRefresh.AddMinutes(60) && !s_categoryCache.IsEmpty)
+        {
+            return;
+        }
+
+        lock (s_cacheLock)
+        {
+            if (DateTime.UtcNow < s_lastCategoryCacheRefresh.AddMinutes(60) && !s_categoryCache.IsEmpty)
+            {
+                return;
+            }
+
+            try
+            {
+                var categories = ArticleCategoryInfo.Provider.Get().ToList();
+                s_categoryCache.Clear();
+                foreach (var cat in categories)
+                {
+                    if (cat != null && !string.IsNullOrWhiteSpace(cat.ArticleCategoryName))
+                    {
+                        s_categoryCache[cat.ArticleCategoryGuid] = cat.ArticleCategoryName;
+                    }
+                }
+                s_lastCategoryCacheRefresh = DateTime.UtcNow;
+            }
+            catch
+            {
+                // Graceful fallback
+            }
+        }
     }
 }
 

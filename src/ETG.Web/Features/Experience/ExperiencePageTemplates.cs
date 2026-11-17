@@ -81,12 +81,30 @@ public class ExperiencePageTemplateController(
         var selectedExperienceGuid =
             experience.SystemFields.WebPageItemGUID.ToString("D");
 
-        // PERFORMANCE FIX: Use cached CQRS query handler instead of direct query
-        var relatedArticles = await mediator.Send(
+        // Launch all independent secondary operations concurrently
+        var articlesTask = mediator.Send(
             new GetExperienceArticlesQuery(
                 channelContext.WebsiteChannelName,
                 selectedExperienceGuid),
             HttpContext.RequestAborted);
+
+        var tourListingTask = CreateTourListingAsync(
+            experience,
+            selectedExperienceGuid);
+
+        var reviewsTask = !experience.HideGoogleReviews
+            ? reviewsService.GetReviewsAsync()
+            : Task.FromResult<ReviewListingResponse?>(null);
+
+        var urlTask = urlRetriever.Retrieve(experience);
+
+        // Wait for all concurrent tasks to finish
+        await Task.WhenAll(articlesTask, tourListingTask, reviewsTask, urlTask);
+
+        var relatedArticles = await articlesTask;
+        var tourListing = await tourListingTask;
+        var reviewsData = await reviewsTask;
+        var experienceUrl = await urlTask;
 
         var relatedArticleViewModels = await Task.WhenAll(
             relatedArticles.Select(article =>
@@ -103,29 +121,19 @@ public class ExperiencePageTemplateController(
             .OfType<MediaFile>()
             .FirstOrDefault();
 
-        var tourListing = await CreateTourListingAsync(
-            experience,
-            selectedExperienceGuid);
-
         GoogleReviewsWidgetViewModel? googleReviewsVm = null;
         ReviewListingResponse? reviews = null;
 
-        if (!experience.HideGoogleReviews)
+        if (reviewsData != null)
         {
-            var reviewsData = await reviewsService.GetReviewsAsync();
-            if (reviewsData != null)
+            reviews = reviewsData;
+
+            var props = new GoogleReviewsWidgetProperties
             {
-                reviews = reviewsData;
-
-                var props = new GoogleReviewsWidgetProperties
-                {
-                    Heading = "What our customers say"
-                };
-                googleReviewsVm = new GoogleReviewsWidgetViewModel(props, reviewsData);
-            }
+                Heading = "What our customers say"
+            };
+            googleReviewsVm = new GoogleReviewsWidgetViewModel(props, reviewsData);
         }
-
-        var experienceUrl = await urlRetriever.Retrieve(experience);
 
         var experiencePath = (experienceUrl?.RelativePath ?? string.Empty)
             .Split(new[] { '?', '#' }, 2)[0]

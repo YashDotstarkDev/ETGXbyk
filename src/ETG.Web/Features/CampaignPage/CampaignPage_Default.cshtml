@@ -13,19 +13,30 @@
 
 @inject IMediator Mediator
 @inject IWebPageDataContextRetriever ContextRetriever
+@inject IContainerExpiryService ExpiryService
 
 @model TemplateViewModel<CampaignPageTemplateProperties>
 
 @{
     var viewModel = await CampaignPageTemplate.LoadViewModelAsync(
-     Mediator,
-     ContextRetriever,
-     UrlRetriever,
-     MetaService,
-     Context.RequestAborted);
+        Mediator,
+        ContextRetriever,
+        UrlRetriever,
+        MetaService,
+        ExpiryService,
+        Context.RequestAborted);
 
     if (viewModel is null)
     {
+        return;
+    }
+
+    if (!string.IsNullOrWhiteSpace(viewModel.RedirectUrl))
+    {
+        if (!Context.Response.HasStarted)
+        {
+            Context.Response.Redirect(viewModel.RedirectUrl);
+        }
         return;
     }
 }

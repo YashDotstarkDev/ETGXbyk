@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CMS.ContentEngine;
+using CMS.Helpers;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
@@ -52,6 +53,7 @@ public sealed class DestinationPostPageTemplateController : Controller
     private readonly ITaxonomyRetriever taxonomyRetriever;
     private readonly WebPageMetaService metaService;
     private readonly IGoogleReviewsService reviewsService;
+    private readonly IProgressiveCache? cache;
 
     public DestinationPostPageTemplateController(
         IMediator mediator,
@@ -61,7 +63,8 @@ public sealed class DestinationPostPageTemplateController : Controller
         IWebsiteChannelContext websiteChannelContext,
         ITaxonomyRetriever taxonomyRetriever,
         WebPageMetaService metaService,
-        IGoogleReviewsService reviewsService)
+        IGoogleReviewsService reviewsService,
+        IProgressiveCache? cache = null)
     {
         this.mediator = mediator;
         this.contextRetriever = contextRetriever;
@@ -71,6 +74,7 @@ public sealed class DestinationPostPageTemplateController : Controller
         this.taxonomyRetriever = taxonomyRetriever;
         this.metaService = metaService;
         this.reviewsService = reviewsService;
+        this.cache = cache;
     }
 
     public async Task<IActionResult> Index()
@@ -87,6 +91,9 @@ public sealed class DestinationPostPageTemplateController : Controller
         {
             return NotFound();
         }
+
+
+        ArticleViewModel.RegisterDestinationName(destination.SystemFields.WebPageItemGUID, destination.DestinationName);
 
         // Added: inspect the selected folders and their linked items.
         var accordionFolders = destination.SelectedAccordionItemFolders?
@@ -105,149 +112,228 @@ public sealed class DestinationPostPageTemplateController : Controller
             // Inspect folderName, itemCount, and accordionItems.
         }
 
-        // Existing: articles for current destination and its parent.
-        var destinationGuids = new HashSet<Guid>
+        var pathBase = Request.PathBase.ToString();
+
+        async Task<DestinationPostPageViewModel> BuildViewModelAsync()
         {
-            destination.SystemFields.WebPageItemGUID
-        };
+            // Start independent tasks early and concurrently
+            var destinationUrlTask = urlRetriever.Retrieve(destination);
+            var reviewsTask = reviewsService.GetReviewsAsync();
 
-        var parentPageId =
-            destination.SystemFields.WebPageItemParentID;
+            // Existing: articles for current destination and its parent.
+            var destinationGuids = new HashSet<Guid>
+            {
+                destination.SystemFields.WebPageItemGUID
+            };
 
-        if (parentPageId > 0)
-        {
-            var parentQuery = new ContentItemQueryBuilder()
-                .ForContentType(
-                    Destination.CONTENT_TYPE_NAME,
-                    query =>
-                    {
-                        query.ForWebsite(
-                            websiteChannelContext.WebsiteChannelName);
-
-                        query.Where(where => where.WhereEquals(
-                            nameof(WebPageFields.WebPageItemID),
-                            parentPageId));
-                    });
-
-            var parentDestinations = await contentQueryExecutor
-                .GetMappedWebPageResult<Destination>(parentQuery);
-
-            var parentDestination = parentDestinations.FirstOrDefault();
+            var parentPageId = destination.SystemFields.WebPageItemParentID;
+            var parentDestination = await GetParentDestinationAsync(parentPageId);
 
             if (parentDestination is not null)
             {
-                destinationGuids.Add(
-                    parentDestination.SystemFields.WebPageItemGUID);
+                ArticleViewModel.RegisterDestinationName(parentDestination.SystemFields.WebPageItemGUID, parentDestination.DestinationName);
+                destinationGuids.Add(parentDestination.SystemFields.WebPageItemGUID);
             }
+
+            var relatedArticlesTask = mediator.Send(
+                new GetDestinationArticlesQuery(
+                    websiteChannelContext.WebsiteChannelName,
+                    destinationGuids),
+                HttpContext.RequestAborted);
+
+            await Task.WhenAll(destinationUrlTask, reviewsTask, relatedArticlesTask);
+
+            var destinationUrl = await destinationUrlTask;
+            var reviews = await reviewsTask;
+            var relatedArticles = await relatedArticlesTask;
+
+            var relatedArticleViewModels = await Task.WhenAll(
+                relatedArticles.Select(article =>
+                    ArticleViewModel.CreateAsync(
+                        article,
+                        urlRetriever,
+                        taxonomyRetriever)));
+
+            var heroImage = destination.DestinationHeroImage?
+                .OfType<MediaFile>()
+                .FirstOrDefault();
+
+            var foregroundImage = destination.DestinationHeroForegroundImage?
+                .OfType<MediaFile>()
+                .FirstOrDefault();
+
+            var destinationPath = (destinationUrl?.RelativePath ?? string.Empty)
+                .Split(new[] { '?', '#' }, 2)[0]
+                .TrimEnd('/');
+
+            var destinationAlias = destinationPath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault();
+
+            var contactUs = new ContactUsViewModel
+            {
+                CTAUrl = string.IsNullOrWhiteSpace(destinationAlias)
+                    ? string.Empty
+                    : $"{pathBase}/destinations/enquire/{destinationAlias}",
+                CTABackgroundImage = destination.DestinationHeroImage?.OfType<MediaFile>()
+                    .FirstOrDefault()?.LegacyMediaFileAsset?.Url ?? string.Empty
+            };
+
+            return new DestinationPostPageViewModel
+            {
+                CtaButtonText = destination.CtaButtonText,
+                CtaButtonUrl = destination.CtaButtonUrl,
+
+                DestinationName =
+                    destination.DestinationName ?? string.Empty,
+
+                DestinationHeroImage = heroImage is null
+                    ? null
+                    : ImageAssetViewModel.Create(heroImage),
+
+                HeroForegroundImage = foregroundImage is null
+                    ? null
+                    : ImageAssetViewModel.Create(foregroundImage),
+
+                DestinationHeroDisableOverlay =
+                    destination.DestinationHeroDisableOverlay,
+
+                DestinationHeroImageAltTag =
+                    destination.DestinationHeroImageAltTag ?? string.Empty,
+
+                DestinationCampaignTitle =
+                    destination.DestinationCampaignTitle ?? string.Empty,
+
+                DestinationHeading =
+                    destination.DestinationHeading ?? string.Empty,
+
+                DestinationJsonSchema =
+                    destination.DestinationJsonSchema ?? string.Empty,
+
+                DestinationSummary =
+                    destination.DestinationSummary ?? string.Empty,
+
+                DestinationDetail =
+                    destination.DestinationDetail ?? string.Empty,
+
+                DestinationWhenToVisit =
+                    destination.DestinationWhenToVisit ?? string.Empty,
+
+                DestinationStickyModel =
+                    CreateDestinationStickyModel(destination, contactUs, reviews),
+
+                SelectedAccordionItemFolders =
+                    destination.SelectedAccordionItemFolders
+                    ?? Enumerable.Empty<AccordionItemFolder>(),
+
+                SelectedImageFolders =
+                    destination.SelectedImageFolders
+                    ?? Enumerable.Empty<ImageFolder>(),
+
+                SelectedImageTileCtaFolders =
+                    destination.SelectedImageTileCtaFolders
+                    ?? Enumerable.Empty<ImageTileCtaFolder>(),
+
+                RelatedArticles = relatedArticleViewModels,
+                DestinationRelatedArticlesHeader = destination.DestinationRelatedArticlesHeader ?? string.Empty,
+                CTA = contactUs,
+                Reviews = reviews
+            };
         }
 
-        var relatedArticles = await mediator.Send(
-            new GetDestinationArticlesQuery(
-                websiteChannelContext.WebsiteChannelName,
-                destinationGuids),
-            HttpContext.RequestAborted);
+        DestinationPostPageViewModel viewModel;
 
-        var relatedArticleViewModels = await Task.WhenAll(
-            relatedArticles.Select(article =>
-                ArticleViewModel.CreateAsync(
-                    article,
-                    urlRetriever,
-                    taxonomyRetriever)));
-
-        var heroImage = destination.DestinationHeroImage?
-            .OfType<MediaFile>()
-            .FirstOrDefault();
-
-        var foregroundImage = destination.DestinationHeroForegroundImage?
-            .OfType<MediaFile>()
-            .FirstOrDefault();
-
-        var destinationUrl = await urlRetriever.Retrieve(destination);
-
-        var destinationPath = (destinationUrl?.RelativePath ?? string.Empty)
-            .Split(new[] { '?', '#' }, 2)[0]
-            .TrimEnd('/');
-
-        var destinationAlias = destinationPath
-            .Split('/', StringSplitOptions.RemoveEmptyEntries)
-            .LastOrDefault();
-
-        var contactUs = new ContactUsViewModel
+        if (cache != null)
         {
-            CTAUrl = string.IsNullOrWhiteSpace(destinationAlias)
-                ? string.Empty
-                : $"{Request.PathBase}/destinations/enquire/{destinationAlias}",
-            CTABackgroundImage = destination.DestinationHeroImage?.OfType<MediaFile>()
-                .FirstOrDefault()?.LegacyMediaFileAsset?.Url ?? string.Empty
-        };
+            var cacheKey = $"DestinationPostPageVM_{websiteChannelContext.WebsiteChannelName}_{data.WebPage.WebPageItemID}_{System.Globalization.CultureInfo.CurrentUICulture.Name}";
 
-        var reviews = await reviewsService.GetReviewsAsync();
-
-        var viewModel = new DestinationPostPageViewModel
+            viewModel = await cache.LoadAsync(async cs =>
+            {
+                cs.GetCacheDependency = () => CacheHelper.GetCacheDependency(new[]
+                {
+                    $"webpageitem|byid|{data.WebPage.WebPageItemID}",
+                    $"webpageitem|bychannel|{websiteChannelContext.WebsiteChannelName}|bycontenttype|{Destination.CONTENT_TYPE_NAME}",
+                    $"webpageitem|bychannel|{websiteChannelContext.WebsiteChannelName}|all",
+                    "webpageitem|all",
+                    CacheHelper.GetCacheItemName("contentitem", "bycontenttype", Destination.CONTENT_TYPE_NAME),
+                    CacheHelper.GetCacheItemName("contentitem", "bycontenttype", AccordionItemFolder.CONTENT_TYPE_NAME),
+                    CacheHelper.GetCacheItemName("contentitem", "bycontenttype", AccordionItem.CONTENT_TYPE_NAME),
+                    CacheHelper.GetCacheItemName("contentitem", "bycontenttype", MediaFile.CONTENT_TYPE_NAME),
+                    CacheHelper.GetCacheItemName("contentitem", "bycontenttype", ArticleContent.CONTENT_TYPE_NAME)
+                });
+                return await BuildViewModelAsync();
+            }, new CacheSettings(30, cacheKey));
+        }
+        else
         {
-            CtaButtonText = destination.CtaButtonText,
-            CtaButtonUrl = destination.CtaButtonUrl,
+            viewModel = await BuildViewModelAsync();
+        }
 
-            DestinationName =
-                destination.DestinationName ?? string.Empty,
+        if (destination is IMetaDataSchema metaFields)
+        {
+            var heroImg = destination.DestinationHeroImage?
+                .OfType<MediaFile>()
+                .FirstOrDefault();
 
-            DestinationHeroImage = heroImage is null
-                ? null
-                : ImageAssetViewModel.Create(heroImage),
-
-            HeroForegroundImage = foregroundImage is null
-                ? null
-                : ImageAssetViewModel.Create(foregroundImage),
-
-            DestinationHeroDisableOverlay =
-                destination.DestinationHeroDisableOverlay,
-
-            DestinationHeroImageAltTag =
-                destination.DestinationHeroImageAltTag ?? string.Empty,
-
-            DestinationCampaignTitle =
-                destination.DestinationCampaignTitle ?? string.Empty,
-
-            DestinationHeading =
-                destination.DestinationHeading ?? string.Empty,
-
-            DestinationJsonSchema =
-                destination.DestinationJsonSchema ?? string.Empty,
-
-            DestinationSummary =
-                destination.DestinationSummary ?? string.Empty,
-
-            DestinationDetail =
-                destination.DestinationDetail ?? string.Empty,
-
-            DestinationWhenToVisit =
-                destination.DestinationWhenToVisit ?? string.Empty,
-
-            DestinationStickyModel =
-                CreateDestinationStickyModel(destination, contactUs, reviews),
-
-            SelectedAccordionItemFolders =
-                destination.SelectedAccordionItemFolders
-                ?? Enumerable.Empty<AccordionItemFolder>(),
-
-            SelectedImageFolders =
-                destination.SelectedImageFolders
-                ?? Enumerable.Empty<ImageFolder>(),
-
-            SelectedImageTileCtaFolders =
-                destination.SelectedImageTileCtaFolders
-                ?? Enumerable.Empty<ImageTileCtaFolder>(),
-
-            RelatedArticles = relatedArticleViewModels,
-            DestinationRelatedArticlesHeader = destination.DestinationRelatedArticlesHeader ?? string.Empty,
-            // Added: contact/enquiry model.
-            CTA = contactUs,
-            Reviews = reviews
-        };
+            metaService.SetMeta(
+                metaFields,
+                heroImg?.LegacyMediaFileAsset?.Url);
+        }
 
         return View(
             "~/Features/Destinations/DestinationPostPage_Default.cshtml",
             viewModel);
+    }
+
+    private async Task<Destination?> GetParentDestinationAsync(int parentPageId)
+    {
+        if (parentPageId <= 0) return null;
+
+        if (cache != null)
+        {
+            var cacheKey = $"ParentDestination_{websiteChannelContext.WebsiteChannelName}_{parentPageId}";
+            return await cache.LoadAsync(async cs =>
+            {
+                cs.GetCacheDependency = () => CacheHelper.GetCacheDependency(new[]
+                {
+                    $"webpageitem|byid|{parentPageId}",
+                    $"webpageitem|bychannel|{websiteChannelContext.WebsiteChannelName}|bycontenttype|{Destination.CONTENT_TYPE_NAME}",
+                    CacheHelper.GetCacheItemName("contentitem", "bycontenttype", Destination.CONTENT_TYPE_NAME)
+                });
+
+                var parentQuery = new ContentItemQueryBuilder()
+                    .ForContentType(
+                        Destination.CONTENT_TYPE_NAME,
+                        query =>
+                        {
+                            query.ForWebsite(websiteChannelContext.WebsiteChannelName);
+                            query.Where(where => where.WhereEquals(nameof(WebPageFields.WebPageItemID), parentPageId));
+                            query.WithLinkedItems(0);
+                        });
+
+                var parentDestinations = await contentQueryExecutor.GetMappedWebPageResult<Destination>(
+                    parentQuery,
+                    new ContentQueryExecutionOptions { ForPreview = false });
+
+                return parentDestinations.FirstOrDefault();
+            }, new CacheSettings(60, cacheKey));
+        }
+
+        var directQuery = new ContentItemQueryBuilder()
+            .ForContentType(
+                Destination.CONTENT_TYPE_NAME,
+                query =>
+                {
+                    query.ForWebsite(websiteChannelContext.WebsiteChannelName);
+                    query.Where(where => where.WhereEquals(nameof(WebPageFields.WebPageItemID), parentPageId));
+                    query.WithLinkedItems(0);
+                });
+
+        var results = await contentQueryExecutor.GetMappedWebPageResult<Destination>(
+            directQuery,
+            new ContentQueryExecutionOptions { ForPreview = false });
+
+        return results.FirstOrDefault();
     }
 
     private static CampaignStickyBarViewModel CreateDestinationStickyModel(

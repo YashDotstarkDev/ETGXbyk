@@ -1,5 +1,6 @@
 ﻿using CMS.OnlineForms;
 using ETG.Core.Content.Forms;
+using ETG.Web.Services;
 using ETG.Web.Services.Email;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -48,7 +49,7 @@ public static class GetSubscribeNowQuery
         return new SubscribeNowViewModel();
     }
 
-    public static async Task<bool> SaveAsync(SubscribeNowViewModel model, IFormEmailService formEmailService, ILogger logger)
+    public static async Task<bool> SaveAsync(SubscribeNowViewModel model, IFormEmailService formEmailService, ILogger logger, ContactTagService contactTagService)
     {
         if (model == null)
         {
@@ -145,6 +146,21 @@ public static class GetSubscribeNowQuery
                         agent.ItemID);
                 }
             }
+
+            // Tag agent contact as Website Trade
+            try
+            {
+                await contactTagService.TagCompetitionContactAsync(
+                    agent.EmailAddress,
+                    agent.FirstName,
+                    agent.LastName,
+                    isAgent: true);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "CompetitionAgents contact tagging failed. ItemID: {ItemID}", agent.ItemID);
+            }
+
             return agent.ItemID > 0;
         }
 
@@ -211,6 +227,20 @@ public static class GetSubscribeNowQuery
                     "Competition confirmation email failed. ItemID: {ItemID}",
                     consumer.ItemID);
             }
+        }
+
+        // Tag consumer contact as Website Consumer
+        try
+        {
+            await contactTagService.TagCompetitionContactAsync(
+                consumer.EmailAddress,
+                consumer.FirstName,
+                consumer.LastName,
+                isAgent: false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Competition contact tagging failed. ItemID: {ItemID}", consumer.ItemID);
         }
 
         return consumer.ItemID > 0;

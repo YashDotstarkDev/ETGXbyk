@@ -8,6 +8,7 @@ using CMS.DataEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Models.Tour;
+using ETG.Core.Operations;
 using ETG.Web.Features;
 using ETG.Web.Services.Tour;
 using Kentico.Content.Web.Mvc;
@@ -18,7 +19,19 @@ using TourContent = ETG.Core.Content.Tour;
 
 namespace ETG.Web.Features.Errors;
 
-public record PageNotFoundQuery(int TourCount = 8, int ArticleCount = 3) : IRequest<PageNotFoundViewModel>;
+public record PageNotFoundQuery(
+    int TourCount = 8,
+    int ArticleCount = 3,
+    string ChannelName = "ETG",
+    string Currency = "AUD"
+) : IQuery<PageNotFoundViewModel>, IChannelContentQuery, ICacheByValueQuery
+{
+    string IChannelContentQuery.ChannelName => ChannelName;
+
+    // Cache key incorporates website channel, requested counts, and active currency
+    // This prevents cross-channel and cross-currency cache collisions
+    public string CacheValueKey => $"{ChannelName}|{TourCount}|{ArticleCount}|{Currency}";
+}
 
 public class PageNotFoundViewModel
 {
@@ -31,20 +44,23 @@ public class PageNotFoundViewModel
 }
 
 public class PageNotFoundQueryHandler(
-    IContentQueryExecutor executor,
-    IWebsiteChannelContext channelContext,
+    ContentItemQueryTools tools,
     IWebPageUrlRetriever urlRetriever,
     ITaxonomyRetriever taxonomyRetriever,
     ITourSummaryService tourSummaryService,
     ITourPricingService tourPricingService,
     IConfiguration configuration)
-    : IRequestHandler<PageNotFoundQuery, PageNotFoundViewModel>
+    : ContentItemQueryHandler<PageNotFoundQuery, PageNotFoundViewModel>(tools)
 {
-    public async Task<PageNotFoundViewModel> Handle(
+    public override async Task<PageNotFoundViewModel> Handle(
         PageNotFoundQuery request,
         CancellationToken cancellationToken = default)
     {
-        var channelName = !string.IsNullOrWhiteSpace(channelContext.WebsiteChannelName) ? channelContext.WebsiteChannelName : "ETG";
+        var channelName = !string.IsNullOrWhiteSpace(request.ChannelName)
+            ? request.ChannelName
+            : (!string.IsNullOrWhiteSpace(tools.WebsiteChannelContext.WebsiteChannelName)
+                ? tools.WebsiteChannelContext.WebsiteChannelName
+                : "ETG");
 
         var toursTask = GetToursAsync(channelName, request.TourCount, cancellationToken);
         var articlesTask = GetArticlesAsync(channelName, request.ArticleCount, cancellationToken);
@@ -67,6 +83,18 @@ public class PageNotFoundQueryHandler(
         };
     }
 
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        PageNotFoundQuery query,
+        PageNotFoundViewModel result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        // Invalidate cache if any tour package or article is published or modified
+        builder = builder.AllContentItems(TourContent.CONTENT_TYPE_NAME);
+        builder = builder.AllContentItems(ArticleContent.CONTENT_TYPE_NAME);
+
+        return builder;
+    }
+
     private async Task<TourListingViewModel> GetToursAsync(string channelName, int count, CancellationToken cancellationToken)
     {
         try
@@ -77,14 +105,22 @@ public class PageNotFoundQueryHandler(
                     TourContent.CONTENT_TYPE_NAME,
                     config => config
                         .ForWebsite(channelName)
-                        .WithLinkedItems(4)
+                        .WithLinkedItems(3)
+                        .TopN(count)
+                        .OrderBy(
+                            new OrderByColumn("ContentItemCommonDataLastPublishedWhen", OrderDirection.Descending),
+                            new OrderByColumn("ContentItemID", OrderDirection.Descending)
+                        )
                         .Where(where => where
-                            .WhereNull("TourIsUpgrade")
-                            .Or()
-                            .WhereNotEquals("TourIsUpgrade", 1))
+                            .WhereNotEmpty(nameof(TourContent.TourCode))
+                            .Where(w => w
+                                .WhereNull("TourIsUpgrade")
+                                .Or()
+                                .WhereNotEquals("TourIsUpgrade", 1))
+                        )
                 );
 
-            var allTours = await executor.GetMappedWebPageResult<TourContent>(query, cancellationToken: cancellationToken);
+            var allTours = await Executor.GetMappedWebPageResult<TourContent>(query, cancellationToken: cancellationToken);
 
             // Fetch the 8 most recently published tours (same logic as articles / publish date)
             var recentTours = allTours
@@ -149,7 +185,7 @@ public class PageNotFoundQueryHandler(
                         .TopN(count)
                 );
 
-            var articles = await executor.GetMappedWebPageResult<ArticleContent>(query, cancellationToken: cancellationToken);
+            var articles = await Executor.GetMappedWebPageResult<ArticleContent>(query, cancellationToken: cancellationToken);
 
             var articleList = new List<ArticleViewModel>();
             foreach (var article in articles)

@@ -259,8 +259,9 @@
                 {
                     <img loading="lazy" 
                          src="@logoUrl"
-                         srcset="@($"{logo.Imgixify(260, 0, fit: "clip")} 1x, {logo.Imgixify(260, 100, fit: "clip")} 2x")"
-                         width="130"
+                         srcset="@logo.ImgixSrcset(260, 0, fit: "clip")"
+                         width="260"
+                         style="width: 260px; max-width: 100%; height: auto;"
                          alt="@(logo?.LegacyMediaFileTitle ?? "Tahiti Travel Logo")"
                          class="tahiti-v2-brand-icon" />
                 }

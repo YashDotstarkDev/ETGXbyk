@@ -28,4 +28,30 @@ public sealed class HomePageQueryHandler(WebPageQueryTools tools)
 
         return pages.FirstOrDefault();
     }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        HomePageQuery query,
+        Homepage result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        base.AddDependencyKeys(query, result, builder);
+
+        if (result is null) return builder;
+
+        builder.Collection(result.HomepageHeroImage, (img, b) => b.ContentItem(img));
+        builder.Collection(result.HomepageHeroVideoImage, (img, b) => b.ContentItem(img));
+
+        if (result.HomepageExperiences is not null)
+        {
+            foreach (var exp in result.HomepageExperiences)
+            {
+                if (exp.WebPageGuid != Guid.Empty)
+                {
+                    builder.WebPage(exp.WebPageGuid);
+                }
+            }
+        }
+
+        return builder;
+    }
 }

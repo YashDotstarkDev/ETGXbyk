@@ -36,8 +36,8 @@ public sealed class TourEnquireFormViewModel
     public string PriceCurrency { get; set; } = string.Empty;
     public string TourDiscountText { get; set; } = string.Empty;
     public string TourDate { get; set; } = string.Empty;
-    public string DepartureDate { get; set; } = string.Empty;
-    public string ReturnDate { get; set; } = string.Empty;
+    public DateTime DepartureDate { get; set; } = DateTime.Now;
+    public DateTime? ReturnDate { get; set; } = DateTime.Now;
     public string ErrorMessage { get; set; } = string.Empty;
     public string PreferredDestination { get; set; } = string.Empty;
 }

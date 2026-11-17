@@ -1,4 +1,4 @@
-﻿using CMS.Websites;
+using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Core.Models;
@@ -37,7 +37,8 @@ public class ExperienceLandingPageTemplateController(
     IWebPageUrlRetriever urlRetriever,
     IWebsiteChannelContext channelContext,
     IWebPageDataContextRetriever contextRetriever,
-    WebPageMetaService metaService
+    WebPageMetaService metaService,
+    IContainerExpiryService expiryService
 ) : Controller
 {
     public async Task<ActionResult> Index()
@@ -59,19 +60,10 @@ public class ExperienceLandingPageTemplateController(
             return NotFound();
         }
 
-        // Resolve the selected redirect page to its URL.
-        var redirectPage = result.Page.ContainerRedirect?
-            .OfType<IWebPageFieldsSource>()
-            .FirstOrDefault();
-
-        if (redirectPage is not null)
+        var redirectUrl = await expiryService.GetExpiryRedirectUrlAsync(result.Page);
+        if (!string.IsNullOrWhiteSpace(redirectUrl))
         {
-            var redirectUrl = await urlRetriever.Retrieve(redirectPage);
-
-            if (!string.IsNullOrWhiteSpace(redirectUrl.RelativePath))
-            {
-                return Redirect(redirectUrl.RelativePath);
-            }
+            return Redirect(redirectUrl);
         }
 
         var heroImage = result.Page.ContainerHeroImage?

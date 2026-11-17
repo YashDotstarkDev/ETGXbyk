@@ -1,7 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
+using CMS.Websites.Routing;
 using ETG.Core.Content;
 using ETG.Web.Infrastructure;
+using ETG.Web.Services.Currency;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,10 +11,16 @@ using Microsoft.AspNetCore.Mvc;
 namespace ETG.Web.Features.Errors;
 
 [Route("error")]
-public class HttpErrorsController(WebPageMetaService metaService, IMediator mediator) : Controller
+public class HttpErrorsController(
+    WebPageMetaService metaService,
+    IMediator mediator,
+    IWebsiteChannelContext channelContext,
+    CurrentCurrencyPricing currencyPricing) : Controller
 {
     private readonly WebPageMetaService metaService = metaService;
     private readonly IMediator mediator = mediator;
+    private readonly IWebsiteChannelContext channelContext = channelContext;
+    private readonly CurrentCurrencyPricing currencyPricing = currencyPricing;
 
     [HttpGet("{code:int}")]
     public async Task<ActionResult> Error(int code, CancellationToken cancellationToken)
@@ -30,7 +38,17 @@ public class HttpErrorsController(WebPageMetaService metaService, IMediator medi
 
         Response.StatusCode = StatusCodes.Status404NotFound;
 
-        var model = await mediator.Send(new PageNotFoundQuery(), cancellationToken);
+        var channelName = !string.IsNullOrWhiteSpace(channelContext.WebsiteChannelName)
+            ? channelContext.WebsiteChannelName
+            : "ETG";
+        var currency = !string.IsNullOrWhiteSpace(currencyPricing.CurrentCurrency)
+            ? currencyPricing.CurrentCurrency
+            : "AUD";
+
+        var model = await mediator.Send(new PageNotFoundQuery(
+            ChannelName: channelName,
+            Currency: currency
+        ), cancellationToken);
 
         return View("~/Features/Errors/NotFound.cshtml", model);
     }

@@ -105,7 +105,7 @@ public class GoogleReviewsService : IGoogleReviewsService
 
                 // Fetch first batch (offset = 0)
                 var response = await client.GetAsync(
-                    $"reviews?id={Uri.EscapeDataString(placeId)}&auth_token={Uri.EscapeDataString(authToken)}&offset=0&sort=highest_rating",
+                    $"reviews?id={Uri.EscapeDataString(placeId)}&auth_token={Uri.EscapeDataString(authToken)}&offset=0&sort=relevancy",
                     cancellationToken);
                 response.EnsureSuccessStatusCode();
                 var firstBatchJson = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -119,11 +119,12 @@ public class GoogleReviewsService : IGoogleReviewsService
                     while (currentOffset < 500 && consecutiveEmptyBatches < 2)
                     {
                         var nextResponse = await client.GetAsync(
-                            $"reviews?id={Uri.EscapeDataString(placeId)}&auth_token={Uri.EscapeDataString(authToken)}&offset={currentOffset}&sort=highest_rating",
+                            $"reviews?id={Uri.EscapeDataString(placeId)}&auth_token={Uri.EscapeDataString(authToken)}&offset={currentOffset}&sort=relevancy",
                             cancellationToken);
 
                         if (!nextResponse.IsSuccessStatusCode)
                         {
+                            logger.LogWarning("Google Reviews pagination stopped at offset {Offset} with status code {StatusCode}.", currentOffset, nextResponse.StatusCode);
                             break;
                         }
 

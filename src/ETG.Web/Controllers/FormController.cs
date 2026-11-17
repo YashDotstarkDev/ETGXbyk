@@ -11,6 +11,7 @@ using ETG.Core.Models;
 using ETG.Core.Models.Tour;
 using ETG.Web.Components.ViewComponents.SubscribeNow;
 using ETG.Web.Infrastructure;
+using ETG.Web.Services;
 using ETG.Web.Services.Email;
 using ETG.Web.Services.Storage;
 using ETG.Web.Services.Tour;
@@ -34,6 +35,7 @@ public class FormController : Controller
     private readonly IShareLinksService _shareLinksService;
     private readonly IBlobStorageService _blobStorageService;
     private readonly IFormEmailService _formEmailService;
+    private readonly ContactTagService _contactTagService;
 
     public FormController(
         IContentQueryExecutor executor,
@@ -45,7 +47,8 @@ public class FormController : Controller
         IBlobStorageService blobStorageService,
         IOptions<ReCaptchaSettings> captchaOptions,
         IFormEmailService formEmailService,
-        CaptchaValidator captchaValidator)
+        CaptchaValidator captchaValidator,
+        ContactTagService contactTagService)
     {
         _executor = executor;
         _utmService = utmService;
@@ -56,6 +59,7 @@ public class FormController : Controller
         _captchaOptions = captchaOptions.Value;
         _formEmailService = formEmailService;
         _captchaValidator = captchaValidator;
+        _contactTagService = contactTagService;
         this.logger = logger;
     }
 
@@ -95,7 +99,7 @@ public class FormController : Controller
             model.EmailAddress = model.EmailAddress.Trim();
             model.IsTravelAgent = agentSelection;
 
-            var saved = await GetSubscribeNowQuery.SaveAsync(model, _formEmailService, logger);
+            var saved = await GetSubscribeNowQuery.SaveAsync(model, _formEmailService, logger, _contactTagService);
 
             if (!saved)
             {
@@ -285,6 +289,21 @@ public class FormController : Controller
         }
 
         BizFormItemProvider.SetItem(enquireItem);
+
+        try
+        {
+            await _contactTagService.TagEnquireContactAsync(
+                enquireItem.Email,
+                enquireItem.Firstname,
+                enquireItem.Lastname,
+                enquireItem.Phone,
+                enquireItem.SubscribeToNewsletter,
+                HttpContext.RequestAborted);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Tour enquiry contact tagging failed. ItemID: {ItemID}", enquireItem.ItemID);
+        }
 
         var formData = new Dictionary<string, string?>
         {
@@ -485,8 +504,8 @@ enquireItem.SubscribeToNewsletter.ToString(),
             Email = model.Form.Email?.Trim() ?? string.Empty,
             Phone = model.Form.Phone?.Trim() ?? string.Empty,
 
-            DepartureDate = model.Form.DepartureDate?.Trim() ?? string.Empty,
-            ReturnDate = model.Form.ReturnDate?.Trim() ?? string.Empty,
+            DepartureDate = null,
+            ReturnDate = null,
 
 
             PreferredContactMethod =
@@ -528,46 +547,60 @@ enquireItem.SubscribeToNewsletter.ToString(),
         }
 
         BizFormItemProvider.SetItem(enquireItem);
-        var formData = new Dictionary<string, string?>
-        {
-            ["Firstname"] = enquireItem.Firstname,
-            ["Lastname"] = enquireItem.Lastname,
-            ["Email"] = enquireItem.Email,
-            ["Phone"] = enquireItem.Phone,
-            ["PreferredContactMethod"] = enquireItem.PreferredContactMethod,
-            ["TourCode"] = enquireItem.TourCode,
-            ["TourName"] = enquireItem.TourName,
-            ["TourClass"] = enquireItem.TourClass,
-            ["TourDepartureCity"] = enquireItem.TourDepartureCity,
-            ["TourQuotedPrice"] = enquireItem.TourQuotedPrice.ToString(),
-            ["PriceCurrency"] = enquireItem.PriceCurrency,
-            ["PreferredDestination"] = enquireItem.PreferredDestination,
-            ["TourDiscountText"] = enquireItem.TourDiscountText,
-            ["TourDate"] = enquireItem.TourDate?.ToString(),
-            ["DepartureDate"] = enquireItem.DepartureDate?.ToString(),
-            ["ReturnDate"] = enquireItem.ReturnDate?.ToString(),
-            ["SubscribeToNewsletter"] =
-        enquireItem.SubscribeToNewsletter.ToString(),
-            ["Message"] = enquireItem.Message
-        };
+
         try
         {
-            await _formEmailService.SendCustomerConfirmationAsync(
-    FormEmailNames.Enquire,
-    enquireItem.Email,
-    formData);
+            await _contactTagService.TagEnquireContactAsync(
+                enquireItem.Email,
+                enquireItem.Firstname,
+                enquireItem.Lastname,
+                enquireItem.Phone,
+                enquireItem.SubscribeToNewsletter,
+                HttpContext.RequestAborted);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Enquire confirmation email failed. ItemID: {ItemID}",
-                enquireItem.ItemID);
+            logger.LogError(ex, "Generic enquiry contact tagging failed. ItemID: {ItemID}", enquireItem.ItemID);
         }
-        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-        {
-            return Json(new { success = true, redirectUrl = "/enquire/thank-you" });
-        }
+
+    //    var formData = new Dictionary<string, string?>
+    //    {
+    //        ["Firstname"] = enquireItem.Firstname,
+    //        ["Lastname"] = enquireItem.Lastname,
+    //        ["Email"] = enquireItem.Email,
+    //        ["Phone"] = enquireItem.Phone,
+    //        ["PreferredContactMethod"] = enquireItem.PreferredContactMethod,
+    //        ["TourCode"] = enquireItem.TourCode,
+    //        ["TourName"] = enquireItem.TourName,
+    //        ["TourClass"] = enquireItem.TourClass,
+    //        ["TourDepartureCity"] = enquireItem.TourDepartureCity,
+    //        ["TourQuotedPrice"] = enquireItem.TourQuotedPrice.ToString(),
+    //        ["PriceCurrency"] = enquireItem.PriceCurrency,
+    //        ["PreferredDestination"] = enquireItem.PreferredDestination,
+    //        ["TourDiscountText"] = enquireItem.TourDiscountText,
+    //        ["TourDate"] = enquireItem.TourDate?.ToString(),
+    //        ["SubscribeToNewsletter"] =
+    //    enquireItem.SubscribeToNewsletter.ToString(),
+    //        ["Message"] = enquireItem.Message
+    //    };
+    //    try
+    //    {
+    //        await _formEmailService.SendCustomerConfirmationAsync(
+    //FormEmailNames.Enquire,
+    //enquireItem.Email,
+    //formData);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        logger.LogError(
+    //            ex,
+    //            "Enquire confirmation email failed. ItemID: {ItemID}",
+    //            enquireItem.ItemID);
+    //    }
+    //    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    //    {
+    //        return Json(new { success = true, redirectUrl = "/enquire/thank-you" });
+    //    }
         return Redirect("/enquire/thank-you");
     }
     #endregion
@@ -712,6 +745,21 @@ enquireItem.SubscribeToNewsletter.ToString(),
             }
 
             BizFormItemProvider.SetItem(enquireItem);
+
+            try
+            {
+                await _contactTagService.TagEnquireContactAsync(
+                    enquireItem.Email,
+                    enquireItem.Firstname,
+                    enquireItem.Lastname,
+                    enquireItem.Phone,
+                    enquireItem.SubscribeToNewsletter,
+                    HttpContext.RequestAborted);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Contact Us enquiry contact tagging failed. ItemID: {ItemID}", enquireItem.ItemID);
+            }
 
             if (enquireItem.ItemID <= 0)
             {

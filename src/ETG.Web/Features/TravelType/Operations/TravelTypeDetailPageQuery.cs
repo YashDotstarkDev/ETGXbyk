@@ -10,11 +10,10 @@ namespace ETG.Web.Features.TravelType.Operations;
 public record TravelTypeDetailPageQuery(
     RoutedWebPage Page,
     string ChannelName
-) : IQuery<TravelTypeDetailPageQueryResponse>,
-    ICacheByValueQuery,
+) : WebPageRoutedQuery<TravelTypeDetailPageQueryResponse>(Page),
     IChannelContentQuery
 {
-    public string CacheValueKey => Page.WebPageItemID.ToString();
+    public override string CacheValueKey => $"{Page.WebPageItemID}:{ChannelName}";
 }
 
 public record TravelTypeDetailPageQueryResponse(

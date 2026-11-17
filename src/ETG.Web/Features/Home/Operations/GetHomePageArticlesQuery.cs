@@ -8,22 +8,20 @@ using ArticleContent = ETG.Core.Content.Article;
 
 namespace ETG.Web.Features.Home.Operations;
 
-/// <summary>
-/// Query to retrieve latest articles for home page
-/// PERFORMANCE FIX: Uses TopN(3) to limit results at database level
-/// </summary>
 public record GetHomePageArticlesQuery(
     string ChannelName
-) : IQuery<List<ArticleContent>>, IChannelContentQuery
+) : IQuery<List<ArticleViewModel>>, IChannelContentQuery
 {
     string IChannelContentQuery.ChannelName => ChannelName;
 }
 
 public class GetHomePageArticlesQueryHandler(
-    ContentItemQueryTools tools
-) : ContentItemQueryHandler<GetHomePageArticlesQuery, List<ArticleContent>>(tools)
+    ContentItemQueryTools tools,
+    IWebPageUrlRetriever urlRetriever,
+    ITaxonomyRetriever taxonomyRetriever
+) : ContentItemQueryHandler<GetHomePageArticlesQuery, List<ArticleViewModel>>(tools)
 {
-    public override async Task<List<ArticleContent>> Handle(
+    public override async Task<List<ArticleViewModel>> Handle(
         GetHomePageArticlesQuery request,
         CancellationToken cancellationToken)
     {
@@ -45,18 +43,21 @@ public class GetHomePageArticlesQueryHandler(
             DefaultQueryOptions,
             cancellationToken);
 
-        return articles.ToList();
+        var viewModels = await Task.WhenAll(
+            articles.Select(article =>
+                ArticleViewModel.CreateAsync(
+                    article,
+                    urlRetriever,
+                    taxonomyRetriever)));
+
+        return viewModels.ToList();
     }
 
     protected override ICacheDependencyKeysBuilder AddDependencyKeys(
         GetHomePageArticlesQuery query,
-        List<ArticleContent> result,
+        List<ArticleViewModel> result,
         ICacheDependencyKeysBuilder builder)
     {
-        return builder
-            .AllContentItems(ArticleContent.CONTENT_TYPE_NAME)
-            .Collection(
-                result,
-                (article, itemBuilder) => itemBuilder.ContentItem(article));
+        return builder.AllContentItems(ArticleContent.CONTENT_TYPE_NAME);
     }
 }

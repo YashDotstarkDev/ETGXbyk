@@ -39,9 +39,7 @@ public class ArticlePostPageToursQueryHandler(WebPageQueryTools tools)
             return new ArticlePostPageToursResult([]);
         }
 
-        var firstDestinationGuid = validDestinationGuids.First();
-
-        // 2. Fetch tours with linked items matching the article destination
+        // 2. Fetch tours with linked items matching any article destination in a single combined query
         // Exactly like ExperiencePageTemplates: query.ForWebsite(channelName) with IncludeWebPageData()
         var tourBuilder = new ContentItemQueryBuilder()
             .ForContentType(ETG.Core.Content.Tour.CONTENT_TYPE_NAME, q =>
@@ -49,8 +47,14 @@ public class ArticlePostPageToursQueryHandler(WebPageQueryTools tools)
                 q.ForWebsite(request.ChannelName);
                 q.WithLinkedItems(4, options => options.IncludeWebPageData());
                 q.Where(w =>
-                    w.WhereLike(nameof(ETG.Core.Content.Tour.TourPrimaryCountry), $"%{firstDestinationGuid}%")
-                );
+                {
+                    w.WhereLike(nameof(ETG.Core.Content.Tour.TourPrimaryCountry), $"%{validDestinationGuids[0]}%");
+                    for (int i = 1; i < validDestinationGuids.Count; i++)
+                    {
+                        var extraGuid = validDestinationGuids[i];
+                        w.Or().WhereLike(nameof(ETG.Core.Content.Tour.TourPrimaryCountry), $"%{extraGuid}%");
+                    }
+                });
             });
 
         var allTours = await tools.Executor.GetMappedWebPageResult<ETG.Core.Content.Tour>(
@@ -58,42 +62,50 @@ public class ArticlePostPageToursQueryHandler(WebPageQueryTools tools)
             cancellationToken: cancellationToken);
 
         // 3. Filter out hidden upgrade tours (TourIsUpgrade == "2")
-        var matchedTours = allTours
+        var validTours = allTours
             .Where(tour =>
-                (string.IsNullOrEmpty(tour.TourIsUpgrade) || tour.TourIsUpgrade != "2")
+                string.IsNullOrEmpty(tour.TourIsUpgrade) || tour.TourIsUpgrade != "2"
             )
             .ToList();
 
-        // If fewer than 8 tours and there are other destinations, also fetch for remaining destinations
+        // 4. Preserve destination priority ranking and deduplication:
+        // Primary destination tours come first. If fewer than 8 tours and multiple destinations exist,
+        // fill from subsequent destinations until at least 8 tours (or all available destinations exhausted).
+        var matchedTours = new List<ETG.Core.Content.Tour>();
+        var existingGuids = new HashSet<Guid>();
+
+        var firstGuid = validDestinationGuids[0];
+        foreach (var tour in validTours)
+        {
+            if (tour.TourPrimaryCountry != null && tour.TourPrimaryCountry.Any(c => c.WebPageGuid == firstGuid))
+            {
+                if (existingGuids.Add(tour.SystemFields.WebPageItemGUID))
+                {
+                    matchedTours.Add(tour);
+                }
+            }
+        }
+
         if (matchedTours.Count < 8 && validDestinationGuids.Count > 1)
         {
-            var existingGuids = matchedTours.Select(t => t.SystemFields.WebPageItemGUID).ToHashSet();
-            foreach (var extraGuid in validDestinationGuids.Skip(1))
+            for (int i = 1; i < validDestinationGuids.Count; i++)
             {
-                var extraBuilder = new ContentItemQueryBuilder()
-                    .ForContentType(ETG.Core.Content.Tour.CONTENT_TYPE_NAME, q =>
-                    {
-                        q.ForWebsite(request.ChannelName);
-                        q.WithLinkedItems(4, options => options.IncludeWebPageData());
-                        q.Where(w =>
-                            w.WhereLike(nameof(ETG.Core.Content.Tour.TourPrimaryCountry), $"%{extraGuid}%")
-                        );
-                    });
-
-                var extraTours = await tools.Executor.GetMappedWebPageResult<ETG.Core.Content.Tour>(
-                    extraBuilder,
-                    cancellationToken: cancellationToken);
-
-                foreach (var et in extraTours)
+                var extraGuid = validDestinationGuids[i];
+                foreach (var tour in validTours)
                 {
-                    if ((string.IsNullOrEmpty(et.TourIsUpgrade) || et.TourIsUpgrade != "2")
-                        && existingGuids.Add(et.SystemFields.WebPageItemGUID))
+                    if (tour.TourPrimaryCountry != null && tour.TourPrimaryCountry.Any(c => c.WebPageGuid == extraGuid))
                     {
-                        matchedTours.Add(et);
+                        if (existingGuids.Add(tour.SystemFields.WebPageItemGUID))
+                        {
+                            matchedTours.Add(tour);
+                        }
                     }
                 }
 
-                if (matchedTours.Count >= 8) break;
+                if (matchedTours.Count >= 8)
+                {
+                    break;
+                }
             }
         }
 

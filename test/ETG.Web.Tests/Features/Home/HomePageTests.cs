@@ -17,7 +17,6 @@ public class HomePageTests : BaseWebTest
 {
     private Mock<IMediator> mediator = null!;
     private Mock<IWebPageDataContextRetriever> context = null!;
-    private Mock<IContentQueryExecutor> executor = null!;
     private Mock<IWebsiteChannelContext> channel = null!;
     private Mock<IWebPageUrlRetriever> urls = null!;
     private Mock<ITaxonomyRetriever> taxonomy = null!;
@@ -32,7 +31,6 @@ public class HomePageTests : BaseWebTest
 
         mediator = new(MockBehavior.Strict);
         context = new(MockBehavior.Strict);
-        executor = new(MockBehavior.Strict);
         channel = new(MockBehavior.Strict);
         urls = new(MockBehavior.Strict);
         taxonomy = new(MockBehavior.Strict);
@@ -49,10 +47,11 @@ public class HomePageTests : BaseWebTest
                 HttpContext = httpContext
             });
 
+        // IContentQueryExecutor is no longer injected into the controller;
+        // experience retrieval now goes through IMediator (GetSelectedExperiencesQuery).
         controller = new HomePageTemplateController(
             mediator.Object,
             context.Object,
-            executor.Object,
             channel.Object,
             urls.Object,
             taxonomy.Object,
@@ -173,7 +172,6 @@ public class HomePageTests : BaseWebTest
     private void VerifyNoDownstreamCalls()
     {
         mediator.VerifyNoOtherCalls();
-        executor.VerifyNoOtherCalls();
         channel.VerifyNoOtherCalls();
         urls.VerifyNoOtherCalls();
         taxonomy.VerifyNoOtherCalls();

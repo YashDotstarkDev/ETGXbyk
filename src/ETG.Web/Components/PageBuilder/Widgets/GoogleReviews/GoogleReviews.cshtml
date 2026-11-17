@@ -124,7 +124,7 @@ int emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
                 @review.Text
               </p>
 
-              @if (!string.IsNullOrWhiteSpace(review.Text))
+              @if (!string.IsNullOrWhiteSpace(review.Text) && review.Text.Length > 120)
               {
                   <a href="#"
                      class="text-pink text-decoration-none link-pink small read-more-btn"

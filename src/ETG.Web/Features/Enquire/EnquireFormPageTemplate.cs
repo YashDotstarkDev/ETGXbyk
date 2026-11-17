@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using ETG.Core.Content;
@@ -42,17 +42,20 @@ public sealed class EnquireFormPageTemplateController : Controller
     private readonly IContentQueryExecutor contentQueryExecutor;
     private readonly IWebsiteChannelContext websiteChannelContext;
     private readonly WebPageMetaService metaService;
+    private readonly IContainerExpiryService expiryService;
 
     public EnquireFormPageTemplateController(
         IWebPageDataContextRetriever contextRetriever,
         IContentQueryExecutor contentQueryExecutor,
         IWebsiteChannelContext websiteChannelContext,
-        WebPageMetaService metaService)
+        WebPageMetaService metaService,
+        IContainerExpiryService expiryService)
     {
         this.contextRetriever = contextRetriever;
         this.contentQueryExecutor = contentQueryExecutor;
         this.websiteChannelContext = websiteChannelContext;
         this.metaService = metaService;
+        this.expiryService = expiryService;
     }
 
     public async Task<IActionResult> Index()
@@ -72,7 +75,10 @@ public sealed class EnquireFormPageTemplateController : Controller
                         .Where(where =>
                             where.WhereEquals(
                                 "WebPageItemID",
-                                data.WebPage.WebPageItemID));
+                                data.WebPage.WebPageItemID))
+                        .WithLinkedItems(
+                            1,
+                            options => options.IncludeWebPageData());
                 });
 
         var containerPages =
@@ -85,6 +91,15 @@ public sealed class EnquireFormPageTemplateController : Controller
         if (page is null)
         {
             return NotFound();
+        }
+
+        var redirectUrl = await expiryService.GetExpiryRedirectUrlAsync(
+            page,
+            HttpContext.RequestAborted);
+
+        if (!string.IsNullOrWhiteSpace(redirectUrl))
+        {
+            return Redirect(redirectUrl);
         }
 
         var destinationQuery = new ContentItemQueryBuilder()

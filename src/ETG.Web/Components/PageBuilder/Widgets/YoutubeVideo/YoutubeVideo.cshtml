@@ -4,7 +4,6 @@
     var widgetId = $"youtube-video-{Guid.NewGuid():N}";
     var iframeId = $"{widgetId}-iframe";
     var overlayId = $"{widgetId}-overlay";
-    var youtubeId = Uri.EscapeDataString(Model.YoutubeID ?? string.Empty);
 }
 
 @if (!string.IsNullOrWhiteSpace(Model.YoutubeID))
@@ -14,11 +13,11 @@
             <div id="@widgetId"
                 class="about-video-wrapper position-relative overflow-hidden rounded-4 shadow-sm ratio ratio-16x9 mx-auto"
                 style="background: #000;"
-                data-youtube-url="https://www.youtube.com/watch?v=@youtubeId"
+                data-youtube-url="@Model.VideoUrl"
                 data-open-in-new-window="@Model.OpenInNewWindow.ToString().ToLowerInvariant()">
 
                 <iframe id="@iframeId"
-                        src="https://www.youtube.com/embed/@youtubeId?rel=0"
+                        src="@Model.EmbedUrl"
                         title="@(string.IsNullOrWhiteSpace(Model.Caption) ? "YouTube video player" : Model.Caption)"
                         loading="lazy"
                         style="border: 0;"
@@ -52,7 +51,7 @@
 
                 @if (Model.OpenInNewWindow)
                 {
-                    <a href="https://www.youtube.com/watch?v=@youtubeId"
+                    <a href="@Model.VideoUrl"
                        target="_blank"
                        rel="noopener noreferrer"
                        aria-label="Open video on YouTube in a new window"
@@ -69,29 +68,39 @@
             const wrapper = document.getElementById("@widgetId");
             const iframe = document.getElementById("@iframeId");
             const overlay = document.getElementById("@overlayId");
-            const playButton = overlay.querySelector(".about-video-play-btn");
+            const playButton = overlay ? overlay.querySelector(".about-video-play-btn") : null;
+
+            if (!wrapper || !iframe) return;
 
             if (wrapper.dataset.openInNewWindow === "true") {
-                playButton.addEventListener("click", () => {
-                    window.open(
-                        wrapper.dataset.youtubeUrl,
-                        "_blank",
-                        "noopener,noreferrer"
-                    );
-                });
+                if (playButton) {
+                    playButton.addEventListener("click", () => {
+                        window.open(
+                            wrapper.dataset.youtubeUrl,
+                            "_blank",
+                            "noopener,noreferrer"
+                        );
+                    });
+                }
                 return;
             }
 
             const removeOverlay = () => {
-                overlay.remove();
+                if (overlay) overlay.remove();
             };
 
-            playButton.addEventListener("click", () => {
-                const videoUrl = new URL(iframe.src);
-                videoUrl.searchParams.set("autoplay", "1");
-                iframe.src = videoUrl.toString();
-                removeOverlay();
-            });
+            if (playButton) {
+                playButton.addEventListener("click", () => {
+                    try {
+                        const videoUrl = new URL(iframe.src);
+                        videoUrl.searchParams.set("autoplay", "1");
+                        iframe.src = videoUrl.toString();
+                    } catch (e) {
+                        iframe.src += (iframe.src.includes("?") ? "&" : "?") + "autoplay=1";
+                    }
+                    removeOverlay();
+                });
+            }
 
             // Hide the custom overlay if the native player receives focus.
             iframe.addEventListener("focus", removeOverlay, { once: true });

@@ -96,7 +96,7 @@ else
         {
             <!-- Preload Google reCAPTCHA library if not already loaded -->
             <script>
-                if (window.grecaptcha == null) {
+                if (window.grecaptcha == null && !document.querySelector('script[src*="google.com/recaptcha/api.js"]')) {
                     const s = document.createElement("script");
                     s.src = "https://www.google.com/recaptcha/api.js?render=@siteKey";
                     s.async = true;

@@ -390,9 +390,12 @@ namespace CMS.OnlineForms.Types
         /// DepartureDate.
         /// </summary>
         [DatabaseField]
-        public string DepartureDate
+        public DateTime? DepartureDate
         {
-            get => ValidationHelper.GetString(GetValue(nameof(DepartureDate)), @"");
+            get => GetValue(nameof(DepartureDate)) is DateTime date
+                ? date
+                : null;
+
             set => SetValue(nameof(DepartureDate), value);
         }
 
@@ -401,9 +404,12 @@ namespace CMS.OnlineForms.Types
         /// ReturnDate.
         /// </summary>
         [DatabaseField]
-        public string ReturnDate
+        public DateTime? ReturnDate
         {
-            get => ValidationHelper.GetString(GetValue(nameof(ReturnDate)), @"");
+            get => GetValue(nameof(ReturnDate)) is DateTime date
+                ? date
+                : null;
+
             set => SetValue(nameof(ReturnDate), value);
         }
 
@@ -786,7 +792,7 @@ namespace CMS.OnlineForms.Types
             /// <summary>
             /// DepartureDate.
             /// </summary>
-            public string DepartureDate
+            public DateTime? DepartureDate
             {
                 get => mInstance.DepartureDate;
                 set => mInstance.DepartureDate = value;
@@ -796,7 +802,7 @@ namespace CMS.OnlineForms.Types
             /// <summary>
             /// ReturnDate.
             /// </summary>
-            public string ReturnDate
+            public DateTime? ReturnDate
             {
                 get => mInstance.ReturnDate;
                 set => mInstance.ReturnDate = value;

@@ -400,7 +400,7 @@ var heading = !string.IsNullOrWhiteSpace(page.PageHeading)
                 // Fetch token using recaptcha.js
                 const { validateCaptcha } = await import('@Url.Content("~/js/recaptcha.js")');
                 const token = await validateCaptcha("contact_us_submit");
-                const tokenInput = document.getElementById("recaptchaToken");
+                const tokenInput = form.querySelector('[name="g-recaptcha-response"]') || document.getElementById("recaptchaToken");
                 if (tokenInput && token) {
                     tokenInput.value = token;
                 }

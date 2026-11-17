@@ -51,4 +51,15 @@ public class MainDestinationsQueryHandler(WebPageQueryTools tools)
             .OrderBy(destination => destination.SystemFields.WebPageItemOrder)
             .ToList();
     }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        MainDestinationsQuery query,
+        IReadOnlyList<Destination> result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        builder = base.AddDependencyKeys(query, result, builder);
+        return builder
+            .AllContentItems(Destination.CONTENT_TYPE_NAME)
+            .AllWebPages(query.WebsiteChannelName);
+    }
 }

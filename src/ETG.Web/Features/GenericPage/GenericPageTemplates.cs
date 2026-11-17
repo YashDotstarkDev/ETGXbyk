@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -43,7 +43,8 @@ public sealed class GenericPageTemplateController(
     IWebPageDataContextRetriever contextRetriever,
     IWebPageUrlRetriever urlRetriever,
     WebPageMetaService metaService,
-    IGoogleReviewsService reviewsService
+    IGoogleReviewsService reviewsService,
+    IContainerExpiryService expiryService
 ) : Controller
 {
     [HttpGet("~/enquire/thank-you")]
@@ -67,25 +68,10 @@ public sealed class GenericPageTemplateController(
             return NotFound();
         }
 
-        // Preserve existing expiry/redirect behavior.
-        if (page.ContainerExpiry > DateTimeHelper.ZERO_TIME &&
-       DateTime.Now > page.ContainerExpiry)
+        var redirectUrl = await expiryService.GetExpiryRedirectUrlAsync(page);
+        if (!string.IsNullOrWhiteSpace(redirectUrl))
         {
-            var redirectPage = page.ContainerRedirect?
-     .OfType<IWebPageFieldsSource>()
-     .FirstOrDefault(target =>
-         target.SystemFields is not null &&
-         target.SystemFields.WebPageItemWebsiteChannelId > 0);
-
-            if (redirectPage is not null)
-            {
-                var redirectUrl = await urlRetriever.Retrieve(redirectPage);
-
-                if (!string.IsNullOrWhiteSpace(redirectUrl?.RelativePath))
-                {
-                    return Redirect(redirectUrl.RelativePath);
-                }
-            }
+            return Redirect(redirectUrl);
         }
 
         var heroImage = page.ContainerHeroImage?

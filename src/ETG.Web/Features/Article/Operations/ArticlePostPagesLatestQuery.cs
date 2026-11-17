@@ -137,11 +137,15 @@ public class ArticlePostPagesLatestQueryHandler(
                         else if (destinations?.Any() == true)
                         {
                             // Destination only
-                            foreach (var destGuid in destinations)
+                            where.WhereLike(
+                                nameof(ETG.Core.Content.Article.ArticleDestinations),
+                                $"%{destinations[0]}%");
+
+                            for (int i = 1; i < destinations.Count; i++)
                             {
                                 where.Or().WhereLike(
                                     nameof(ETG.Core.Content.Article.ArticleDestinations),
-                                    $"%{destGuid}%");
+                                    $"%{destinations[i]}%");
                             }
                         }
                         else if (categories?.Any() == true)

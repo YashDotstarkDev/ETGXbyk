@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using ETG.Core.Content;
 using ETG.Core.Operations;
@@ -8,11 +8,13 @@ namespace ETG.Web.Features.AgentIncentive.Operations;
 
 public record AgentIncentivePageQuery(
     RoutedWebPage Page,
-    bool ForPreview)
-    : IQuery<Incentive>, ICacheByValueQuery
+    bool ForPreview = false)
+    : WebPageRoutedQuery<Incentive>(Page), IChannelContentQuery
 {
-    public string CacheValueKey =>
-        $"{Page.WebPageItemID}:{ForPreview}";
+    string IChannelContentQuery.ChannelName => Page?.WebsiteChannelName ?? string.Empty;
+
+    public override string CacheValueKey =>
+        $"{Page.WebPageItemID}|{Page.WebsiteChannelName}|{Page.LanguageName}:{ForPreview}";
 }
 
 public class AgentIncentivePageQueryHandler(WebPageQueryTools tools)
@@ -38,5 +40,23 @@ public class AgentIncentivePageQueryHandler(WebPageQueryTools tools)
         return pages.FirstOrDefault()
             ?? throw new InvalidOperationException(
                 $"Incentive page {request.Page.WebPageItemID} was not found.");
+    }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        AgentIncentivePageQuery query,
+        Incentive result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        if (query.Page is not null)
+        {
+            builder.WebPage(query.Page.WebPageItemID, query.Page.LanguageName);
+        }
+
+        if (result is not null)
+        {
+            builder.Collection(result.IncentiveHeroImage, (img, b) => b.ContentItem(img));
+        }
+
+        return builder;
     }
 }

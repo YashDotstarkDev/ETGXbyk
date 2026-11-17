@@ -1,4 +1,4 @@
-﻿using CMS.Websites;
+using CMS.Websites;
 using ETG.Web.Rendering;
 using Kentico.Content.Web.Mvc;
 
@@ -11,6 +11,7 @@ public sealed class CampaignPageViewModel
 {
     public string PageName { get; init; } = string.Empty;
     public string BannerLabel { get; init; } = string.Empty;
+    public string? RedirectUrl { get; init; }
 
     public CampaignPageHeroViewModel PageHero { get; init; } = new();
 

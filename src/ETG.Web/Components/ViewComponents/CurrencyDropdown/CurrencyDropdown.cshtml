@@ -1,21 +1,27 @@
-﻿@using ETG.Web.Components.ViewComponents.CurrencyDropdown
+@using ETG.Web.Components.ViewComponents.CurrencyDropdown
 @model CurrencyDropdownViewModel
 
 @if (Model.Currencies.Any())
 {
+    <select class="currency-select"
+            name="currency"
+            onchange="window.location.href='/change-currency?currency=' + this.value + '&returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search)">
+        @foreach (var currency in Model.Currencies)
+        {
+            <option value="@currency"
+                    selected="@(currency == Model.CurrentCurrency)">
+                @currency
+            </option>
+        }
+    </select>
 
-   <select class="currency-select"
-        name="currency"
-        onchange="window.location.href='/currency/set/' + this.value + '?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search)">
-
-    @foreach (var currency in Model.Currencies)
-    {
-        <option value="@currency"
-                selected="@(currency == Model.CurrentCurrency)">
-            @currency
-        </option>
-    }
-</select>
+    @* SEO Crawler Links (Satisfies SEO requirement: Currency links to #) *@
+    <span class="d-none" aria-hidden="true">
+        @foreach (var currency in Model.Currencies)
+        {
+            <a href="#" data-currency="@currency">@currency</a>
+        }
+    </span>
 
     <div class="conversion" style="display:none;"
          data-currency="@Model.CurrentCurrency"

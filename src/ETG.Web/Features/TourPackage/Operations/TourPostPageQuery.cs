@@ -91,6 +91,13 @@ public class TourPostPageQueryHandler(
                 linkedItemsDepth: 2,
                 cancellationToken);
 
+        var tourUpgradesFoldersTask =
+    LoadContentItems<TourUpgradesFolder>(
+        TourUpgradesFolder.CONTENT_TYPE_NAME,
+        GetContentItemGuids(tour.SelectedTourUpgradesFolders),
+        linkedItemsDepth: 1,
+        cancellationToken);
+
         var roomUpgradeFoldersTask =
             LoadContentItems<RoomUpgradeFolder>(
                 RoomUpgradeFolder.CONTENT_TYPE_NAME,
@@ -122,6 +129,7 @@ public class TourPostPageQueryHandler(
             optionalExtrasFoldersTask,
             roomUpgradeFoldersTask,
             faqFoldersTask,
+            tourUpgradesFoldersTask,
             discountFoldersTask);
 
         tour.SelectedImageFolders =
@@ -150,6 +158,9 @@ public class TourPostPageQueryHandler(
 
         tour.TourDiscountAndOffer =
             discountFoldersTask.Result;
+
+        tour.SelectedTourUpgradesFolders =
+    tourUpgradesFoldersTask.Result;
 
         tour.TourFAQFolder =
             faqFoldersTask.Result;
@@ -252,6 +263,11 @@ public class TourPostPageQueryHandler(
             result.SelectedRoomUpgradeFolders,
             (item, itemBuilder) =>
                 itemBuilder.ContentItem(item));
+
+        builder.Collection(
+    result.SelectedTourUpgradesFolders,
+    (item, itemBuilder) =>
+        itemBuilder.ContentItem(item));
 
         builder.Collection(
             result.TourDiscountAndOffer,

@@ -546,7 +546,7 @@ else
                                         }
                                     }
                                 }
-                                @if (tour?.TourHasFreedomOfChoice != null)
+                                @if (tour?.TourHasFreedomOfChoice == true)
                                 {
                                     <li class="inclusion-item">
                                         <span class="inclusion-icon-wrapper">
@@ -562,6 +562,121 @@ else
                         </div>
                     }
 
+                    <div class="pkg-section mb-5">
+                    @if (tour?.TourHasFreedomOfChoice == true)
+                    {
+                        <div id="pkg-freedom-of-choice" class="pkg-section">
+                            <div class="widget package-accordion" data-widget="package-freedom" style="opacity: 1;">
+
+                                <div class="ui styled fluid accordion">
+                                    <div class="accordion-panel">
+
+                                        <div class="title">
+                                            <div class="w-heading">
+                                                <h3 class="heading">Freedom of Choice</h3>
+                                            </div>
+                                            <i class="dropdown icon bi bi-chevron-down"></i>
+                                        </div>
+
+                                        <div class="content">
+                                            <div class="freedom-of-choice-content">
+
+                                                <div class="image">
+                                                    <img src="@("/images/PDF-freedom-of-choice.png".Imgixify())"
+                                                    alt="Freedom of Choice">
+                                                </div>
+
+                                                <div class="description">
+                                                    <p>
+                                                        Our Freedom of Choice program offers flexibility, by allowing you to choose
+                                                        from different options on pre-selected days.
+                                                    </p>
+
+                                                    <p>
+                                                        Our per person price includes one tour on each Freedom of Choice day, as follows:
+                                                    </p>
+
+                                                    @if (Model.FreedomOfChoiceDays.Any())
+                                                    {
+                                                        <ul>
+                                                            @foreach (var day in Model.FreedomOfChoiceDays)
+                                                            {
+                                                                <li>@Html.Raw($"One \"Freedom of Choice\" tour on {System.Net.WebUtility.HtmlEncode(day.ToLower())}")</li>
+                                                            }
+                                                        </ul>
+                                                    }
+
+                                                    <p>
+                                                        Expand the itinerary below for more details.
+                                                    </p>
+
+                                                    <p>
+                                                        Please note, if more than one room is selected during the booking process,
+                                                        our team will contact you afterwards to discuss options.
+                                                    </p>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+                    @if (Model.TourUpgrades.Any(f => f.Items.Any()))
+                    {
+                        <div id="pkg-package-upgrades" class="pkg-section">
+                            <div class="widget package-accordion" data-widget="package-upgrades" style="opacity: 1;">
+
+                                <div class="ui styled fluid accordion">
+                                    <div class="accordion-panel">
+
+                                        <div class="title">
+                                            <div class="w-heading">
+                                                <h3 class="heading">Package Upgrades</h3>
+                                            </div>
+                                            <i class="dropdown icon bi bi-chevron-down"></i>
+                                        </div>
+
+                                        <div class="content">
+                                            @foreach (var upgradeFolder in Model.TourUpgrades)
+                                            {
+                                                foreach (var upgrade in upgradeFolder.Items)
+                                                {
+                                                    <p class="package-upgrade-description">
+                                                        @if (!string.IsNullOrWhiteSpace(upgrade.IconClass))
+                                                        {
+                                                            <i class="@upgrade.IconClass"></i>
+                                                        }
+                                                        <a href="@upgrade.PageUrl" style="color: #d94b91;">
+                                                            @(!string.IsNullOrWhiteSpace(upgrade.Label) ? upgrade.Label : upgrade.TourName)
+                                                        </a>
+                                                        @if (upgrade.PriceInfo is { } up && up.CurrentPrice > 0)
+                                                        {
+                                                            <strong>
+                                                                FROM @up.CurrencyCode
+                                                                @if (up.OriginalPrice > up.CurrentPrice)
+                                                                {
+                                                                    <del>@up.OriginalPrice.ToString("N0")</del>
+                                                                }
+                                                                @up.CurrentPrice.ToString("N0")
+                                                            </strong>
+                                                        }
+                                                        @upgrade.PriceTypeLabel
+                                                    </p>
+                                                }
+                                            }
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+                    </div>
 
                     @if (itineraryItems.Any())
                     {
@@ -685,7 +800,8 @@ else
                                                         {
                                                             <ul>
                                                                 <li>
-                                                                    @foc
+                                                                    @foc.OptionName
+                                                                    @Html.Raw(foc.OptionDescription)
                                                                 </li>
                                                             </ul>
                                                         }

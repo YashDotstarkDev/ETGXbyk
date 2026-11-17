@@ -1,5 +1,7 @@
+
 using CMS.Base;
 using CMS.ContentEngine;
+using CMS.EmailMarketing;
 using ETG.Core.Content;
 using ETG.Web.Components.EmailBuilder.Widgets.WelcomeSection;
 using Kentico.Components.Web.Mvc.FormComponents;
@@ -9,7 +11,8 @@ using Kentico.Forms.Web.Mvc;
 using Kentico.Xperience.Admin.Base.FormAnnotations;
 using Kentico.Xperience.Admin.Base.Forms;
 using Microsoft.AspNetCore.Components;
-using System.Linq; // Ensure System.Linq is present
+using System.Linq;
+using System.Text.Encodings.Web;
 
 [assembly: RegisterEmailWidget(
     identifier: WelcomeSectionWidget.IDENTIFIER,
@@ -29,6 +32,9 @@ public partial class WelcomeSectionWidget : ComponentBase
     [Inject]
     private IContentRetriever ContentRetriever { get; set; } = default!;
 
+    [Inject]
+    private IEmailRecipientContextAccessor RecipientContextAccessor { get; set; } = default!;
+
     [Parameter]
     public WelcomeSectionWidgetProperties Properties { get; set; } = new();
 
@@ -37,30 +43,60 @@ public partial class WelcomeSectionWidget : ComponentBase
     public override Task SetParametersAsync(ParameterView parameters) =>
         ContextUtils.PropagateCurrent(async () => await base.SetParametersAsync(parameters))();
 
+    private string PersonalizeContent(string? content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            return string.Empty;
+        }
+
+        var recipient = RecipientContextAccessor.GetContext();
+
+        var firstName = HtmlEncoder.Default.Encode(
+            recipient.FirstName ?? string.Empty);
+
+        return content.Replace(
+            "{{FirstName}}",
+            firstName,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        // FIX: Target the Image collection property
-        var ImageGuid = Properties.Image?.FirstOrDefault()?.Identifier ?? Guid.Empty;
+        var imageGuid = Properties.Image?.FirstOrDefault()?.Identifier ?? Guid.Empty;
 
-        var guids = new[] { ImageGuid }.Where(g => g != Guid.Empty).Distinct().ToList();
+        var guids = new[] { imageGuid }
+            .Where(g => g != Guid.Empty)
+            .Distinct()
+            .ToList();
 
         var mediaDict = new Dictionary<Guid, MediaFile>();
+
         if (guids.Count > 0)
         {
             var files = await ContentRetriever.RetrieveContentByGuids<MediaFile>(guids);
-            mediaDict = files.ToDictionary(f => f.SystemFields.ContentItemGUID);
+
+            mediaDict = files.ToDictionary(
+                f => f.SystemFields.ContentItemGUID);
         }
 
-        string ImageUrl = string.Empty;
-        if (ImageGuid != Guid.Empty && mediaDict.TryGetValue(ImageGuid, out var mf_Image))
-            ImageUrl = mf_Image.LegacyMediaFileAsset?.Url ?? string.Empty;
+        string imageUrl = string.Empty;
+
+        if (imageGuid != Guid.Empty &&
+            mediaDict.TryGetValue(imageGuid, out var mediaFile))
+        {
+            imageUrl = mediaFile.LegacyMediaFileAsset?.Url ?? string.Empty;
+        }
 
         Model = new WelcomeSectionWidgetModel
         {
             Heading = Properties.Heading ?? string.Empty,
-            Image = ImageUrl ?? string.Empty,
-            Intro = Properties.Intro ?? string.Empty,
-            Copy = Properties.Copy ?? string.Empty,
+            Image = imageUrl,
+
+            // Personalize Rich Text content
+            Intro = PersonalizeContent(Properties.Intro),
+            Copy = PersonalizeContent(Properties.Copy),
+
             PrimaryCTALabel = Properties.PrimaryCTALabel ?? string.Empty,
             PrimaryCTAUrl = Properties.PrimaryCTAUrl ?? string.Empty,
             SecondaryCTALabel = Properties.SecondaryCTALabel ?? string.Empty,

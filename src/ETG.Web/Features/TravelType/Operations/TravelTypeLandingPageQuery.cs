@@ -11,11 +11,10 @@ namespace ETG.Web.Features.TravelType.Operations;
 public record TravelTypeLandingPageQuery(
     RoutedWebPage Page,
     string ChannelName
-) : IQuery<TravelTypeLandingPageQueryResponse>,
-    ICacheByValueQuery,
+) : WebPageRoutedQuery<TravelTypeLandingPageQueryResponse>(Page),
     IChannelContentQuery
 {
-    public string CacheValueKey => Page.WebPageItemID.ToString();
+    public override string CacheValueKey => $"{Page.WebPageItemID}:{ChannelName}";
 }
 
 public record TravelTypeLandingPageQueryResponse(
@@ -68,17 +67,23 @@ public class TravelTypeLandingPageQueryHandler(
             );
 
         var travelTypeDetails = (
-     await Executor.GetMappedWebPageResult<TravelTypeDetail>(
-         travelTypeDetailsQuery,
-         DefaultQueryOptions,
-         cancellationToken
-     )
- ).ToList();
-
+            await Executor.GetMappedWebPageResult<TravelTypeDetail>(
+                travelTypeDetailsQuery,
+                DefaultQueryOptions,
+                cancellationToken
+            )
+        ).ToList();
 
         return new TravelTypeLandingPageQueryResponse(
             landingPage,
             travelTypeDetails
         );
     }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        TravelTypeLandingPageQuery query,
+        TravelTypeLandingPageQueryResponse result,
+        ICacheDependencyKeysBuilder builder) =>
+        base.AddDependencyKeys(query, result, builder)
+            .AllContentItems(TravelTypeDetail.CONTENT_TYPE_NAME);
 }

@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CSharpFunctionalExtensions;
 using ETG.Core.Components;
@@ -81,28 +81,30 @@ public class FeaturedTilesWidget(
         IEnumerable<ImageTileCta> retrievedTiles)
     {
         var languageName = preferredLanguageRetriever.Get();
-        var tiles = new List<ImageTileViewModel>();
 
-        foreach (var tile in retrievedTiles)
+        var tileTasks = retrievedTiles.Select(async tile =>
         {
             var imageUrl = GetImageUrl(tile);
 
             if (string.IsNullOrEmpty(imageUrl))
             {
-                continue;
+                return null;
             }
 
             var ctaUrl = await GetCtaUrl(tile, languageName);
 
-            tiles.Add(new ImageTileViewModel(
+            return new ImageTileViewModel(
                 tile.Caption ?? string.Empty,
                 tile.SubCaption ?? string.Empty,
                 imageUrl,
                 ctaUrl,
                 tile.CtaLabel ?? string.Empty,
                 tile.CardTag ?? string.Empty,
-                tile.Dimensions ?? string.Empty));
-        }
+                tile.Dimensions ?? string.Empty);
+        });
+
+        var resolvedTiles = await Task.WhenAll(tileTasks);
+        var tiles = resolvedTiles.Where(t => t != null).Cast<ImageTileViewModel>().ToList();
 
         if (tiles.Count == 0)
         {

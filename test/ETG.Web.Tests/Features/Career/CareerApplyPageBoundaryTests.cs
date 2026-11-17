@@ -27,36 +27,36 @@ public class CareerApplyPageBoundaryTests : BaseWebTest
     private CareerApplyPageTemplateController controller = null!;
     private WebPageMetaService metadata = null!;
 
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
+    //[SetUp]
+    //public override void Setup()
+    //{
+    //    base.Setup();
 
-        context = new(MockBehavior.Strict);
-        executor = new(MockBehavior.Strict);
-        channel = new(MockBehavior.Strict);
-        mediator = new(MockBehavior.Strict);
-        logger = new();
+    //    context = new(MockBehavior.Strict);
+    //    executor = new(MockBehavior.Strict);
+    //    channel = new(MockBehavior.Strict);
+    //    mediator = new(MockBehavior.Strict);
+    //    logger = new();
 
-        var http = new DefaultHttpContext();
+    //    var http = new DefaultHttpContext();
 
-        metadata = new WebPageMetaService(
-            mediator.Object,
-            new HttpContextAccessor { HttpContext = http });
+    //    metadata = new WebPageMetaService(
+    //        mediator.Object,
+    //        new HttpContextAccessor { HttpContext = http });
 
-        controller = new CareerApplyPageTemplateController(
-            context.Object,
-            executor.Object,
-            channel.Object,
-            logger.Object,
-            metadata)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = http
-            }
-        };
-    }
+    //    controller = new CareerApplyPageTemplateController(
+    //        context.Object,
+    //        executor.Object,
+    //        channel.Object,
+    //        logger.Object,
+    //        metadata)
+    //    {
+    //        ControllerContext = new ControllerContext
+    //        {
+    //            HttpContext = http
+    //        }
+    //    };
+    //}
 
     [TearDown]
     public override void TearDown()

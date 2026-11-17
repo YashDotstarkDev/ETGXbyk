@@ -47,11 +47,12 @@
     if (!string.IsNullOrWhiteSpace(Model.HeroImageUrl))
     {
         slides.Add(new HeroGalleryImageItem(
-            Model.HeroImageUrl,
-            Model.HeroImageAltText,
-            Model.HeroCaption ?? "",
-            Model.HeroImageAccreditation ?? ""
-        ));
+     Model.HeroImageUrl,
+     Model.HeroImageAltText,
+     string.IsNullOrWhiteSpace(Model.HeroCaption) ? Model.HeroAccreditation : Model.HeroCaption,
+     string.IsNullOrWhiteSpace(Model.HeroImageAccreditation) ? Model.HeroAccreditation : Model.HeroImageAccreditation
+ ));
+
     }
 
     if (Model.GalleryImages is { Count: > 0 })
@@ -77,7 +78,7 @@
             <div class="swiper-wrapper">
                 @{ var sIdx = 0; }
                 @foreach (var slide in slides)
-                {
+                  {
                     var isFirst = sIdx == 0;
                     <div class="swiper-slide position-relative w-100 h-100">
                         <picture>
@@ -173,10 +174,10 @@
             <p class="lead mb-0 fs-5 mx-auto" style="max-width: 600px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">@Model.HeadingText</p>
         }
 
-        @if (!string.IsNullOrWhiteSpace(Model.HeroAccreditation))
+        @* @if (!string.IsNullOrWhiteSpace(Model.HeroAccreditation))
         {
             <p class="lead mb-0 fs-5 mx-auto" style="max-width: 600px; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">@Model.HeroAccreditation</p>
-        }
+        } *@
 
         @if (!string.IsNullOrWhiteSpace(Model.HeroContactUsPath))
         {

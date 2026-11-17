@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using CMS.ContentEngine;
 using CMS.Websites;
 using ETG.Core.Content;
@@ -17,9 +17,12 @@ public class DestinationLandingPageQueryHandler(WebPageQueryTools tools)
         DestinationLandingPageQuery request,
         CancellationToken cancellationToken = default)
     {
-        // Load the container without general linked-item loading.
         var query = new ContentItemQueryBuilder()
-            .ForWebPage(request.Page);
+            .ForWebPage(
+                request.Page,
+                parameters => parameters.WithLinkedItems(
+                    1,
+                    options => options.IncludeWebPageData()));
 
         var result = await Executor.GetMappedWebPageResult<Container>(
             query,
@@ -57,5 +60,19 @@ public class DestinationLandingPageQueryHandler(WebPageQueryTools tools)
             .ToArray();
 
         return container;
+    }
+
+    protected override ICacheDependencyKeysBuilder AddDependencyKeys(
+        DestinationLandingPageQuery query,
+        Container result,
+        ICacheDependencyKeysBuilder builder)
+    {
+        builder = base.AddDependencyKeys(query, result, builder);
+        if (result is null) return builder;
+
+        return builder
+            .AllContentItems(Container.CONTENT_TYPE_NAME)
+            .AllContentItems(ETG.Core.Content.MediaFile.CONTENT_TYPE_NAME)
+            .AllWebPages(query.Page.WebsiteChannelName);
     }
 }

@@ -688,7 +688,8 @@ document.addEventListener("DOMContentLoaded", function() {
     'use strict';
 
     // Get all accordion panels in the Optional Extras section (exclude hotels)
-    const optionalExtrasContainer = document.querySelector('.widget.package-accordion');
+    // const optionalExtrasContainer = document.querySelector('.widget.package-accordion');
+    const optionalExtrasContainer = document.querySelector('#pkg-optional-extras .widget.package-accordion');
     if (!optionalExtrasContainer) {
         return; // Exit if no optional extras accordion found
     }
@@ -771,6 +772,67 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
     }
+})();
+
+/* ============================================================
+   FREEDOM OF CHOICE & PACKAGE UPGRADES ACCORDION
+   ============================================================ */
+(function () {
+    'use strict';
+
+    const accordionSections = document.querySelectorAll(
+        '#pkg-freedom-of-choice, #pkg-package-upgrades'
+    );
+
+    if (!accordionSections.length) return;
+
+    accordionSections.forEach(section => {
+        const titles = section.querySelectorAll('.accordion-panel > .title');
+
+        titles.forEach(titleEl => {
+            const contentEl = titleEl.nextElementSibling;
+
+            if (!contentEl || !contentEl.classList.contains('content')) {
+                return;
+            }
+
+            const innerContent = contentEl.querySelector('.inner-content');
+            const icon = titleEl.querySelector('.dropdown.icon');
+
+            // Both sections are closed by default
+            titleEl.classList.remove('active');
+            contentEl.classList.remove('active');
+
+            if (innerContent) {
+                innerContent.classList.add('hidden');
+                innerContent.classList.remove('visible');
+            }
+
+            if (icon) {
+                icon.classList.remove('rotate');
+            }
+
+            // Open or close when clicked
+            titleEl.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const isActive = titleEl.classList.contains('active');
+
+                titleEl.classList.toggle('active', !isActive);
+                contentEl.classList.toggle('active', !isActive);
+
+                if (innerContent) {
+                    innerContent.classList.toggle('hidden', isActive);
+                    innerContent.classList.toggle('visible', !isActive);
+                }
+
+                if (icon) {
+                    icon.classList.toggle('rotate', !isActive);
+                }
+            }, true);
+        });
+    });
 })();
 
 /* ============================================================

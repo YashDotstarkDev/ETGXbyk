@@ -8,11 +8,13 @@ using ETG.Web.Components.ViewComponents.Shared;
 using ETG.Web.Configuration;
 using ETG.Web.Features.Brochures;
 using ETG.Web.Features.Enquire;
+using ETG.Web.Features.Errors;
 using ETG.Web.Features.SEO;
 using ETG.Web.Infrastructure;
 using ETG.Web.Rendering;
 using ETG.Web.Services.Email;
 using ETG.Web.Services.Storage;
+using ETG.Web.Services;
 using ETG.Web.Services.Tour;
 using ETG.Web.Services.Unsubscribe;
 using ETG.Web.Services.Utm;
@@ -22,6 +24,7 @@ using Sidio.Sitemap.AspNetCore;
 using Sidio.Sitemap.Core.Services;
 using Slugify;
 using CMS.EmailEngine;
+using ETG.Web.Features.TourPackage;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -45,12 +48,16 @@ public static class ServiceCollectionAppExtensions
         .AddAzureBlobStorage(config, env)
         .AddScoped<IFormEmailService, FormEmailService>()
         .AddScoped<IFormAutoresponderConfigurationService, FormAutoresponderConfigurationService>()
+        .AddScoped<ContactTagService>()
         .AddScoped<ETG.Web.Services.Payment.ITravelPayService, ETG.Web.Services.Payment.TravelPayService>()
         .AddScoped<UnsubscribeRedirectService>()
         .AddScoped<TourVanityUrlBackfillRunner>()
         .AddSingleton<TourVanityUrlService>()
         .AddScoped<TourVanityUrlBackfillRunner>()
         .AddScoped<IWebsiteLayoutAccessor, WebsiteLayoutAccessor>()
+        .AddMemoryCache()
+        .AddTransient<UnpublishedTourRedirectMiddleware>()
+        .AddTransient<IStartupFilter, UnpublishedTourRedirectStartupFilter>()
         .Configure<EmailQueueOptions>(options =>{options.ArchiveDuration = 30; options.BatchSize = 100;options.LoadInterval = 60000;});
 
     private static IServiceCollection AddOperations(this IServiceCollection services, IConfiguration config) =>
@@ -74,6 +81,8 @@ public static class ServiceCollectionAppExtensions
             .AddTransient<ContentItemQueryTools>()
             .AddTransient<DataItemCommandTools>()
             .AddTransient<DataItemQueryTools>()
+            .AddTransient<IQueryCacheKeysCreator<PageNotFoundQuery, PageNotFoundViewModel>, PageNotFoundQueryHandler>()
+            .AddTransient<IQueryCacheSettingsCustomizer<PageNotFoundQuery, PageNotFoundViewModel>, PageNotFoundQueryHandler>()
             .AddScoped<BookingPriceImportService>()
         .AddUnsubscribe(config);
 
@@ -105,6 +114,7 @@ public static class ServiceCollectionAppExtensions
 
         return services
             .AddScoped<CaptchaValidator>()
+            .AddScoped<IContainerExpiryService, ContainerExpiryService>()
             .Configure<ReCaptchaSettings>(config.GetSection("ReCaptcha"));
     }
 

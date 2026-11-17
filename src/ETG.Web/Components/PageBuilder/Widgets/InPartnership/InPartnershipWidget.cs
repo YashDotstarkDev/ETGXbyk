@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CSharpFunctionalExtensions;
 using ETG.Core.Components;
 using ETG.Core.Content;
@@ -33,9 +33,15 @@ public class InPartnershipWidget(IContentRetriever contentRetriever) : ViewCompo
     {
         var props = cvm.Properties;
 
-        var logo1 = await RetrieveLogo(props.Logo1Images);
-        var logo2 = await RetrieveLogo(props.Logo2Images);
-        var logo3 = await RetrieveLogo(props.Logo3Images);
+        var logo1Task = RetrieveLogo(props.Logo1Images);
+        var logo2Task = RetrieveLogo(props.Logo2Images);
+        var logo3Task = RetrieveLogo(props.Logo3Images);
+
+        await Task.WhenAll(logo1Task, logo2Task, logo3Task);
+
+        var logo1 = await logo1Task;
+        var logo2 = await logo2Task;
+        var logo3 = await logo3Task;
 
         return Validate(props, logo1, logo2, logo3)
             .Match(

@@ -38,16 +38,15 @@ public class DestinationLandingPageViewModel
         ITaxonomyRetriever taxonomyRetriever,
         string languageName)
     {
-        var items = new List<DestinationLandingItemViewModel>();
-
-        // Preserve the existing destination order and URL mapping.
-        foreach (var destination in destinations)
+        if (destinations == null!)
         {
-            items.Add(
-                await DestinationLandingItemViewModel.CreateAsync(
-                    destination,
-                    urlRetriever));
+            throw new NullReferenceException();
         }
+
+        // PERFORMANCE FIX: Concurrently resolve destination items in parallel instead of sequential WAN queries
+        var itemTasks = destinations.Select(destination =>
+            DestinationLandingItemViewModel.CreateAsync(destination, urlRetriever));
+        var items = (await Task.WhenAll(itemTasks)).ToList();
 
         // Collect the selected category tag identifiers.
         var tagIdentifiers = destinations

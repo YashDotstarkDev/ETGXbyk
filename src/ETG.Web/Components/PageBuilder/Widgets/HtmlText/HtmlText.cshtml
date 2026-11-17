@@ -4,7 +4,11 @@
 
 @model HtmlTextWidgetViewModel
 
-<div class="container html-text">
+
+@if (Model.featuredBackground)
+{
+   <div class="bg-lightgray">
+        <div class="container html-text">
         <div class="text-wrapper section-pad">
             @if (Context.Kentico().PageBuilder().GetMode() == PageBuilderMode.Edit)
             {
@@ -16,4 +20,22 @@
                 @Html.Raw(Model.Text)
             }
         </div>
-</div>
+    </div> 
+   </div>
+}
+else
+{
+    <div class="container html-text">
+        <div class="text-wrapper section-pad">
+            @if (Context.Kentico().PageBuilder().GetMode() == PageBuilderMode.Edit)
+            {
+                Html.Kentico().RichTextEditor(
+                    nameof(Model.Text));
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.Text))
+            {
+                @Html.Raw(Model.Text)
+            }
+        </div>
+    </div>
+}

@@ -1,4 +1,4 @@
-﻿using CMS.Websites;
+using CMS.Websites;
 using ETG.Core.Content;
 using ETG.Web.Infrastructure;
 using Kentico.Content.Web.Mvc;
@@ -31,6 +31,7 @@ public static class CampaignPageTemplate
         IWebPageDataContextRetriever contextRetriever,
         IWebPageUrlRetriever urlRetriever,
         WebPageMetaService metaService,
+        IContainerExpiryService? expiryService = null,
         CancellationToken cancellationToken = default)
     {
         if (!contextRetriever.TryRetrieve(out var data))
@@ -45,6 +46,21 @@ public static class CampaignPageTemplate
         if (page is null)
         {
             return null;
+        }
+
+        if (expiryService is not null)
+        {
+            var redirectUrl = await expiryService.GetExpiryRedirectUrlAsync(
+                page,
+                cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(redirectUrl))
+            {
+                return new CampaignPageViewModel
+                {
+                    RedirectUrl = redirectUrl
+                };
+            }
         }
 
         if (page is IMetaDataSchema metaFields)

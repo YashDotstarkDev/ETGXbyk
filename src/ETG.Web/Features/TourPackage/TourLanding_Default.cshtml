@@ -192,6 +192,10 @@
     </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script>
-<script src="~/minified/js/tourlandingscript.min.js" asp-append-version="true"></script>
+@section Scripts
+{
+    <!-- Algolia InstantSearch & Tour Landing Script -->
+    <script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script>
+    <script defer src="~/minified/js/tourlandingscript.min.js" asp-append-version="true"></script>
+}

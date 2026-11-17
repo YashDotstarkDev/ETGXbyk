@@ -5326,7 +5326,7 @@ a{
 .tahiti-v2-features {
   display: flex;
   align-items: center;
-  gap: 3vw;
+  gap: 5vw;
 }
 
 .tahiti-v2-feature-item {
@@ -5338,11 +5338,17 @@ a{
 }
 
 .tahiti-v2-feature-item svg {
-  max-height: 48px !important;
-  max-width:48px !important;
-  width: 48px !important;
+  width: auto !important;
   object-fit: contain;
   height:56px!important;
+}
+
+@media (min-width:1800px){
+    .tahiti-v2-feature-item svg {
+        width: auto !important;
+        object-fit: contain;
+        height: 80px !important;
+    }
 }
 
 .tahiti-v2-feature-item p {
@@ -11527,3 +11533,41 @@ body.filter-offcanvas-open .connect-bar {
         font-weight:400;
         text-transform:none !important;
     }
+
+
+/*tour Package Upgrades / Freedom of Choice CSS */
+.freedom-of-choice-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 20px 20px;
+}
+
+.package-upgrade-description {
+    padding: 20px 20px;
+}
+
+.freedom-of-choice-content .image {
+    flex: 0 0 120px;
+}
+
+        .freedom-of-choice-content .image img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+
+    .freedom-of-choice-content .description {
+        flex: 1;
+    }
+
+        .freedom-of-choice-content .description p {
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+
+@media (max-width: 767px) {
+    .freedom-of-choice-content {
+        flex-direction: column;
+    }
+}

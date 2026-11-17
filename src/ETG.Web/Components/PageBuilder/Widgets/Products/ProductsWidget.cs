@@ -1,4 +1,4 @@
-﻿using CMS.ContentEngine;
+using CMS.ContentEngine;
 using CMS.Websites;
 using CMS.Websites.Routing;
 using CSharpFunctionalExtensions;
@@ -65,18 +65,45 @@ public class ProductsWidget(
                      .OfType<TourContent>()
                      .ToList();
 
-        var bulkPrices = await pricingService.GetPricesBulkAsync(ordered);
+        var bulkPricesTask = pricingService.GetPricesBulkAsync(ordered);
 
-        var tourItems = new List<TourSummaryViewModel>();
-        foreach (var tour in ordered)
+        var countryGuids = ordered
+            .Select(t => t.TourPrimaryCountry?.FirstOrDefault()?.WebPageGuid)
+            .Where(g => g.HasValue && g.Value != Guid.Empty)
+            .Select(g => g!.Value)
+            .Distinct()
+            .ToArray();
+
+        var countryTask = countryGuids.Length > 0
+            ? contentRetriever.RetrievePagesByGuids<Destination>(countryGuids)
+            : Task.FromResult<IEnumerable<Destination>>([]);
+
+        var urlTasks = Task.WhenAll(ordered.Select(async tour =>
         {
             var url = await urlRetriever.Retrieve(tour!);
-            var priceInfo = bulkPrices.TryGetValue(tour.TourCode, out var p)
+            return new { Tour = tour, Path = url?.RelativePath ?? string.Empty };
+        }));
+
+        await Task.WhenAll(bulkPricesTask, countryTask, urlTasks);
+
+        var bulkPrices = await bulkPricesTask;
+        var countries = await countryTask;
+        var destinationLookup = countries.ToDictionary(
+            d => d.SystemFields.WebPageItemGUID,
+            d => d.DestinationName ?? string.Empty);
+        var tourUrls = await urlTasks;
+
+        var tourItems = tourUrls.Select(item =>
+        {
+            var priceInfo = bulkPrices.TryGetValue(item.Tour.TourCode, out var p)
                             ? p
                             : new TourPricingResult(0, 0);
 
-            tourItems.Add(await MapToViewModelAsync(tour!, url.RelativePath, priceInfo));
-        }
+            var countryGuid = item.Tour.TourPrimaryCountry?.FirstOrDefault()?.WebPageGuid ?? Guid.Empty;
+            var countryName = destinationLookup.TryGetValue(countryGuid, out var name) ? name : string.Empty;
+
+            return MapToViewModel(item.Tour, item.Path, priceInfo, countryName);
+        }).ToList();
 
         var tourListing = new TourListingViewModel
         {
@@ -90,7 +117,7 @@ public class ProductsWidget(
         return View("~/Components/PageBuilder/Widgets/Products/Products.cshtml", new ProductsWidgetViewModel(props, tourListing));
     }
 
-    private async Task<TourSummaryViewModel> MapToViewModelAsync(TourContent tour, string path, TourPricingResult priceInfo)
+    private static TourSummaryViewModel MapToViewModel(TourContent tour, string path, TourPricingResult priceInfo, string primaryCountryName)
     {
         var heroImage = tour.TourHeroImage?.OfType<MediaFile>().FirstOrDefault();
         
@@ -101,15 +128,6 @@ public class ProductsWidget(
                 .SelectMany(image => image.ImageFilePath ?? [])
                 .OfType<MediaFile>()
                 .FirstOrDefault();
-        }
-
-        var primaryCountryGuid = tour.TourPrimaryCountry?.FirstOrDefault()?.WebPageGuid;
-        var primaryCountryName = string.Empty;
-        if (primaryCountryGuid is Guid countryGuid && countryGuid != Guid.Empty)
-        {
-            var countries = await contentRetriever.RetrievePagesByGuids<Destination>([countryGuid]);
-            var country = countries.FirstOrDefault();
-            primaryCountryName = country?.DestinationName ?? string.Empty;
         }
 
         var badge = !string.IsNullOrWhiteSpace(primaryCountryName)
